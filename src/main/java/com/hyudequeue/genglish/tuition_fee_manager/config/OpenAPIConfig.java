@@ -13,8 +13,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @OpenAPIDefinition(
-        info = @Info(title = "Roomify-API"),
-        servers = {@Server(url = "/", description = "Default Server URL")})
+        info = @Info(title = "GEnglish Development API"),
+        servers = {@Server(url = "/", description = "Development URL")})
 public class OpenAPIConfig {
 
     private SecurityScheme createAPIKeyScheme() {
