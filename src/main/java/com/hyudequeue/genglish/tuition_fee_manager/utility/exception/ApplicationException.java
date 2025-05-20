@@ -1,6 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.utility.exception;
 
-import com.hyudequeue.genglish.tuition_fee_manager.model.res.ErrorCode;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ErrorCode;
 import lombok.Getter;
 
 /**

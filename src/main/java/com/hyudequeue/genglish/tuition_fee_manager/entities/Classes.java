@@ -1,5 +1,6 @@
-package com.hyudequeue.genglish.tuition_fee_manager.model.entities;
+package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
+import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.ClassStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -7,21 +8,27 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Class_Fees")
+@Table(name = "Class")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ClassFee {
+public class Classes {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long classFeeId;
+    private Long classId;
 
-    @ManyToOne
-    @JoinColumn(name = "class_id", nullable = false)
-    private Classes classes;
+    @Column(nullable = false, length = 100)
+    private String className;
+
+    @Column(length = 1000)
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ClassStatusEnum status;
 
     @Column(nullable = false)
     private Double amount;
@@ -34,6 +41,5 @@ public class ClassFee {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
     private LocalDateTime updatedAt;
 }

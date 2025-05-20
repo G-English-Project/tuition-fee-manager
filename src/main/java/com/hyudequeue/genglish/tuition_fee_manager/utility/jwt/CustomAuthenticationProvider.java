@@ -1,7 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.utility.jwt;
 
-import com.hyudequeue.genglish.tuition_fee_manager.model.custom.UserDetailsCustom;
-import com.hyudequeue.genglish.tuition_fee_manager.model.entities.User;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.custom.UserDetailsCustom;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.exception.ApplicationErrorCode;
@@ -14,8 +14,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;

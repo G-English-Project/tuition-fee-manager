@@ -1,0 +1,9 @@
+package com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints;
+
+public final class UserEndpoints {
+    public static final String GET_ALL_ENDPOINT = "";
+    public static final String CREATE_ENDPOINT = "";
+    public static final String EDIT_ENDPOINT = "{userId}";
+    public static final String DELETE_ENDPOINT = "{userId}";
+
+}

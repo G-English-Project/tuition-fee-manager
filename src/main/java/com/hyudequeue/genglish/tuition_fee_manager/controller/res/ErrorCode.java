@@ -1,4 +1,4 @@
-package com.hyudequeue.genglish.tuition_fee_manager.model.res;
+package com.hyudequeue.genglish.tuition_fee_manager.controller.res;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 

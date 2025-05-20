@@ -1,4 +1,4 @@
-package com.hyudequeue.genglish.tuition_fee_manager.model.dtos;
+package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request;
 
 import lombok.Data;
 

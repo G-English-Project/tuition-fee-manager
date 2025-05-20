@@ -1,4 +1,4 @@
-package com.hyudequeue.genglish.tuition_fee_manager.model.custom;
+package com.hyudequeue.genglish.tuition_fee_manager.controller.model.custom;
 
 import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.RoleEnum;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.hyudequeue.genglish.tuition_fee_manager.model.entities;
+package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
 import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.UserStatusEnum;
@@ -27,7 +27,6 @@ public class User {
 
     @Column(nullable = false, length = 100)
     private String fullName;
-
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

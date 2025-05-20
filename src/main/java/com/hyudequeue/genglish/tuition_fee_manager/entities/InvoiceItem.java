@@ -1,4 +1,4 @@
-package com.hyudequeue.genglish.tuition_fee_manager.model.entities;
+package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
