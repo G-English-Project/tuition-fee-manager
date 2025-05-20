@@ -39,7 +39,7 @@ public class Invoice {
     private InvoiceStatusEnum status;
 
     @Column(nullable = false)
-    private Double totalAmount;
+    private Integer totalAmount;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

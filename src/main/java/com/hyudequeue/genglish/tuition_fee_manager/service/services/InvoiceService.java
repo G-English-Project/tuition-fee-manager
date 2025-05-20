@@ -10,4 +10,6 @@ public interface InvoiceService {
     //GetAllInvoices
     //GetInvoiceByStatus
     //ProcessInvoiceStatus
+    //GetInvoiceByStudent
+
 }

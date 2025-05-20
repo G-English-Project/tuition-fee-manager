@@ -27,5 +27,8 @@ public class InvoiceItem {
     private String description;
 
     @Column(nullable = false)
-    private Double amount;
+    private Integer amount;
+
+    @Column(nullable = false)
+    private Integer quantity;
 }
