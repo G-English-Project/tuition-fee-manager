@@ -7,8 +7,8 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.re
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
-import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.RoleEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.UserStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PasswordUtils;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatusCode;

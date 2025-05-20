@@ -1,8 +1,8 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
-import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.RoleEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.UserStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

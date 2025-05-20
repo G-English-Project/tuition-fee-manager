@@ -1,6 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
-import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.NotificationStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.NotificationStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -23,11 +23,13 @@ public class Notification {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "invoice_id", nullable = false)
-    private Invoice invoice;
+    @JoinColumn(name = "payment_id", nullable = false)
+    private Payment payment;
 
+    @Column(nullable = false)
     private String subject;
 
+    @Column(nullable = false)
     private String body;
 
     @Column(nullable = false, updatable = false)

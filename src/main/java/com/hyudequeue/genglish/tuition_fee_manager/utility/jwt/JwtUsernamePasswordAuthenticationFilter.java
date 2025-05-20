@@ -5,7 +5,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.config.JwtConfig;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.custom.UserDetailsCustom;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserAuthRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
-import com.hyudequeue.genglish.tuition_fee_manager.model.dtos.BaseResponseDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.custom.BaseResponseDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.exception.ApplicationErrorCode;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.exception.NotFoundException;

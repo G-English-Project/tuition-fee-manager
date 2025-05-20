@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
-import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.PaymentStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,9 +35,11 @@ public class Payment {
     private Double amountPaid;
 
     @Column(nullable = false)
-    private Integer method;
+    private String description;
 
-    private String transactionRef;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentMethodEnum method;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

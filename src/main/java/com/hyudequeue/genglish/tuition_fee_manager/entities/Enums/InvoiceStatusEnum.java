@@ -1,4 +1,4 @@
-package com.hyudequeue.genglish.tuition_fee_manager.utility.Enums;
+package com.hyudequeue.genglish.tuition_fee_manager.entities.Enums;
 
 public enum InvoiceStatusEnum {
     PAID,

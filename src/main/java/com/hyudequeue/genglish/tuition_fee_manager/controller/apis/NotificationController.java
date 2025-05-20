@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,6 +12,7 @@ import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiP
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(NOTIFICATION_API)
+@Deprecated
 public class NotificationController {
     private final NotificationService notificationService;
 }

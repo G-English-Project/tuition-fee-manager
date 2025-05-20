@@ -1,6 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
-import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.InvoiceStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
