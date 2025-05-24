@@ -1,6 +1,5 @@
 package com.hyudequeue.genglish.tuition_fee_manager.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.SecurityConstants;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.exception.CustomAccessDeniedHandler;
@@ -9,8 +8,6 @@ import com.hyudequeue.genglish.tuition_fee_manager.utility.jwt.JwtService;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.jwt.JwtTokenAuthenticationFilter;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.jwt.JwtUsernamePasswordAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,6 +20,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @EnableWebSecurity
 @Configuration
@@ -31,12 +29,14 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final CustomAuthenticationProvider customAuthenticationProvider;
+    private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtConfig jwtConfig, JwtService jwtService, UserRepository userRepository, CustomAuthenticationProvider customAuthenticationProvider) {
+    public SecurityConfig(JwtConfig jwtConfig, JwtService jwtService, UserRepository userRepository, CustomAuthenticationProvider customAuthenticationProvider, CorsConfigurationSource corsConfigurationSource) {
         this.jwtConfig = jwtConfig;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.customAuthenticationProvider = customAuthenticationProvider;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
     @Bean
     public AuthenticationManager authManager(HttpSecurity http) throws Exception {
@@ -47,8 +47,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authManager) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
                         .requestMatchers(SecurityConstants.TEACHER_URL_PREFIX).hasAuthority(SecurityConstants.ROLE_TEACHER)

@@ -12,7 +12,6 @@ import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiP
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(NOTIFICATION_API)
-@Deprecated
 public class NotificationController {
     private final NotificationService notificationService;
 }
