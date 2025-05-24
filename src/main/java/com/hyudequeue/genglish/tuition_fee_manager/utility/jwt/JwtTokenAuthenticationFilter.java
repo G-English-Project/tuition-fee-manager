@@ -1,16 +1,13 @@
 package com.hyudequeue.genglish.tuition_fee_manager.utility.jwt;
 
 import com.hyudequeue.genglish.tuition_fee_manager.config.JwtConfig;
-import com.hyudequeue.genglish.tuition_fee_manager.model.dtos.BaseResponseDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.custom.BaseResponseDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.HelperUtils;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

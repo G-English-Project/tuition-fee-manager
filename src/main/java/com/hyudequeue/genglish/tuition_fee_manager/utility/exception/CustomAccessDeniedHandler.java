@@ -1,6 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.utility.exception;
 
-import com.hyudequeue.genglish.tuition_fee_manager.model.dtos.BaseResponseDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.custom.BaseResponseDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.HelperUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

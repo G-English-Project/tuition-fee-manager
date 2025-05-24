@@ -1,12 +1,9 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.basicOauth;
 
-import com.hyudequeue.genglish.tuition_fee_manager.model.custom.UserDetailsCustom;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.custom.UserDetailsCustom;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.exception.ApplicationErrorCode;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.exception.ApplicationException;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

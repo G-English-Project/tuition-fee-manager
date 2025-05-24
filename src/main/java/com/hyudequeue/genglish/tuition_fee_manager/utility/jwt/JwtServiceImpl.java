@@ -1,8 +1,8 @@
 package com.hyudequeue.genglish.tuition_fee_manager.utility.jwt;
 
 import com.hyudequeue.genglish.tuition_fee_manager.config.JwtConfig;
-import com.hyudequeue.genglish.tuition_fee_manager.model.custom.UserDetailsCustom;
-import com.hyudequeue.genglish.tuition_fee_manager.utility.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.custom.UserDetailsCustom;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.exception.BaseException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;

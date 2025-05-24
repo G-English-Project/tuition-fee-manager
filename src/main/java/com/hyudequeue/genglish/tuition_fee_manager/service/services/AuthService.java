@@ -1,7 +1,8 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.services;
 
-import org.springframework.stereotype.Service;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserAuthRequestDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserAuthResponseDto;
 
-@Service
 public interface AuthService {
+    public UserAuthResponseDto GetUserAuthorize(UserAuthRequestDto userRequest);
 }

@@ -1,14 +1,14 @@
 package com.hyudequeue.genglish.tuition_fee_manager.config;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class JwtConfig {
