@@ -22,11 +22,17 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
+    private final JwtConfig jwtConfig;
 
-    public AuthServiceImpl(JwtService jwtService, UserRepository userRepository, AuthenticationManager authenticationManager) {
+    public AuthServiceImpl(
+            JwtService jwtService,
+            UserRepository userRepository,
+            AuthenticationManager authenticationManager,
+            JwtConfig jwtConfig) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
+        this.jwtConfig = jwtConfig;
     }
 
     @Override
@@ -34,16 +40,15 @@ public class AuthServiceImpl implements AuthService {
         User user =
                 userRepository
                         .findByEmail(userRequest.getEmail())
-                        .orElseThrow(
-                                () -> new ResponseStatusException(HttpStatusCode.valueOf(404), "User not found"));
-        if(user.getPasswordHash() == null){
+                        .orElseThrow(() ->
+                                new ResponseStatusException(HttpStatusCode.valueOf(404), "User not found"));
+        if (user.getPasswordHash() == null) {
             throw new ResponseStatusException(HttpStatusCode.valueOf(401), "Incorrect login method, password is not initialized here yet");
         }
-        if (!BCrypt.verifyer()
-                .verify(userRequest.getPassword().toCharArray(), user.getPasswordHash())
-                .verified) {
+        if (!BCrypt.verifyer().verify(userRequest.getPassword().toCharArray(), user.getPasswordHash()).verified) {
             throw new ResponseStatusException(HttpStatusCode.valueOf(403), "Incorrect password");
         }
+
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
@@ -51,6 +56,7 @@ public class AuthServiceImpl implements AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtService.generateToken((UserDetailsCustom) authentication.getPrincipal());
-        return new UserAuthResponseDto(token,new JwtConfig().getPrefix(), UserResponseDto.toDto(user));
+
+        return new UserAuthResponseDto(token, jwtConfig.getPrefix(), UserResponseDto.toDto(user));
     }
 }
