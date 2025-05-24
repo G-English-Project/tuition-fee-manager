@@ -3,7 +3,9 @@ package com.hyudequeue.genglish.tuition_fee_manager.utility.constants;
 public class SecurityConstants {
     public static final String[] ALLOWED_ORIGINS = {
             "http://localhost:2707",
-            "https://genglish.threemusketeer.click"
+            "https://genglish.threemusketeer.click",
+            "https://genglish-internal.threemusketeer.click",
+            "http://localhost:1600"
     };
     public static final long CORS_MAX_AGE = 3600;
 
