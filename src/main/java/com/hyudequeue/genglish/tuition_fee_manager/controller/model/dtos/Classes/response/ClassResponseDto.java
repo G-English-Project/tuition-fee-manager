@@ -31,7 +31,7 @@ public class ClassResponseDto {
                 classes.getClassName(),
                 classes.getDescription(),
                 classes.getStatus(),
-                classes.getAmount() != null ? classes.getAmount().intValue() : null, // Convert Double to Integer
+                classes.getAmount(),
                 classes.getEffectiveFrom(),
                 classes.getEffectiveTo(),
                 classes.getCreatedAt(),
