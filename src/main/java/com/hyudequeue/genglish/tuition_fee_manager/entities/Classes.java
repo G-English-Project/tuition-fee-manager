@@ -31,7 +31,7 @@ public class Classes {
     private ClassStatusEnum status;
 
     @Column(nullable = false)
-    private Double amount;
+    private Integer amount;
 
     @Column(nullable = false)
     private LocalDate effectiveFrom;

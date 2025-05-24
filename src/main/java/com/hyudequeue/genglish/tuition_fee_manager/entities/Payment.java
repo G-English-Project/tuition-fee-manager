@@ -32,7 +32,7 @@ public class Payment {
     private LocalDateTime paidAt;
 
     @Column(nullable = false)
-    private Double amountPaid;
+    private Integer amountPaid;
 
     @Column(nullable = false)
     private String description;

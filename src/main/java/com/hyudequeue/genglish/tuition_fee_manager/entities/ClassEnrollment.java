@@ -29,5 +29,5 @@ public class ClassEnrollment {
     @Column(nullable = false, updatable = false)
     private LocalDateTime enrolledAt;
 
-    private LocalDateTime unenrolledAt;
+    private LocalDateTime unEnrolledAt;
 }
