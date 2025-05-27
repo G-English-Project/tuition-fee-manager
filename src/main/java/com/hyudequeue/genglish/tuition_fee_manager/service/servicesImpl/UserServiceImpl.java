@@ -3,6 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentAccountResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
@@ -38,12 +39,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto CreateStudent(UserCreateRequestDto user) {
+    public StudentAccountResponseDto CreateStudent(UserCreateRequestDto user) {
         String randomPassword = PasswordUtils.generateRandomPassword(8, 12);
         String hashedPassword = BCrypt.withDefaults().hashToString(12, randomPassword.toCharArray());
         User userSave = user.toEntityWithPassword(hashedPassword);
-        userRepository.save(userSave);
-        return UserResponseDto.toDto(userSave);
+        User createdUser = userRepository.save(userSave);
+        createdUser.setPasswordHash(randomPassword);
+        return StudentAccountResponseDto.toDto(createdUser);
     }
 
     @Override

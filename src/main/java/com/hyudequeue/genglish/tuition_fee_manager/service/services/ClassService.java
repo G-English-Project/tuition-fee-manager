@@ -14,7 +14,7 @@ public interface ClassService {
     Page<ClassResponseDto> GetAllClasses(int pageNumber, int pageSize);
     ClassResponseDto GetClassById(Long classId);
     ClassResponseDto CreateClass(ClassRequestDto classCreate);
-    ClassResponseDto EditClass(ClassRequestDto classEdit);
+    ClassResponseDto EditClass(Long classId, ClassRequestDto classEdit);
     void RemoveClass(Long classId);
     ClassResponseDto ModifyClassFee(ClassFeeModifyRequestDto classFeeModify);
     Page<EnrollmentResponseDto> GetStudentEnrollmentClasses(Long studentId, int pageNumber, int pageSize);

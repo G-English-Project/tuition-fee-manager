@@ -14,6 +14,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -80,8 +81,43 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public ClassResponseDto EditClass(ClassRequestDto classEdit) {
-        return ClassResponseDto.fromEntity(classesRepository.save(classEdit.toEntity()));
+    public ClassResponseDto EditClass(Long classId, ClassRequestDto classEdit) {
+        Classes existingClass = classesRepository.findById(classId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+
+        boolean isUpdated = false;
+
+        if (classEdit.getClassName() != null && !classEdit.getClassName().equals(existingClass.getClassName())) {
+            existingClass.setClassName(classEdit.getClassName());
+            isUpdated = true;
+        }
+
+        if (classEdit.getDescription() != null && !classEdit.getDescription().equals(existingClass.getDescription())) {
+            existingClass.setDescription(classEdit.getDescription());
+            isUpdated = true;
+        }
+
+        if (classEdit.getAmount() != null && !classEdit.getAmount().equals(existingClass.getAmount())) {
+            existingClass.setAmount(classEdit.getAmount());
+            isUpdated = true;
+        }
+
+        if (classEdit.getEffectiveFrom() != null && !classEdit.getEffectiveFrom().equals(existingClass.getEffectiveFrom())) {
+            existingClass.setEffectiveFrom(classEdit.getEffectiveFrom());
+            isUpdated = true;
+        }
+
+        if (classEdit.getEffectiveTo() != null && !classEdit.getEffectiveTo().equals(existingClass.getEffectiveTo())) {
+            existingClass.setEffectiveTo(classEdit.getEffectiveTo());
+            isUpdated = true;
+        }
+
+        if (isUpdated) {
+            existingClass.setUpdatedAt(LocalDateTime.now());
+            classesRepository.save(existingClass);
+        }
+
+        return ClassResponseDto.fromEntity(existingClass);
     }
 
     @Override

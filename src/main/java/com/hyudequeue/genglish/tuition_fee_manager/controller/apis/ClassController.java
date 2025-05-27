@@ -63,12 +63,16 @@ public class ClassController {
             @ApiResponse(responseCode = "200", description = "Class updated successfully"),
             @ApiResponse(responseCode = "404", description = "Class not found")
     })
-    @PutMapping(EDIT_CLASS)
+    @PutMapping(EDIT_CLASS + "/{classId}")
     public ResponseEntity<?> editClass(
+            @Parameter(description = "ID of the class to edit", required = true)
+            @PathVariable Long classId,
+
             @Parameter(description = "Updated class information", required = true)
             @RequestBody ClassRequestDto request) {
-        return ApiResp.success(classService.EditClass(request));
+        return ApiResp.success(classService.EditClass(classId, request));
     }
+
 
     @Operation(summary = "Remove class", description = "Deletes a class by its ID.")
     @ApiResponses(value = {
