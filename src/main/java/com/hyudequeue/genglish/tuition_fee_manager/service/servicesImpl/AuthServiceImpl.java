@@ -14,9 +14,15 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Collection;
+import java.util.Collections;
+
 @Service
 public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
@@ -48,11 +54,15 @@ public class AuthServiceImpl implements AuthService {
         if (!BCrypt.verifyer().verify(userRequest.getPassword().toCharArray(), user.getPasswordHash()).verified) {
             throw new ResponseStatusException(HttpStatusCode.valueOf(403), "Incorrect password");
         }
+        Collection<GrantedAuthority> authorities = Collections.singletonList(
+                new SimpleGrantedAuthority(user.getRole().name())
+        );
+
 
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
-                                userRequest.getEmail(), userRequest.getPassword()));
+                                userRequest.getEmail(), userRequest.getPassword(), authorities));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtService.generateToken((UserDetailsCustom) authentication.getPrincipal());
