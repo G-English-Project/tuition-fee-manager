@@ -46,7 +46,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
           String email = claims.getSubject();
 
-          List<String> authorities = claims.get("authorities", List.class);
+          List<String> authorities = claims.get("roles", List.class);
 
           if (!ObjectUtils.isEmpty(email)) {
             UsernamePasswordAuthenticationToken auth =
