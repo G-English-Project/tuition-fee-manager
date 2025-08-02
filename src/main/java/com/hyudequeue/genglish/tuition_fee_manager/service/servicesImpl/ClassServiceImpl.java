@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class ClassServiceImpl implements ClassService {
@@ -135,26 +136,29 @@ public class ClassServiceImpl implements ClassService {
     @Override
     public EnrollmentResponseDto AssignStudentToClass(Long classId, Long studentId) {
         Classes classes = classesRepository.findById(classId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Class not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
         User user = userRepository.findById(studentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Student not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
 
-        boolean alreadyEnrolled = classEnrollmentRepository
-                .findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(classId, studentId)
-                .isPresent();
+        Optional<ClassEnrollment> currentEnrollmentOpt =
+                classEnrollmentRepository.findByUser_UserIdAndUnEnrolledAtIsNull(studentId);
 
-        if (alreadyEnrolled) {
-            throw new ResponseStatusException(HttpStatusCode.valueOf(403), "Student is already enrolled in this class");
+        if (currentEnrollmentOpt.isPresent()) {
+            ClassEnrollment currentEnrollment = currentEnrollmentOpt.get();
+            currentEnrollment.setUnEnrolledAt(LocalDateTime.now());
+            classEnrollmentRepository.save(currentEnrollment);
         }
-
-        ClassEnrollment newEnrollment = new ClassEnrollment();
-        newEnrollment.setEnrolledAt(LocalDateTime.now());
-        newEnrollment.setClasses(classes);
-        newEnrollment.setUser(user);
+        ClassEnrollment newEnrollment = ClassEnrollment.builder()
+                .user(user)
+                .classes(classes)
+                .enrolledAt(LocalDateTime.now())
+                .build();
 
         return EnrollmentResponseDto.fromEntity(classEnrollmentRepository.save(newEnrollment));
     }
+
+
     @Override
     public void RemoveStudentFromClass(Long classId, Long studentId) {
         ClassEnrollment enrollment = classEnrollmentRepository

@@ -16,6 +16,6 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
 
     Page<ClassEnrollment> findByUser_UserId(Long userId, Pageable pageable);
     Optional<ClassEnrollment> findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(Long classId, Long userId);
-
+    Optional<ClassEnrollment> findByUser_UserIdAndUnEnrolledAtIsNull(Long userId);
     List<ClassEnrollment> findByUserUserId(Long userId);
 }
