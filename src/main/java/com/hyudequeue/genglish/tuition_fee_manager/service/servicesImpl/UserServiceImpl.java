@@ -12,10 +12,12 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PasswordUtils;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -49,12 +51,33 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto EditProfile(UserEditRequestDto user, Long userId) {
+    public UserResponseDto EditProfile(UserEditRequestDto userDto, Long userId) {
         User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404),"Student not found"));
-        User newUser = userRepository.save(user.toEntity(existingUser));
-        return UserResponseDto.toDto(newUser);
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (userDto.getEmail() != null) {
+            existingUser.setEmail(userDto.getEmail());
+        }
+
+        if (userDto.getPasswordHash() != null) {
+            String hashedPassword = BCrypt.withDefaults().hashToString(12, userDto.getPasswordHash().toCharArray());
+            existingUser.setPasswordHash(hashedPassword);
+        }
+
+        if (userDto.getFullName() != null) {
+            existingUser.setFullName(userDto.getFullName());
+        }
+
+        if (userDto.getStatus() != null) {
+            existingUser.setStatus(userDto.getStatus());
+        }
+
+        existingUser.setUpdatedAt(userDto.getUpdatedAt() != null ? userDto.getUpdatedAt() : LocalDateTime.now());
+
+        User updatedUser = userRepository.save(existingUser);
+        return UserResponseDto.toDto(updatedUser);
     }
+
 
     @Override
     public void DeleteStudent(Long userId) {
