@@ -45,13 +45,14 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
       throw new ApplicationException(ApplicationErrorCode.UNAUTHORIZED, "Invalid password");
     }
 
-    List<RoleEnum> roles = List.of(user.getRole());
+
+    RoleEnum role = user.getRole();
 
     UserDetailsCustom userDetails =
             new UserDetailsCustom(
                     user.getEmail(),
                     user.getPasswordHash(),
-                    roles);
+                    role);
     return new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
   }
 

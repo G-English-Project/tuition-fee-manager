@@ -31,11 +31,11 @@ public class UserDetailsServiceCustom implements UserDetailsService {
   private UserDetailsCustom getUserDetailsCustom(String email) {
     return userRepository
             .findByEmail(email)
-            .map(_user ->
+            .map(user ->
                     new UserDetailsCustom(
-                            _user.getEmail(),
-                            _user.getPasswordHash(),
-                            List.of(_user.getRole())
+                            user.getEmail(),
+                            user.getPasswordHash(),
+                            user.getRole()
                     ))
             .orElseThrow(() ->
                     new ApplicationException(ApplicationErrorCode.USER_NOT_FOUND, "User not found"));

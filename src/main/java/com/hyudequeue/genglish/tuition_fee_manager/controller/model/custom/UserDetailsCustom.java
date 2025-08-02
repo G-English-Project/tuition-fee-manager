@@ -15,33 +15,27 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class UserDetailsCustom implements UserDetails {
     private String email;
-
     private String password;
-
-    private List<RoleEnum> roles;
-
+    private RoleEnum roles;
     private boolean isEnabled;
-
     private boolean accountNonExpired;
-
     private boolean accountNonLocked;
-
     private boolean credentialsNonExpired;
 
-    public UserDetailsCustom(String email, String passwordHash, List<RoleEnum> roles) {
+    public UserDetailsCustom(String email, String passwordHash, RoleEnum roles) {
         this.email = email;
         this.password = passwordHash;
         this.roles = roles;
+        this.isEnabled = true;
+        this.accountNonExpired = true;
+        this.accountNonLocked = true;
+        this.credentialsNonExpired = true;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.name()))
-                .collect(Collectors.toList());
+        return List.of(new SimpleGrantedAuthority(roles.name()));
     }
-
-
 
     @Override
     public String getPassword() {
