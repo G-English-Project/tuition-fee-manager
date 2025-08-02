@@ -7,6 +7,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.re
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentAccountResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentProfileDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
@@ -35,16 +36,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserResponseDto> GetAllStudent(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("status").ascending());
-        Page<User> userPage = userRepository.findByRole(RoleEnum.STUDENT, pageable);
-        List<UserResponseDto> dtoList = userPage
-                .getContent()
-                .stream()
-                .map(UserResponseDto::toDto)
-                .toList();
-        return new PageImpl<>(dtoList, pageable, userPage.getTotalElements());
+    public Page<UserWithClassDto> GetAllStudent(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return userRepository.findAllActiveStudentsWithCurrentClass(pageable);
     }
+
 
     @Override
     public StudentAccountResponseDto CreateStudent(UserCreateRequestDto user) {
