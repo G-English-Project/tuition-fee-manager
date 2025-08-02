@@ -49,8 +49,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto EditProfile(UserEditRequestDto user) {
-        User existingUser = userRepository.findById(user.getUserId())
+    public UserResponseDto EditProfile(UserEditRequestDto user, Long userId) {
+        User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404),"Student not found"));
         User newUser = userRepository.save(user.toEntity(existingUser));
         return UserResponseDto.toDto(newUser);

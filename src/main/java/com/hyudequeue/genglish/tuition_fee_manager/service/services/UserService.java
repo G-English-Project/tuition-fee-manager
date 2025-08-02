@@ -10,6 +10,6 @@ import org.springframework.data.domain.Page;
 public interface UserService {
     Page<UserResponseDto> GetAllStudent(int page, int size);
     StudentAccountResponseDto CreateStudent(UserCreateRequestDto user);
-    UserResponseDto EditProfile(UserEditRequestDto user);
+    UserResponseDto EditProfile(UserEditRequestDto user, Long userId);
     void DeleteStudent(Long userId);
 }

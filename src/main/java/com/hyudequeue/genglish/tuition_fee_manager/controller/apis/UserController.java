@@ -70,8 +70,7 @@ public class UserController {
             @Parameter(description = "ID of the user to update", required = true) @PathVariable Long userId,
             @Parameter(description = "Updated user information", required = true)
             @RequestBody UserEditRequestDto userDto) {
-        userDto.setUserId(userId);
-        return ApiResp.success(userService.EditProfile(userDto));
+        return ApiResp.success(userService.EditProfile(userDto, userId));
     }
 
     @Operation(summary = "Delete user", description = "Delete a user by their ID.")

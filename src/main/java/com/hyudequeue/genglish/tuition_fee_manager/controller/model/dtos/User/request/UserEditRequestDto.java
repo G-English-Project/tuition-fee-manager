@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserEditRequestDto {
-    private Long userId;
     private String email;
     private String passwordHash;
     private String fullName;
@@ -28,7 +27,6 @@ public class UserEditRequestDto {
                 : existingUser.getPasswordHash();
 
         return User.builder()
-                .userId(existingUser.getUserId())
                 .email(this.email != null ? this.email : existingUser.getEmail())
                 .passwordHash(hashedPassword)
                 .fullName(this.fullName != null ? this.fullName : existingUser.getFullName())
