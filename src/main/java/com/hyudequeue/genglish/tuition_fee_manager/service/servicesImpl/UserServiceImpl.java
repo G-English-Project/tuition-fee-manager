@@ -1,11 +1,15 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.EnrolledClassDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentAccountResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentProfileDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
+import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
@@ -23,9 +27,11 @@ import java.util.List;
 @Service
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final ClassEnrollmentRepository classEnrollmentRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, ClassEnrollmentRepository classEnrollmentRepository) {
         this.userRepository = userRepository;
+        this.classEnrollmentRepository = classEnrollmentRepository;
     }
 
     @Override
@@ -85,5 +91,38 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Student not found"));
         user.setStatus(UserStatusEnum.DISABLED);
         userRepository.save(user);
+    }
+
+    @Override
+    public StudentProfileDto getUserProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<ClassEnrollment> enrollments = classEnrollmentRepository.findByUserUserId(userId);
+
+        List<EnrolledClassDto> enrolledClassDtos = enrollments.stream()
+                .map(e -> EnrolledClassDto.builder()
+                        .classId(e.getClasses().getClassId())
+                        .className(e.getClasses().getClassName())
+                        .description(e.getClasses().getDescription())
+                        .status(e.getClasses().getStatus().name())
+                        .amount(e.getClasses().getAmount())
+                        .effectiveFrom(e.getClasses().getEffectiveFrom())
+                        .effectiveTo(e.getClasses().getEffectiveTo())
+                        .enrolledAt(e.getEnrolledAt())
+                        .unEnrolledAt(e.getUnEnrolledAt())
+                        .build()
+                )
+                .toList();
+
+        return StudentProfileDto.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .status(user.getStatus().name())
+                .createdAt(user.getCreatedAt())
+                .enrolledClasses(enrolledClassDtos)
+                .build();
     }
 }

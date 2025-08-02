@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentProfileDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -88,4 +89,24 @@ public class UserController {
         userService.DeleteStudent(userId);
         return ApiResp.success(null);
     }
+    @Operation(
+            summary = "Get student profile",
+            description = "Retrieve a student profile including user info and list of enrolled classes."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile retrieved successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = StudentProfileDto.class))),
+            @ApiResponse(responseCode = "404", description = "Student not found",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping(PROFILE_ENDPOINT)
+    public ResponseEntity<?> getStudentProfile(
+            @Parameter(description = "ID of the user to retrieve profile", required = true)
+            @PathVariable Long userId) {
+        return ResponseEntity.ok(userService.getUserProfile(userId));
+    }
+
 }
