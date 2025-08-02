@@ -109,4 +109,25 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserProfile(userId));
     }
 
+    @Operation(
+            summary = "Search students by keyword",
+            description = "Search active students by full name, email, or class name."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Students retrieved successfully",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping(SEARCH_ENDPOINT)
+    public ResponseEntity<?> searchStudents(
+            @Parameter(description = "Search keyword (name, email, or class)", required = true)
+            @RequestParam String keyword,
+            @Parameter(description = "Page number", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") int size
+    ) {
+        return ApiResp.success(userService.searchStudents(keyword, page, size));
+    }
+
+
 }

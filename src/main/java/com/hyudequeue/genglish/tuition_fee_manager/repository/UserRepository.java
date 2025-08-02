@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -35,6 +36,28 @@ public interface UserRepository extends JpaRepository<User, Long> {
 """)
     Page<UserWithClassDto> findAllActiveStudentsWithCurrentClass(Pageable pageable);
 
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(
+        u.userId,
+        u.email,
+        u.fullName,
+        c.classId,
+        c.className,
+        u.createdAt
+    )
+    FROM User u
+    LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
+    LEFT JOIN Classes c ON ce.classes = c
+    WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
+      AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
+      AND (
+            LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+         OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+         OR LOWER(c.className) LIKE LOWER(CONCAT('%', :keyword, '%'))
+      )
+        ORDER BY u.createdAt DESC
+    """)
+    Page<UserWithClassDto> searchStudentsWithClassByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
 
 }

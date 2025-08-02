@@ -121,4 +121,11 @@ public class UserServiceImpl implements UserService {
                 .enrolledClasses(enrolledClassDtos)
                 .build();
     }
+
+    @Override
+    public Page<UserWithClassDto> searchStudents(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return userRepository.searchStudentsWithClassByKeyword(keyword, pageable);
+    }
+
 }

@@ -16,4 +16,6 @@ public interface UserService {
     void DeleteStudent(Long userId);
     StudentProfileDto getUserProfile(Long userId);
 
+    Page<UserWithClassDto> searchStudents(String keyword, int page, int size);
+
 }
