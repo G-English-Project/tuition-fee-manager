@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.*;
-import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstant.USER_API;
+import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.USER_API;
 
 @RestController
 @RequiredArgsConstructor

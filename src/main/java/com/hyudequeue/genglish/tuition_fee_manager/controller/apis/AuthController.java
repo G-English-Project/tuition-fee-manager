@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.AuthEndpoints.LOGIN_ENDPOINT;
-import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstant.AUTH_API;
+import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.AUTH_API;
 
 @RestController
 @RequiredArgsConstructor

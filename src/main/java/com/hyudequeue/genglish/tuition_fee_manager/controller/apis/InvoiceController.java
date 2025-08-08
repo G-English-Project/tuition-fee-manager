@@ -5,8 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstant.AUTH_API;
-import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstant.INVOICE_API;
+import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.INVOICE_API;
 
 @RestController
 @RequiredArgsConstructor

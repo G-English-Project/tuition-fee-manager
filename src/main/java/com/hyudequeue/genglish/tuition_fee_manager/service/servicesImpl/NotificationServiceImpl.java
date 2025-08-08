@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Notification.response.NotificationResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.NotificationStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Notification;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
@@ -24,7 +25,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository userRepository;
 
     @Override
-    public Notification createNotification(Long userId, String subject, String body) {
+    public NotificationResponseDto createNotification(Long userId, String subject, String body) {
         User user = getUserOrThrow(userId);
         Notification notification = Notification.builder()
                 .user(user)
@@ -33,7 +34,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .sentAt(LocalDateTime.now())
                 .status(NotificationStatusEnum.UNREAD)
                 .build();
-        return notificationRepository.save(notification);
+        return NotificationResponseDto.ToDto(notificationRepository.save(notification));
     }
 
     @Override
@@ -60,10 +61,12 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public Page<Notification> getNotifications(Long userId, Pageable pageable) {
+    public Page<NotificationResponseDto> getNotifications(Long userId, Pageable pageable) {
         User user = getUserOrThrow(userId);
-        return notificationRepository.findByUserOrderBySentAtDesc(user, pageable);
+        Page<Notification> notifications = notificationRepository.findByUserOrderBySentAtDesc(user, pageable);
+        return notifications.map(NotificationResponseDto::ToDto);
     }
+
 
     @Override
     public long countUnreadNotifications(Long userId) {
