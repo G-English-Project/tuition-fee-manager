@@ -31,23 +31,27 @@ public class InvoiceController {
     @Operation(summary = "Create invoice for one student")
     @PostMapping(CREATE_ONE)
     public ResponseEntity<ApiResp<InvoiceResponseDto>> createInvoiceForStudent(
-            @RequestParam Long userId,
-            @RequestParam Long classId,
-            @RequestParam Integer month,
+            @Parameter(description = "User ID") @RequestParam Long userId,
+            @Parameter(description = "Class ID") @RequestParam Long classId,
+            @Parameter(description = "Month of invoice (1-12)") @RequestParam Integer month,
+            @Parameter(description = "Due date (e.g., last day of current month)", example = "2025-08-31")
             @RequestParam LocalDate dueDate,
             @RequestBody List<InvoiceItemRequestDTO> items) {
         return ApiResp.success(invoiceService.createInvoiceForStudent(userId, classId, month, dueDate, items));
     }
 
+
     @Operation(summary = "Create invoices for a class")
     @PostMapping(CREATE_BULK)
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> createInvoicesForClass(
-            @RequestParam Long classId,
-            @RequestParam Integer month,
+            @Parameter(description = "Class ID") @RequestParam Long classId,
+            @Parameter(description = "Month of invoice (1-12)") @RequestParam Integer month,
+            @Parameter(description = "Due date (e.g., last day of current month)", example = "2025-08-31")
             @RequestParam LocalDate dueDate,
             @RequestBody List<InvoiceItemRequestDTO> items) {
         return ApiResp.success(invoiceService.createInvoicesForClass(classId, month, dueDate, items));
     }
+
 
     @Operation(summary = "Get invoices by class")
     @GetMapping(GET_BY_CLASS)
