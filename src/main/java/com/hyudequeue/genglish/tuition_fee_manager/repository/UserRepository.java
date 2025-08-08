@@ -19,7 +19,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     Page<User> findByRole(RoleEnum role, Pageable pageable);
     boolean existsByEmail(String email);
-    List<User> findAllByClasses(Classes classes);
+    @Query("""
+    SELECT u FROM User u
+    JOIN ClassEnrollment ce ON ce.user = u
+    WHERE ce.classes = :classes
+      AND ce.unEnrolledAt IS NULL
+    """)
+    List<User> findAllByEnrolledClass(@Param("classes") Classes classes);
 
     @Query("""
     SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(

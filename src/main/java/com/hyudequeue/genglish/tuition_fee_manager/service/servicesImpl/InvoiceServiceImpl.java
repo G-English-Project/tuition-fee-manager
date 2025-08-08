@@ -66,7 +66,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         Classes classes = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found"));
 
-        List<User> students = userRepository.findAllByClasses(classes);
+        List<User> students = userRepository.findAllByEnrolledClass(classes);
 
         List<Invoice> invoices = students.stream().map(user -> {
             Invoice invoice = Invoice.builder()
