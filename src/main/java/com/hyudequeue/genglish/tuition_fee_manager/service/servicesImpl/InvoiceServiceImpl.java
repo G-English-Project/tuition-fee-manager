@@ -15,7 +15,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,9 +39,9 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public InvoiceResponseDto createInvoiceForStudent(Long userId, Long classId, Integer month, LocalDate dueDate, List<InvoiceItemRequestDTO> items) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         Classes classes = classRepository.findById(classId)
-                .orElseThrow(() -> new RuntimeException("Class not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
         Invoice invoice = Invoice.builder()
                 .user(user)
@@ -64,7 +66,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public Page<InvoiceResponseDto> createInvoicesForClass(Long classId, Integer month, LocalDate dueDate, List<InvoiceItemRequestDTO> items) {
         Classes classes = classRepository.findById(classId)
-                .orElseThrow(() -> new RuntimeException("Class not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
         List<User> students = userRepository.findAllByEnrolledClass(classes);
 
@@ -111,7 +113,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Transactional
     public InvoiceResponseDto updateInvoice(Long invoiceId, List<InvoiceItemRequestDTO> updatedItems) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
         invoice.getItems().clear();
 
@@ -142,19 +144,26 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public void deleteInvoice(Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
         invoice.setStatus(InvoiceStatusEnum.CANCELLED);
     }
 
     @Override
     public void processInvoiceStatus(Long invoiceId, InvoiceStatusEnum invoiceStatus) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
         invoice.setStatus(invoiceStatus);
         invoice.setUpdatedAt(LocalDateTime.now());
 
         invoiceRepository.save(invoice);
+    }
+
+    @Override
+    public InvoiceResponseDto getInvoiceById(Long invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
+        return InvoiceResponseDto.toDto(invoice);
     }
 
     private int calculateTotalAmount(List<InvoiceItemRequestDTO> items) {

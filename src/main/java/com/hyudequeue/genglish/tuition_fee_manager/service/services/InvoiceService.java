@@ -28,4 +28,5 @@ public interface InvoiceService {
     void deleteInvoice(Long invoiceId);
 
     void processInvoiceStatus(Long invoiceId, InvoiceStatusEnum invoiceStatus);
+    InvoiceResponseDto getInvoiceById(Long invoiceId);
 }

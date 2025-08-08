@@ -40,7 +40,6 @@ public class InvoiceController {
         return ApiResp.success(invoiceService.createInvoiceForStudent(userId, classId, month, dueDate, items));
     }
 
-
     @Operation(summary = "Create invoices for a class")
     @PostMapping(CREATE_BULK)
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> createInvoicesForClass(
@@ -51,7 +50,6 @@ public class InvoiceController {
             @RequestBody List<InvoiceItemRequestDTO> items) {
         return ApiResp.success(invoiceService.createInvoicesForClass(classId, month, dueDate, items));
     }
-
 
     @Operation(summary = "Get invoices by class")
     @GetMapping(GET_BY_CLASS)
@@ -94,6 +92,12 @@ public class InvoiceController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ApiResp.success(invoiceService.getInvoicesByStatus(PageRequest.of(page, size), status));
+    }
+
+    @Operation(summary = "Get invoice by ID")
+    @GetMapping(GET_BY_ID)
+    public ResponseEntity<ApiResp<InvoiceResponseDto>> getInvoiceById(@RequestParam Long invoiceId) {
+        return ApiResp.success(invoiceService.getInvoiceById(invoiceId));
     }
 
     @Operation(summary = "Delete invoice")
