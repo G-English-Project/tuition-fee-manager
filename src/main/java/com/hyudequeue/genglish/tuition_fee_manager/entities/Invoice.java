@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "Invoices")
@@ -28,8 +29,8 @@ public class Invoice {
     @JoinColumn(name = "class_id", nullable = false)
     private Classes classes;
 
-    @Column(nullable = false)
-    private LocalDate month;
+    @Column(nullable = true)
+    private Integer month;
 
     @Column(nullable = false)
     private LocalDate dueDate;
@@ -41,9 +42,13 @@ public class Invoice {
     @Column(nullable = false)
     private Integer totalAmount;
 
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InvoiceItem> items;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
 }
