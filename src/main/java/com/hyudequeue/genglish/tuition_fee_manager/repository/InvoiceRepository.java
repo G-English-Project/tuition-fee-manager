@@ -16,8 +16,5 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     Page<Invoice> findByUser_UserIdAndStatusNot(Long userId, InvoiceStatusEnum status, Pageable pageable);
     Page<Invoice> findAllByStatusNot(InvoiceStatusEnum status, Pageable pageable);
-
     Page<Invoice> findByStatus(InvoiceStatusEnum status, Pageable pageable);
-    Page<Invoice> findByStatusNot(InvoiceStatusEnum status, Pageable pageable);
-
 }
