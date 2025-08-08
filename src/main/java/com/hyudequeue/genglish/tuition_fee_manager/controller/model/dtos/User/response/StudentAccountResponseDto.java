@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class StudentAccountResponseDto {
     private Long userId;
     private String email;
+    private String phone;
     private String fullName;
     private RoleEnum role;
     private String password;
@@ -28,6 +29,7 @@ public class StudentAccountResponseDto {
         return new StudentAccountResponseDto(
                 user.getUserId(),
                 user.getEmail(),
+                user.getPhone(),
                 user.getFullName(),
                 user.getRole(),
                 user.getPasswordHash(),

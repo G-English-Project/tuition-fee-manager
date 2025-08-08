@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class UserResponseDto {
     private Long userId;
     private String email;
+    private String phone;
     private String fullName;
     private RoleEnum role;
     private UserStatusEnum status;
@@ -27,6 +28,7 @@ public class UserResponseDto {
         return new UserResponseDto(
                 user.getUserId(),
                 user.getEmail(),
+                user.getPhone(),
                 user.getFullName(),
                 user.getRole(),
                 user.getStatus(),

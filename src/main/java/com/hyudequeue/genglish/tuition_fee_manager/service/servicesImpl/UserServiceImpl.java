@@ -70,8 +70,8 @@ public class UserServiceImpl implements UserService {
             existingUser.setFullName(userDto.getFullName());
         }
 
-        if (userDto.getStatus() != null) {
-            existingUser.setStatus(userDto.getStatus());
+        if (userDto.getPhone() != null) {
+            existingUser.setPhone(userDto.getPhone());
         }
 
         existingUser.setUpdatedAt(userDto.getUpdatedAt() != null ? userDto.getUpdatedAt() : LocalDateTime.now());

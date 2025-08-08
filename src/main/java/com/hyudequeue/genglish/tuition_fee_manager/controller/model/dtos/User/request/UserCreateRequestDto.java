@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class UserCreateRequestDto {
     private String email;
+    private String phone;
     private String fullName;
     private RoleEnum role;
     private UserStatusEnum status;
@@ -22,6 +23,7 @@ public class UserCreateRequestDto {
     public User toEntityWithPassword(String rawPasswordHash) {
         return User.builder()
                 .email(this.email)
+                .phone(this.phone)
                 .fullName(this.fullName)
                 .role(this.role)
                 .status(this.status)

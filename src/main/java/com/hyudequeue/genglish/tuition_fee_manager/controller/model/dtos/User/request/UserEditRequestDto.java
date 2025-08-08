@@ -14,9 +14,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class UserEditRequestDto {
     private String email;
+    private String phone;
     private String passwordHash;
     private String fullName;
-    private UserStatusEnum status;
     private LocalDateTime updatedAt;
 
     public User toEntity(User existingUser) {
@@ -28,10 +28,10 @@ public class UserEditRequestDto {
 
         return User.builder()
                 .email(this.email != null ? this.email : existingUser.getEmail())
+                .phone(this.phone != null ? this.phone : existingUser.getPhone())
                 .passwordHash(hashedPassword)
                 .fullName(this.fullName != null ? this.fullName : existingUser.getFullName())
                 .role(existingUser.getRole())
-                .status(this.status != null ? this.status : existingUser.getStatus())
                 .createdAt(existingUser.getCreatedAt())
                 .updatedAt(this.updatedAt != null ? this.updatedAt : LocalDateTime.now())
                 .build();
