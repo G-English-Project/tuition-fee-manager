@@ -49,6 +49,7 @@ public class UserServiceImpl implements UserService {
         String randomPassword = CommonConstants.STUDENT_DEFAULT_PASSWORD;
         String hashedPassword = BCrypt.withDefaults().hashToString(12, randomPassword.toCharArray());
         User userSave = user.toEntityWithPassword(hashedPassword);
+        userSave.setChangedDefaultPassword(false);
         User createdUser = userRepository.save(userSave);
         createdUser.setPasswordHash(randomPassword);
         return StudentAccountResponseDto.toDto(createdUser);
@@ -134,6 +135,28 @@ public class UserServiceImpl implements UserService {
     public Page<UserWithClassDto> searchStudents(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return userRepository.searchStudentsWithClassByKeyword(keyword, pageable);
+    }
+
+    @Override
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        var result = BCrypt.verifyer().verify(oldPassword.toCharArray(), user.getPasswordHash());
+        if (!result.verified) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Mật khẩu cũ không trùng khớp");
+        }
+
+        var sameAsOld = BCrypt.verifyer().verify(newPassword.toCharArray(), user.getPasswordHash()).verified;
+        if (sameAsOld) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu mới phải khác mật khẩu cũ");
+        }
+
+        String hashed = BCrypt.withDefaults().hashToString(12, newPassword.toCharArray());
+        user.setPasswordHash(hashed);
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setChangedDefaultPassword(true);
+        userRepository.save(user);
     }
 
 }

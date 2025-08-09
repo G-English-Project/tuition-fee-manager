@@ -15,7 +15,7 @@ public interface UserService {
     UserResponseDto EditProfile(UserEditRequestDto user, Long userId);
     void DeleteStudent(Long userId);
     StudentProfileDto getUserProfile(Long userId);
-
+    void changePassword(Long userId, String oldPassword, String newPassword);
     Page<UserWithClassDto> searchStudents(String keyword, int page, int size);
 
 }
