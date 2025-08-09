@@ -15,6 +15,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.CommonConstants;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PasswordUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.*;
@@ -45,7 +46,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public StudentAccountResponseDto CreateStudent(UserCreateRequestDto user) {
-        String randomPassword = PasswordUtils.generateRandomPassword(8, 12);
+        String randomPassword = CommonConstants.STUDENT_DEFAULT_PASSWORD;
         String hashedPassword = BCrypt.withDefaults().hashToString(12, randomPassword.toCharArray());
         User userSave = user.toEntityWithPassword(hashedPassword);
         User createdUser = userRepository.save(userSave);
