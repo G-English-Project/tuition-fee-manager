@@ -4,8 +4,12 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,4 +22,20 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
     Optional<ClassEnrollment> findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(Long classId, Long userId);
     Optional<ClassEnrollment> findByUser_UserIdAndUnEnrolledAtIsNull(Long userId);
     List<ClassEnrollment> findByUserUserId(Long userId);
+
+    @Query("SELECT ce FROM ClassEnrollment ce " +
+            "WHERE ce.classes.classId = :classId " +
+            "AND ce.user.userId IN :userIds " +
+            "AND ce.unEnrolledAt IS NULL")
+    List<ClassEnrollment> findActiveByClassAndUserIds(@Param("classId") Long classId,
+                                                      @Param("userIds") List<Long> userIds);
+    boolean existsByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(Long classId, Long userId);
+    List<ClassEnrollment> findByClasses_ClassIdAndUnEnrolledAtIsNull(Long classId);
+
+    @Modifying
+    @Query("UPDATE ClassEnrollment ce " +
+            "SET ce.unEnrolledAt = :ts " +
+            "WHERE ce.user.userId = :userId AND ce.unEnrolledAt IS NULL")
+    int unEnrollAllActiveByUser(@Param("userId") Long userId, @Param("ts") LocalDateTime ts);
+
 }

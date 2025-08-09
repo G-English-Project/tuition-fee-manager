@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.services;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import org.springframework.data.domain.Page;
@@ -13,7 +14,13 @@ public interface InvoiceService {
 
     InvoiceResponseDto createInvoiceForStudent(Long userId, Long classId, Integer month, LocalDate dueDate, List<InvoiceItemRequestDTO> items);
 
-    Page<InvoiceResponseDto> createInvoicesForClass(Long classId, Integer month, LocalDate dueDate, List<InvoiceItemRequestDTO> items);
+    Page<InvoiceResponseDto> createInvoicesForClass(
+            Long classId,
+            Integer month,
+            LocalDate dueDate,
+            List<StudentInvoiceRequest> studentRequests
+    );
+
 
     Page<InvoiceResponseDto> getInvoicesByClass(Long classId, Pageable pageable);
 

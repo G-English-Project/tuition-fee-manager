@@ -42,6 +42,7 @@ public class PaymentServiceImpl implements PaymentService {
         PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
         Invoice invoice = invoiceRepository.findById(req.getInvoiceId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404),"Invoice not found"));
+
         Payment payment = paymentRepository.save(Payment.fromCreateRequest(req, invoice, payOSProperties));
         PaymentData data = Payment.toPaymentData(payment);
 

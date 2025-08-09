@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
@@ -40,16 +41,20 @@ public class InvoiceController {
         return ApiResp.success(invoiceService.createInvoiceForStudent(userId, classId, month, dueDate, items));
     }
 
-    @Operation(summary = "Create invoices for a class")
+    @Operation(summary = "Create invoices for a class (per-student fee list)")
     @PostMapping(CREATE_BULK)
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> createInvoicesForClass(
             @Parameter(description = "Class ID") @RequestParam Long classId,
             @Parameter(description = "Month of invoice (1-12)") @RequestParam Integer month,
             @Parameter(description = "Due date (e.g., last day of current month)", example = "2025-08-31")
             @RequestParam LocalDate dueDate,
-            @RequestBody List<InvoiceItemRequestDTO> items) {
-        return ApiResp.success(invoiceService.createInvoicesForClass(classId, month, dueDate, items));
+            @RequestBody List<StudentInvoiceRequest> studentRequests) {
+
+        return ApiResp.success(
+                invoiceService.createInvoicesForClass(classId, month, dueDate, studentRequests)
+        );
     }
+
 
     @Operation(summary = "Get invoices by class")
     @GetMapping(GET_BY_CLASS)

@@ -16,6 +16,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PasswordUtils;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -82,10 +83,16 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
+    @Transactional
     public void DeleteStudent(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Student not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        int affected = classEnrollmentRepository.unEnrollAllActiveByUser(userId, now);
         user.setStatus(UserStatusEnum.DISABLED);
+        user.setUpdatedAt(now);
         userRepository.save(user);
     }
 
