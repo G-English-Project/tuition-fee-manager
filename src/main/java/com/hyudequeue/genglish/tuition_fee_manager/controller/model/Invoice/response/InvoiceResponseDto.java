@@ -25,6 +25,7 @@ public class InvoiceResponseDto {
     private List<InvoiceItemResponseDTO> items;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime paidAt;
 
     public static InvoiceResponseDto toDto(Invoice invoice) {
         return InvoiceResponseDto.builder()
@@ -37,6 +38,7 @@ public class InvoiceResponseDto {
                 .totalAmount(invoice.getTotalAmount())
                 .createdAt(invoice.getCreatedAt())
                 .updatedAt(invoice.getUpdatedAt())
+                .paidAt(invoice.getPaidAt())
                 .items(invoice.getItems().stream().map(InvoiceItemResponseDTO::toDto).toList())
                 .build();
     }

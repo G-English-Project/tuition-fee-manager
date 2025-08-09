@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
+import vn.payos.type.PaymentData;
 
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor

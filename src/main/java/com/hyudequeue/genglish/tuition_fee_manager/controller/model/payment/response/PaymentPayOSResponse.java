@@ -9,7 +9,7 @@ import vn.payos.type.CheckoutResponseData;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentResponse {
+public class PaymentPayOSResponse {
     private Long paymentId;
     private CheckoutResponseData payOsResponse;
 }

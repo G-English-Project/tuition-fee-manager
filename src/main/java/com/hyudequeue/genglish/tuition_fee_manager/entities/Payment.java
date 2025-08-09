@@ -1,11 +1,14 @@
 package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.request.CreatePaymentRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PayOSProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import vn.payos.type.ItemData;
+import vn.payos.type.PaymentData;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -54,8 +57,59 @@ public class Payment {
         if (this.createdAt == null) this.createdAt = LocalDateTime.now();
         if (this.description == null) this.description = "THANH TOAN HOA DON";
     }
+
     @Transient
     public List<InvoiceItem> getInvoiceItems() {
         return (invoice != null && invoice.getItems() != null) ? invoice.getItems() : List.of();
+    }
+
+    // ===========================
+    // STATIC CONVERTER METHODS
+    // ===========================
+
+    /**
+     * Convert CreatePaymentRequest -> Payment entity
+     */
+    public static Payment fromCreateRequest(CreatePaymentRequest req, Invoice invoice, PayOSProperties properties) {
+        return Payment.builder()
+                .invoice(invoice)
+                .amount(invoice.getTotalAmount())
+                .currency("VND")
+                .description("THANH TOAN HOA DON " + invoice.getInvoiceId())
+                .buyerName(req.getBuyerName())
+                .buyerEmail(req.getBuyerEmail())
+                .buyerPhone(req.getBuyerPhone())
+                .cancelUrl(properties.getCancelUrl())
+                .returnUrl(properties.getReturnUrl())
+                .status(PaymentStatusEnum.PENDING)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+    /**
+     * Convert Payment entity -> PayOS PaymentData
+     */
+    public static PaymentData toPaymentData(Payment payment) {
+        PaymentData.PaymentDataBuilder builder =
+                vn.payos.type.PaymentData.builder()
+                        .orderCode(payment.getPaymentId())
+                        .amount(payment.getAmount())
+                        .description(payment.getDescription())
+                        .cancelUrl(payment.getCancelUrl())
+                        .returnUrl(payment.getReturnUrl())
+                        .buyerName(payment.getBuyerName())
+                        .buyerEmail(payment.getBuyerEmail())
+                        .buyerPhone(payment.getBuyerPhone())
+                        .expiredAt(System.currentTimeMillis() / 1000 + 15 * 60);
+
+        for (InvoiceItem item : payment.getInvoiceItems()) {
+            builder.item(
+                    ItemData.builder()
+                            .name(item.getFeeName())
+                            .quantity(item.getQuantity())
+                            .price(item.getAmount())
+                            .build()
+            );
+        }
+        return builder.build();
     }
 }

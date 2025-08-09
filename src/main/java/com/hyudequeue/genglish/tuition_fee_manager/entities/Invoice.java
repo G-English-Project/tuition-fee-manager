@@ -49,9 +49,8 @@ public class Invoice {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentMethodEnum method;
+    @Column(nullable = true)
+    private LocalDateTime paidAt;
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
