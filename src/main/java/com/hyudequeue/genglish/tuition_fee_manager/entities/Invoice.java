@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -47,6 +48,10 @@ public class Invoice {
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentMethodEnum method;
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
