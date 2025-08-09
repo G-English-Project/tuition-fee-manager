@@ -73,6 +73,8 @@ public class PaymentServiceImpl implements PaymentService {
         else {
             payment.setStatus(PaymentStatusEnum.CANCELLED);
         }
+        paymentRepository.save(payment);
+        invoiceRepository.save(invoice);
     }
 
     @Override
