@@ -18,6 +18,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     Page<User> findByRole(RoleEnum role, Pageable pageable);
+
+    Optional<User> findFirstByRole(RoleEnum role);
     boolean existsByEmail(String email);
     @Query("""
     SELECT u FROM User u

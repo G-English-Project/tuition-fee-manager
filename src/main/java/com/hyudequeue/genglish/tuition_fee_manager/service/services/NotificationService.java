@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface NotificationService {
 
@@ -20,4 +21,6 @@ public interface NotificationService {
     Page<NotificationResponseDto> getNotifications(Long userId, Pageable pageable);
 
     long countUnreadNotifications(Long userId);
+    void createNotifications(List<Long> userIds, String subject, String body);
+    void createNotifications(Map<Long, String> perUserBodies, String subject);
 }
