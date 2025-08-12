@@ -67,32 +67,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         invoice.setItems(invoiceItems);
         Invoice saved = invoiceRepository.save(invoice);
-        Map<String, String> values = Map.of(
-                "studentName", user.getFullName(),
-                "invoiceContent", "Học phí tháng " + month
-        );
-
-// Notify student
-        String studentSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-        );
-        String studentBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-        );
-        notificationService.createNotification(userId, studentSubject, studentBody);
-
-// Notify teacher (first teacher found in DB)
-        String teacherSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
-        );
-        String teacherBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
-        );
-        userRepository.findFirstByRole(RoleEnum.TEACHER)
-                .ifPresent(teacher -> notificationService.createNotification(
-                        teacher.getUserId(), teacherSubject, teacherBody
-                ));
-
+        notificationService.createNotification(2L, "Test student", "Student message");
+        notificationService.createNotification(1L, "Test teacher", "Teacher message");
         return InvoiceResponseDto.toDto(saved);
     }
 
