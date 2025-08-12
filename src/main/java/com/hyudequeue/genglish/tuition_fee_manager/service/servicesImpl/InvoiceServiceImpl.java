@@ -116,12 +116,14 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
         invoice.getItems().clear();
+        
+        invoiceRepository.saveAndFlush(invoice);
 
-        List<InvoiceItem> newItems = updatedItems.stream()
-                .map(dto -> dto.toEntity(invoice))
-                .toList();
+        for (InvoiceItemRequestDTO itemDto : updatedItems) {
+            InvoiceItem newItem = itemDto.toEntity(invoice);
+            invoice.getItems().add(newItem);
+        }
 
-        invoice.setItems(newItems);
         invoice.setTotalAmount(calculateTotalAmount(updatedItems));
         invoice.setUpdatedAt(LocalDateTime.now());
 
@@ -146,6 +148,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
         invoice.setStatus(InvoiceStatusEnum.CANCELLED);
+        invoice.setUpdatedAt(LocalDateTime.now());
+        invoiceRepository.save(invoice);
     }
 
     @Override
