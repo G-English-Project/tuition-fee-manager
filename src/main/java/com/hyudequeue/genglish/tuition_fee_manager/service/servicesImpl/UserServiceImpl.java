@@ -15,7 +15,9 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.CommonConstants;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PasswordUtils;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -44,9 +46,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public StudentAccountResponseDto CreateStudent(UserCreateRequestDto user) {
-        String randomPassword = PasswordUtils.generateRandomPassword(8, 12);
+        String randomPassword = CommonConstants.STUDENT_DEFAULT_PASSWORD;
         String hashedPassword = BCrypt.withDefaults().hashToString(12, randomPassword.toCharArray());
         User userSave = user.toEntityWithPassword(hashedPassword);
+        userSave.setChangedDefaultPassword(false);
         User createdUser = userRepository.save(userSave);
         createdUser.setPasswordHash(randomPassword);
         return StudentAccountResponseDto.toDto(createdUser);
@@ -82,10 +85,16 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
+    @Transactional
     public void DeleteStudent(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Student not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        int affected = classEnrollmentRepository.unEnrollAllActiveByUser(userId, now);
         user.setStatus(UserStatusEnum.DISABLED);
+        user.setUpdatedAt(now);
         userRepository.save(user);
     }
 
@@ -126,6 +135,28 @@ public class UserServiceImpl implements UserService {
     public Page<UserWithClassDto> searchStudents(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return userRepository.searchStudentsWithClassByKeyword(keyword, pageable);
+    }
+
+    @Override
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        var result = BCrypt.verifyer().verify(oldPassword.toCharArray(), user.getPasswordHash());
+        if (!result.verified) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Mật khẩu cũ không trùng khớp");
+        }
+
+        var sameAsOld = BCrypt.verifyer().verify(newPassword.toCharArray(), user.getPasswordHash()).verified;
+        if (sameAsOld) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu mới phải khác mật khẩu cũ");
+        }
+
+        String hashed = BCrypt.withDefaults().hashToString(12, newPassword.toCharArray());
+        user.setPasswordHash(hashed);
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setChangedDefaultPassword(true);
+        userRepository.save(user);
     }
 
 }

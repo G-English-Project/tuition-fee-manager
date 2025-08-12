@@ -21,6 +21,7 @@ public class UserResponseDto {
     private UserStatusEnum status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private boolean changedDefaultPassword;
 
     public static UserResponseDto toDto(User user) {
         if (user == null) return null;
@@ -33,7 +34,8 @@ public class UserResponseDto {
                 user.getRole(),
                 user.getStatus(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getUpdatedAt(),
+                user.isChangedDefaultPassword()
         );
     }
 }

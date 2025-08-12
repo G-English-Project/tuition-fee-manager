@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.ChangePasswordRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentProfileDto;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -128,6 +130,25 @@ public class UserController {
     ) {
         return ApiResp.success(userService.searchStudents(keyword, page, size));
     }
-
+    @Operation(summary = "Change user password",
+            description = "Change password for a specific user. Must provide oldPassword and newPassword.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Password changed successfully"),
+            @ApiResponse(responseCode = "401", description = "Old password is incorrect",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PatchMapping("/{userId}/password")
+    public ResponseEntity<?> changePassword(
+            @Parameter(description = "ID of the user to change password", required = true)
+            @PathVariable Long userId,
+            @Valid @RequestBody ChangePasswordRequestDto body
+    ) {
+        userService.changePassword(userId, body.getOldPassword(), body.getNewPassword());
+        return ResponseEntity.noContent().build();
+    }
 
 }
