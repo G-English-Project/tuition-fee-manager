@@ -11,6 +11,9 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceService;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -18,10 +21,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,11 +34,13 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final UserRepository userRepository;
     private final ClassRepository classRepository;
+    private final NotificationService notificationService;
 
-    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, UserRepository userRepository, ClassRepository classRepository) {
+    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, UserRepository userRepository, ClassRepository classRepository, NotificationService notificationService) {
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -60,6 +67,32 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         invoice.setItems(invoiceItems);
         Invoice saved = invoiceRepository.save(invoice);
+        Map<String, String> values = Map.of(
+                "studentName", user.getFullName(),
+                "invoiceContent", "Học phí tháng " + month
+        );
+
+// Notify student
+        String studentSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+        );
+        String studentBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+        );
+        notificationService.createNotification(userId, studentSubject, studentBody);
+
+// Notify teacher (first teacher found in DB)
+        String teacherSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
+        );
+        String teacherBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
+        );
+        userRepository.findFirstByRole(RoleEnum.TEACHER)
+                .ifPresent(teacher -> notificationService.createNotification(
+                        teacher.getUserId(), teacherSubject, teacherBody
+                ));
+
         return InvoiceResponseDto.toDto(saved);
     }
 
