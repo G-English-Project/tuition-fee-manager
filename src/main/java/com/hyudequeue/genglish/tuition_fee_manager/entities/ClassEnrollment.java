@@ -30,4 +30,6 @@ public class ClassEnrollment {
     private LocalDateTime enrolledAt;
 
     private LocalDateTime unEnrolledAt;
+    @Column(length = 10000)
+    private String note;
 }

@@ -4,6 +4,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Enrollment.response.EnrollmentResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserInClassWithNoteDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
@@ -36,21 +37,21 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public Page<UserResponseDto> GetCurrentStudentInClass(Long classId, int pageNumber, int pageSize) {
+    public Page<UserInClassWithNoteDto> GetCurrentStudentInClass(Long classId, int pageNumber, int pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("user.fullName").ascending());
         Page<ClassEnrollment> enrollments = classEnrollmentRepository
                 .findByClasses_ClassIdAndUnEnrolledAtIsNull(classId, pageable);
 
-        return enrollments.map(enrollment -> UserResponseDto.toDto(enrollment.getUser()));
+        return enrollments.map(UserInClassWithNoteDto::fromEnrollment);
     }
 
     @Override
-    public Page<UserResponseDto> GetAllStudentInClass(Long classId, int pageNumber, int pageSize) {
+    public Page<UserInClassWithNoteDto> GetAllStudentInClass(Long classId, int pageNumber, int pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("user.fullName").ascending());
         Page<ClassEnrollment> enrollments = classEnrollmentRepository
                 .findByClasses_ClassId(classId, pageable);
 
-        return enrollments.map(enrollment -> UserResponseDto.toDto(enrollment.getUser()));
+        return enrollments.map(UserInClassWithNoteDto::fromEnrollment);
     }
 
     @Override

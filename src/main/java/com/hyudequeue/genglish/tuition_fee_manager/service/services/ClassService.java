@@ -4,13 +4,14 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Enrollment.response.EnrollmentResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserInClassWithNoteDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 public interface ClassService {
-    Page<UserResponseDto> GetCurrentStudentInClass(Long classId, int pageNumber, int pageSize);
-    Page<UserResponseDto> GetAllStudentInClass(Long classId, int pageNumber, int pageSize);
+    Page<UserInClassWithNoteDto> GetCurrentStudentInClass(Long classId, int pageNumber, int pageSize);
+    Page<UserInClassWithNoteDto> GetAllStudentInClass(Long classId, int pageNumber, int pageSize);
     Page<ClassResponseDto> GetAllClasses(int pageNumber, int pageSize);
     ClassResponseDto GetClassById(Long classId);
     ClassResponseDto CreateClass(ClassRequestDto classCreate);
