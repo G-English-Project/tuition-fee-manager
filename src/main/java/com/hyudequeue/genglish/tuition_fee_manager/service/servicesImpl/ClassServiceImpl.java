@@ -141,14 +141,14 @@ public class ClassServiceImpl implements ClassService {
         User user = userRepository.findById(studentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
 
-        Optional<ClassEnrollment> currentEnrollmentOpt =
-                classEnrollmentRepository.findByUser_UserIdAndUnEnrolledAtIsNull(studentId);
+        boolean alreadyEnrolled = classEnrollmentRepository
+                .findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(classId, studentId)
+                .isPresent();
 
-        if (currentEnrollmentOpt.isPresent()) {
-            ClassEnrollment currentEnrollment = currentEnrollmentOpt.get();
-            currentEnrollment.setUnEnrolledAt(LocalDateTime.now());
-            classEnrollmentRepository.save(currentEnrollment);
+        if (alreadyEnrolled) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Student already enrolled in this class");
         }
+
         ClassEnrollment newEnrollment = ClassEnrollment.builder()
                 .user(user)
                 .classes(classes)
@@ -157,6 +157,7 @@ public class ClassServiceImpl implements ClassService {
 
         return EnrollmentResponseDto.fromEntity(classEnrollmentRepository.save(newEnrollment));
     }
+
 
 
     @Override
