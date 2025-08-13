@@ -174,6 +174,42 @@ public class InvoiceServiceImpl implements InvoiceService {
         }).toList();
 
         List<Invoice> saved = invoiceRepository.saveAll(invoices);
+// === Gửi thông báo + email cho từng học sinh ===
+        saved.forEach(invoice -> {
+            User student = invoice.getUser();
+            Map<String, String> values = Map.of(
+                    "studentName", student.getFullName(),
+                    "invoiceContent", "Học phí tháng " + invoice.getMonth()
+            );
+
+            // Notify & Email student
+            String studentSubject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+            );
+            String studentBody = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+            );
+            notificationService.createNotification(student.getUserId(), studentSubject, studentBody);
+            emailService.sendNotificationEmail(student.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
+        });
+
+        // === Gửi thông báo + email cho giáo viên (chỉ 1 lần) ===
+        Map<String, String> teacherValues = Map.of(
+                "className", classes.getClassName()
+        );
+
+        String teacherSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.CLASS_INVOICE_CREATED, teacherValues
+        );
+        String teacherBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.CLASS_INVOICE_CREATED, teacherValues
+        );
+
+        userRepository.findFirstByRole(RoleEnum.TEACHER)
+                .ifPresent(teacher -> {
+                    notificationService.createNotification(teacher.getUserId(), teacherSubject, teacherBody);
+                    emailService.sendNotificationEmail(teacher.getEmail(), NotificationTemplateEnum.CLASS_INVOICE_CREATED, teacherValues);
+                });
 
         List<InvoiceResponseDto> responseDtos = saved.stream()
                 .map(InvoiceResponseDto::toDto)
@@ -243,6 +279,28 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
         invoice.setStatus(InvoiceStatusEnum.CANCELLED);
         invoice.setUpdatedAt(LocalDateTime.now());
+        Map<String, String> teacherValues = Map.of(
+                "invoiceId", invoice.getInvoiceId().toString(),
+                "className", invoice.getClasses().getClassName(),
+                "invoiceContent", "Hóa đơn #" + invoice.getInvoiceId() + " (" + invoice.getClasses().getClassName() + ")"
+        );
+
+
+        String teacherSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
+        );
+        String teacherBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
+        );
+
+        userRepository.findFirstByRole(RoleEnum.TEACHER)
+                .ifPresent(teacher ->
+                        notificationService.createNotification(
+                                teacher.getUserId(),
+                                teacherSubject,
+                                teacherBody
+                        )
+                );
         invoiceRepository.save(invoice);
     }
 

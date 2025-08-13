@@ -9,11 +9,15 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.re
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -21,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -29,11 +34,14 @@ public class ClassServiceImpl implements ClassService {
     private final ClassEnrollmentRepository classEnrollmentRepository;
     private final ClassRepository classesRepository;
     private final UserRepository userRepository;
-
-    public ClassServiceImpl(ClassEnrollmentRepository classEnrollmentRepository, ClassRepository classesRepository, UserRepository userRepository) {
+    private final NotificationService notificationService;
+    private final ClassRepository classRepository;
+    public ClassServiceImpl(ClassEnrollmentRepository classEnrollmentRepository, ClassRepository classesRepository, UserRepository userRepository, NotificationService notificationService, ClassRepository classRepository) {
         this.classEnrollmentRepository = classEnrollmentRepository;
         this.classesRepository = classesRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
+        this.classRepository = classRepository;
     }
 
     @Override
@@ -156,20 +164,70 @@ public class ClassServiceImpl implements ClassService {
                 .enrolledAt(LocalDateTime.now())
                 .build();
 
-        return EnrollmentResponseDto.fromEntity(classEnrollmentRepository.save(newEnrollment));
+        newEnrollment = classEnrollmentRepository.save(newEnrollment);
+        Map<String, String> valuesForClass = Map.of(
+                "studentName", user.getFullName(),
+                "className", classes.getClassName() // or however you get the class name
+        );
+
+        // Notify student
+        String studentSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_ADDED_TO_CLASS, valuesForClass
+        );
+        String studentBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_ADDED_TO_CLASS, valuesForClass
+        );
+        notificationService.createNotification(studentId, studentSubject, studentBody);
+
+        return EnrollmentResponseDto.fromEntity(newEnrollment);
     }
 
 
 
     @Override
     public void RemoveStudentFromClass(Long classId, Long studentId) {
+        // Find the enrollment record
         ClassEnrollment enrollment = classEnrollmentRepository
                 .findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(classId, studentId)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found or already unenrolled"));
 
+        // Mark as unenrolled
         enrollment.setUnEnrolledAt(LocalDateTime.now());
+
+        // Fetch user (student) and class info for notification
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Classes classes = classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class not found"));
+
+        Map<String, String> valuesForClass = Map.of(
+                "studentName", user.getFullName(),
+                "className", classes.getClassName()
+        );
+
+        // Notify student
+        String studentSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS_STUDENT, valuesForClass
+        );
+        String studentBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS_STUDENT, valuesForClass
+        );
+        notificationService.createNotification(studentId, studentSubject, studentBody);
+        //Notify teacher
+        String teacherSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS, valuesForClass
+        );
+        String teacherBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS, valuesForClass
+        );
+        userRepository.findFirstByRole(RoleEnum.TEACHER)
+                .ifPresent(teacher -> {
+                    notificationService.createNotification(teacher.getUserId(), teacherSubject, teacherBody);
+                });
+        // Save the updated enrollment
         classEnrollmentRepository.save(enrollment);
     }
+
 
     @Override
     public UserInClassWithNoteDto NoteAStudentInClass(Long classId, Long studentId, String note) {

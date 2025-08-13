@@ -5,11 +5,16 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.resp
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.response.PaymentResponseDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Invoice;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Payment;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.PaymentRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.PaymentService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PayOSProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,6 +26,10 @@ import vn.payos.type.CheckoutResponseData;
 import vn.payos.type.PaymentData;
 import vn.payos.type.PaymentLinkData;
 import vn.payos.type.Webhook;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -28,12 +37,17 @@ public class PaymentServiceImpl implements PaymentService {
     private final PayOSProperties payOSProperties;
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final EmailServiceImpl emailService;
 
-
-    public PaymentServiceImpl(PayOSProperties payOSProperties, PaymentRepository paymentRepository, InvoiceRepository invoiceRepository) {
+    public PaymentServiceImpl(PayOSProperties payOSProperties, PaymentRepository paymentRepository, InvoiceRepository invoiceRepository, UserRepository userRepository, NotificationService notificationService, EmailServiceImpl emailService) {
         this.payOSProperties = payOSProperties;
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
+        this.userRepository = userRepository;
+        this.notificationService = notificationService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -69,6 +83,39 @@ public class PaymentServiceImpl implements PaymentService {
         if(webhook.getSuccess()){
             payment.setStatus(PaymentStatusEnum.PAID);
             invoice.setStatus(InvoiceStatusEnum.PAID);
+            // --- Notify Student ---
+            Long studentId = invoice.getUser().getUserId(); // userId của invoice
+            Map<String, String> studentValues = Map.of(
+                    "studentName", invoice.getUser().getFullName(),
+                    "invoiceId", String.valueOf(invoice.getInvoiceId()),
+                    "amount", String.valueOf(payment.getAmount())
+            );
+            String studentSubject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
+            );
+            String studentBody = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
+            );
+            notificationService.createNotification(studentId, studentSubject, studentBody);
+            emailService.sendNotificationEmail(invoice.getUser().getEmail(), NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues);
+
+            // --- Notify Teacher ---
+            User teacher = userRepository.findFirstByRole(RoleEnum.TEACHER)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Teacher not found"));
+            Map<String, String> teacherValues = Map.of(
+                    "teacherName", teacher.getFullName(),
+                    "studentName", invoice.getUser().getFullName(),
+                    "invoiceId", String.valueOf(invoice.getInvoiceId()),
+                    "amount", String.valueOf(payment.getAmount())
+            );
+            String teacherSubject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, teacherValues
+            );
+            String teacherBody = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, teacherValues
+            );
+            notificationService.createNotification(teacher.getUserId(), teacherSubject, teacherBody);
+            emailService.sendNotificationEmail(teacher.getEmail(), NotificationTemplateEnum.STUDENT_PAID_INVOICE, teacherValues);
         }
         else {
             payment.setStatus(PaymentStatusEnum.CANCELLED);
