@@ -157,4 +157,23 @@ public class ClassController {
         classService.RemoveStudentFromClass(classId, studentId);
         return ApiResp.success("Student removed from class.");
     }
+
+    @Operation(
+            summary = "Update note for a student in a class",
+            description = "Create or update a note for the given student in the given class."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Note updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Enrollment not found or already unenrolled")
+    })
+    @PatchMapping(NOTE_STUDENT)
+    public ResponseEntity<?> noteAStudentInClass(
+            @Parameter(description = "Class ID", required = true) @PathVariable Long classId,
+            @Parameter(description = "Student ID", required = true) @PathVariable Long studentId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Note payload", required = true)
+            @RequestBody String note
+    ) {
+        return ApiResp.success(classService.NoteAStudentInClass(classId, studentId, note));
+    }
+
 }

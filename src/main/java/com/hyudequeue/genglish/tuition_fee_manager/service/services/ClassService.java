@@ -21,5 +21,6 @@ public interface ClassService {
     Page<EnrollmentResponseDto> GetStudentEnrollmentClasses(Long studentId, int pageNumber, int pageSize);
     EnrollmentResponseDto AssignStudentToClass(Long classId, Long studentId);
     void RemoveStudentFromClass(Long classId, Long studentId);
+    UserInClassWithNoteDto NoteAStudentInClass(Long classId, Long studentId, String note);
 
 }

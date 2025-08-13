@@ -171,4 +171,15 @@ public class ClassServiceImpl implements ClassService {
         classEnrollmentRepository.save(enrollment);
     }
 
+    @Override
+    public UserInClassWithNoteDto NoteAStudentInClass(Long classId, Long studentId, String note) {
+        ClassEnrollment enrollment = classEnrollmentRepository
+                .findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(classId, studentId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Enrollment not found or already un-enrolled"));
+
+        enrollment.setNote(note);
+        enrollment = classEnrollmentRepository.save(enrollment);
+        return UserInClassWithNoteDto.fromEnrollment(enrollment);
+    }
 }
