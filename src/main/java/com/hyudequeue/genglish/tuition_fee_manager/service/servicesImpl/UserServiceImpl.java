@@ -4,10 +4,7 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.EnrolledClassDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentAccountResponseDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentProfileDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
@@ -26,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -38,10 +36,45 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserWithClassDto> GetAllStudent(int page, int size) {
+    public Page<UserWithClassesDto> GetAllStudent(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return userRepository.findAllActiveStudentsWithCurrentClass(pageable);
+
+        Page<User> usersPage = userRepository
+                .findByRoleAndStatusOrderByCreatedAtDesc(RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable);
+
+        if (usersPage.isEmpty()) {
+            return usersPage.map(u -> null);
+        }
+
+        List<Long> userIds = usersPage.getContent().stream().map(User::getUserId).toList();
+        List<ClassEnrollment> activeEnrollments = classEnrollmentRepository
+                .findByUser_UserIdInAndUnEnrolledAtIsNull(userIds);
+
+        Map<Long, List<ClassEnrollment>> byUserId = activeEnrollments.stream()
+                .collect(java.util.stream.Collectors.groupingBy(e -> e.getUser().getUserId()));
+
+        return usersPage.map(u -> {
+            List<EnrolledClassLiteDto> currentClasses = byUserId.getOrDefault(u.getUserId(), List.of())
+                    .stream()
+                    .map(e -> EnrolledClassLiteDto.builder()
+                            .classId(e.getClasses().getClassId())
+                            .className(e.getClasses().getClassName())
+                            .enrolledAt(e.getEnrolledAt())
+                            .build())
+                    .toList();
+
+            return UserWithClassesDto.builder()
+                    .userId(u.getUserId())
+                    .email(u.getEmail())
+                    .fullName(u.getFullName())
+                    .phone(u.getPhone())
+                    .status(u.getStatus().name())
+                    .createdAt(u.getCreatedAt())
+                    .currentClasses(currentClasses)
+                    .build();
+        });
     }
+
 
 
     @Override
@@ -132,10 +165,44 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserWithClassDto> searchStudents(String keyword, int page, int size) {
+    public Page<UserWithClassesDto> searchStudents(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return userRepository.searchStudentsWithClassByKeyword(keyword, pageable);
+
+        Page<User> usersPage = userRepository.searchStudents(RoleEnum.STUDENT, UserStatusEnum.ACTIVE, keyword, pageable);
+
+        if (usersPage.isEmpty()) {
+            return usersPage.map(u -> null);
+        }
+
+        List<Long> userIds = usersPage.getContent().stream().map(User::getUserId).toList();
+        List<ClassEnrollment> activeEnrollments = classEnrollmentRepository
+                .findByUser_UserIdInAndUnEnrolledAtIsNull(userIds);
+
+        Map<Long, List<ClassEnrollment>> byUserId = activeEnrollments.stream()
+                .collect(java.util.stream.Collectors.groupingBy(e -> e.getUser().getUserId()));
+
+        return usersPage.map(u -> {
+            List<EnrolledClassLiteDto> currentClasses = byUserId.getOrDefault(u.getUserId(), List.of())
+                    .stream()
+                    .map(e -> EnrolledClassLiteDto.builder()
+                            .classId(e.getClasses().getClassId())
+                            .className(e.getClasses().getClassName())
+                            .enrolledAt(e.getEnrolledAt())
+                            .build())
+                    .toList();
+
+            return UserWithClassesDto.builder()
+                    .userId(u.getUserId())
+                    .email(u.getEmail())
+                    .fullName(u.getFullName())
+                    .phone(u.getPhone())
+                    .status(u.getStatus().name())
+                    .createdAt(u.getCreatedAt())
+                    .currentClasses(currentClasses)
+                    .build();
+        });
     }
+
 
     @Override
     public void changePassword(Long userId, String oldPassword, String newPassword) {

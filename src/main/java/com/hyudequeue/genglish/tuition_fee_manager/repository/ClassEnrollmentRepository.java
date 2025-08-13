@@ -17,7 +17,7 @@ import java.util.Optional;
 public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment, Long> {
     Page<ClassEnrollment> findByClasses_ClassIdAndUnEnrolledAtIsNull(Long classId, Pageable pageable);
     Page<ClassEnrollment> findByClasses_ClassId(Long classId, Pageable pageable);
-
+    List<ClassEnrollment> findByUser_UserIdInAndUnEnrolledAtIsNull(List<Long> userIds);
     Page<ClassEnrollment> findByUser_UserId(Long userId, Pageable pageable);
     Optional<ClassEnrollment> findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(Long classId, Long userId);
     Optional<ClassEnrollment> findByUser_UserIdAndUnEnrolledAtIsNull(Long userId);

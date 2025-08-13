@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.repository;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import org.springframework.data.domain.Page;
@@ -71,5 +72,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
     """)
     Page<UserWithClassDto> searchStudentsWithClassByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
+    Page<User> findByRoleAndStatusOrderByCreatedAtDesc(RoleEnum role, UserStatusEnum status, Pageable pageable);
 
+    @Query("""
+      SELECT u FROM User u
+      WHERE u.role = :role 
+        AND u.status = :status
+        AND (
+          LOWER(u.fullName) LIKE LOWER(CONCAT('%', :kw, '%')) OR
+          LOWER(u.email)    LIKE LOWER(CONCAT('%', :kw, '%')) OR
+          LOWER(u.phone)    LIKE LOWER(CONCAT('%', :kw, '%'))
+        )
+      ORDER BY u.createdAt DESC
+    """)
+    Page<User> searchStudents(@org.springframework.data.repository.query.Param("role") RoleEnum role,
+                              @org.springframework.data.repository.query.Param("status") UserStatusEnum status,
+                              @org.springframework.data.repository.query.Param("kw") String keyword,
+                              Pageable pageable);
 }
