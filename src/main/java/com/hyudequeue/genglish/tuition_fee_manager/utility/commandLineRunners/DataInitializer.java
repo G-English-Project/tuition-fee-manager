@@ -17,8 +17,10 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initAdminUser(UserRepository userRepository) {
         return args -> {
-            String adminEmail = "admin@example.com";
-            if (!userRepository.existsByEmail(adminEmail)) {
+            boolean teacherExists = userRepository.existsByRole(RoleEnum.TEACHER);
+
+            if (!teacherExists) {
+                String adminEmail = "admin@example.com";
                 User admin = User.builder()
                         .email(adminEmail)
                         .passwordHash(new BCryptPasswordEncoder().encode("Admin@123"))
@@ -32,8 +34,9 @@ public class DataInitializer {
                 userRepository.save(admin);
                 System.out.println("Admin user created.");
             } else {
-                System.out.println("Admin user already exists.");
+                System.out.println("Teacher user already exists, skipping admin creation.");
             }
         };
     }
+
 }
