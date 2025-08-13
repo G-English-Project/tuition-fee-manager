@@ -2,9 +2,10 @@ package com.hyudequeue.genglish.tuition_fee_manager.utility.helper;
 
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class MailTemplateBuilder {
@@ -12,14 +13,18 @@ public class MailTemplateBuilder {
     public static String buildHtml(NotificationTemplateEnum template, Map<String, String> values) {
         String subject = applyValues(getSubjectTemplate(template), values);
         String body = applyValues(getBodyTemplate(template), values);
-        return wrapInHtml(subject, body);
+
+        try {
+            return wrapInHtml(subject, body);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load mail template", e);
+        }
     }
 
     private static String applyValues(String template, Map<String, String> values) {
         if (template == null || values == null || values.isEmpty()) {
             return template;
         }
-
         String result = template;
         for (Map.Entry<String, String> entry : values.entrySet()) {
             if (entry.getKey() != null && entry.getValue() != null) {
@@ -31,7 +36,7 @@ public class MailTemplateBuilder {
 
     private static String getSubjectTemplate(NotificationTemplateEnum type) {
         return switch (type) {
-            case STUDENT_PAID_INVOICE -> "Học sinh {studentName} đã thanh toán";
+            case STUDENT_PAID_INVOICE -> "THANK YOU !";
             case CLASS_INVOICE_CREATED -> "Tạo đơn học phí mới cho lớp {className}";
             case STUDENT_INVOICE_CREATED -> "Tạo hóa đơn cho học sinh {studentName}";
             case OVERDUE_INVOICE_ALERT -> "Cảnh báo: Có hóa đơn quá hạn";
@@ -80,13 +85,13 @@ public class MailTemplateBuilder {
         };
     }
 
-    private static String wrapInHtml(String subject, String body) {
-        try {
-            // Load the HTML template from resources
-            String htmlTemplate = Files.readString(Paths.get("src/main/resources/templates/mail-template.html"));
+    private static String wrapInHtml(String subject, String body) throws IOException {
+        try (InputStream inputStream = MailTemplateBuilder.class.getResourceAsStream("/MailTemplate/mail-template.html")) {
+            if (inputStream == null) {
+                throw new FileNotFoundException("mail-template.html not found in resources/MailTemplate");
+            }
+            String htmlTemplate = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             return String.format(htmlTemplate, subject, body);
-        } catch (IOException e) {
-            throw new RuntimeException("Không thể đọc file mail-template.html", e);
         }
     }
 }

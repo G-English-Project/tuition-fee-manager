@@ -5,12 +5,15 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.requ
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -33,15 +36,16 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final UserRepository userRepository;
     private final ClassRepository classRepository;
     private final NotificationService notificationService;
-
+    private final EmailServiceImpl emailService;
     private final ClassEnrollmentRepository classEnrollmentRepository;
 
-    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, UserRepository userRepository, ClassRepository classRepository, NotificationService notificationService, ClassEnrollmentRepository classEnrollmentRepository) {
+    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, UserRepository userRepository, ClassRepository classRepository, NotificationService notificationService, ClassEnrollmentRepository classEnrollmentRepository, EmailServiceImpl emailService) {
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
         this.notificationService = notificationService;
         this.classEnrollmentRepository = classEnrollmentRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -68,8 +72,33 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         invoice.setItems(invoiceItems);
         Invoice saved = invoiceRepository.save(invoice);
-        notificationService.createNotification(2L, "Test student", "Student message");
-        notificationService.createNotification(1L, "Test teacher", "Teacher message");
+        Map<String, String> values = Map.of(
+                "studentName", user.getFullName(),
+                "invoiceContent", "Học phí tháng " + month
+        );
+
+        // Notify & Email student
+        String studentSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+        );
+        String studentBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+        );
+        notificationService.createNotification(userId, studentSubject, studentBody);
+        emailService.sendNotificationEmail(user.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
+
+        // Notify & Email teacher
+        String teacherSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
+        );
+        String teacherBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
+        );
+        userRepository.findFirstByRole(RoleEnum.TEACHER)
+                .ifPresent(teacher -> {
+                    notificationService.createNotification(teacher.getUserId(), teacherSubject, teacherBody);
+                    emailService.sendNotificationEmail(teacher.getEmail(), NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values);
+                });
         return InvoiceResponseDto.toDto(saved);
     }
 
