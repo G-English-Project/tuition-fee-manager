@@ -1,5 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.request.CreatePaymentRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.response.PaymentPayOSResponse;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.response.PaymentResponseDTO;
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import vn.payos.PayOS;
 import vn.payos.type.Webhook;
+
+import java.util.Map;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.*;
 import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.PAYMENT_API;
@@ -106,23 +110,23 @@ public class PaymentController {
         return ApiResp.success(paymentService.getLatestPaymentByInvoiceId(invoiceId));
     }
 
-//    @PostMapping(path = "/confirm-webhook")
-//    public ObjectNode confirmWebhook(@RequestBody Map<String, String> requestBody) {
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        ObjectNode response = objectMapper.createObjectNode();
-//        PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
-//        try {
-//            String str = payOS.confirmWebhook("https://genglish-internal.threemusketeer.click/api/v1/payment/webhook");
-//            response.set("data", objectMapper.valueToTree(str));
-//            response.put("error", 0);
-//            response.put("message", "ok");
-//            return response;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            response.put("error", -1);
-//            response.put("message", e.getMessage());
-//            response.set("data", null);
-//            return response;
-//        }
-//    }
+    @PostMapping(path = "/confirm-webhook")
+    public ObjectNode confirmWebhook(@RequestBody Map<String, String> requestBody) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode response = objectMapper.createObjectNode();
+        PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
+        try {
+            String str = payOS.confirmWebhook("https://genglish-internal.threemusketeer.click/api/v1/payment/webhook");
+            response.set("data", objectMapper.valueToTree(str));
+            response.put("error", 0);
+            response.put("message", "ok");
+            return response;
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("error", -1);
+            response.put("message", e.getMessage());
+            response.set("data", null);
+            return response;
+        }
+    }
 }
