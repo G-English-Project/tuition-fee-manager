@@ -14,6 +14,4 @@ import java.time.LocalDate;
 public class ClassFeeModifyRequestDto {
     private Long classId;
     private Integer amount;
-    private LocalDate effectiveFrom;
-    private LocalDate effectiveTo;
 }

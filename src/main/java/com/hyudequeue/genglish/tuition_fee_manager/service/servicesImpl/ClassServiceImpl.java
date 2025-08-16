@@ -130,9 +130,25 @@ public class ClassServiceImpl implements ClassService {
         classesRepository.save(classes);
     }
     @Override
-    public ClassResponseDto ModifyClassFee(ClassFeeModifyRequestDto classFeeModify) {
-        return null;
+    public ClassResponseDto ModifyClassFee(ClassFeeModifyRequestDto req) {
+        if (req == null || req.getClassId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "classId is required");
+        }
+        if (req.getAmount() == null || req.getAmount() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "amount must be greater than 0");
+        }
+
+        Classes classes = classesRepository.findById(req.getClassId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+
+        classes.setAmount(req.getAmount());
+        classes.setUpdatedAt(LocalDateTime.now());
+
+        classesRepository.save(classes);
+
+        return ClassResponseDto.fromEntity(classes);
     }
+
 
     @Override
     public EnrollmentResponseDto AssignStudentToClass(Long classId, Long studentId) {
