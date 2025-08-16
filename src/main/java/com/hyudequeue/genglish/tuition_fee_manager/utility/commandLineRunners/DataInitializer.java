@@ -17,7 +17,7 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initAdminUser(UserRepository userRepository) {
         return args -> {
-            boolean teacherExists = userRepository.existsByRole(RoleEnum.TEACHER);
+            boolean teacherExists = userRepository.existsByRole(RoleEnum.ADMIN);
 
             if (!teacherExists) {
                 String adminEmail = "admin@example.com";
@@ -25,7 +25,7 @@ public class DataInitializer {
                         .email(adminEmail)
                         .passwordHash(new BCryptPasswordEncoder().encode("Admin@123"))
                         .fullName("System Administrator")
-                        .role(RoleEnum.TEACHER)
+                        .role(RoleEnum.ADMIN)
                         .status(UserStatusEnum.ACTIVE)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())

@@ -88,17 +88,23 @@ public class InvoiceServiceImpl implements InvoiceService {
         emailService.sendNotificationEmail(user.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
 
         // Notify & Email teacher
-        String teacherSubject = NotificationTemplateBuilder.buildSubject(
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
                 NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
         );
-        String teacherBody = NotificationTemplateBuilder.buildBody(
+        String adminBody = NotificationTemplateBuilder.buildBody(
                 NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
         );
-        userRepository.findFirstByRole(RoleEnum.TEACHER)
-                .ifPresent(teacher -> {
-                    notificationService.createNotification(teacher.getUserId(), teacherSubject, teacherBody);
-                    emailService.sendNotificationEmail(teacher.getEmail(), NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values);
-                });
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.STUDENT_INVOICE_CREATED,
+                    values
+            );
+        }
+
         return InvoiceResponseDto.toDto(saved);
     }
 
@@ -193,24 +199,23 @@ public class InvoiceServiceImpl implements InvoiceService {
             emailService.sendNotificationEmail(student.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
         });
 
-        // === Gửi thông báo + email cho giáo viên (chỉ 1 lần) ===
-        Map<String, String> teacherValues = Map.of(
+        // === Gửi thông báo + email cho admin (chỉ 1 lần) ===
+        Map<String, String> adminValues = Map.of(
                 "className", classes.getClassName()
         );
 
-        String teacherSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.CLASS_INVOICE_CREATED, teacherValues
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
         );
-        String teacherBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.CLASS_INVOICE_CREATED, teacherValues
+        String adminBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
         );
 
-        userRepository.findFirstByRole(RoleEnum.TEACHER)
-                .ifPresent(teacher -> {
-                    notificationService.createNotification(teacher.getUserId(), teacherSubject, teacherBody);
-                    emailService.sendNotificationEmail(teacher.getEmail(), NotificationTemplateEnum.CLASS_INVOICE_CREATED, teacherValues);
-                });
-
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues);
+            };
         List<InvoiceResponseDto> responseDtos = saved.stream()
                 .map(InvoiceResponseDto::toDto)
                 .toList();
@@ -286,21 +291,28 @@ public class InvoiceServiceImpl implements InvoiceService {
         );
 
 
-        String teacherSubject = NotificationTemplateBuilder.buildSubject(
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
                 NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
         );
-        String teacherBody = NotificationTemplateBuilder.buildBody(
+        String adminrBody = NotificationTemplateBuilder.buildBody(
                 NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
         );
 
-        userRepository.findFirstByRole(RoleEnum.TEACHER)
-                .ifPresent(teacher ->
-                        notificationService.createNotification(
-                                teacher.getUserId(),
-                                teacherSubject,
-                                teacherBody
-                        )
-                );
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+
+        admins.forEach(admin -> {
+            notificationService.createNotification(
+                    admin.getUserId(),
+                    adminSubject,
+                    adminrBody
+            );
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.CLASS_INVOICE_CREATED,
+                    teacherValues
+            );
+        });
+
         invoiceRepository.save(invoice);
     }
 

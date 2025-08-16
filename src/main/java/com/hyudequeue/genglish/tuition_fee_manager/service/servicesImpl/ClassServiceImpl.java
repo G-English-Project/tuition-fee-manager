@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -213,17 +214,23 @@ public class ClassServiceImpl implements ClassService {
                 NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS_STUDENT, valuesForClass
         );
         notificationService.createNotification(studentId, studentSubject, studentBody);
-        //Notify teacher
-        String teacherSubject = NotificationTemplateBuilder.buildSubject(
+        // Notify admin(s)
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
                 NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS, valuesForClass
         );
-        String teacherBody = NotificationTemplateBuilder.buildBody(
+        String adminBody = NotificationTemplateBuilder.buildBody(
                 NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS, valuesForClass
         );
-        userRepository.findFirstByRole(RoleEnum.TEACHER)
-                .ifPresent(teacher -> {
-                    notificationService.createNotification(teacher.getUserId(), teacherSubject, teacherBody);
-                });
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            notificationService.createNotification(
+                    admin.getUserId(),
+                    adminSubject,
+                    adminBody
+            );
+        }
+
         // Save the updated enrollment
         classEnrollmentRepository.save(enrollment);
     }

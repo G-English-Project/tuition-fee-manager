@@ -29,6 +29,7 @@ import vn.payos.type.Webhook;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -99,23 +100,30 @@ public class PaymentServiceImpl implements PaymentService {
             notificationService.createNotification(studentId, studentSubject, studentBody);
             emailService.sendNotificationEmail(invoice.getUser().getEmail(), NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues);
 
-            // --- Notify Teacher ---
-            User teacher = userRepository.findFirstByRole(RoleEnum.TEACHER)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Teacher not found"));
-            Map<String, String> teacherValues = Map.of(
-                    "teacherName", teacher.getFullName(),
-                    "studentName", invoice.getUser().getFullName(),
-                    "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                    "amount", String.valueOf(payment.getAmount())
-            );
-            String teacherSubject = NotificationTemplateBuilder.buildSubject(
-                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, teacherValues
-            );
-            String teacherBody = NotificationTemplateBuilder.buildBody(
-                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, teacherValues
-            );
-            notificationService.createNotification(teacher.getUserId(), teacherSubject, teacherBody);
-            emailService.sendNotificationEmail(teacher.getEmail(), NotificationTemplateEnum.STUDENT_PAID_INVOICE, teacherValues);
+            List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+            if (admins.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found");
+            }
+
+            for (User admin : admins) {
+                Map<String, String> adminValues = Map.of(
+                        "teacherName", admin.getFullName(),
+                        "studentName", invoice.getUser().getFullName(),
+                        "invoiceId", String.valueOf(invoice.getInvoiceId()),
+                        "amount", String.valueOf(payment.getAmount())
+                );
+
+                String teacherSubject = NotificationTemplateBuilder.buildSubject(
+                        NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
+                );
+                String teacherBody = NotificationTemplateBuilder.buildBody(
+                        NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
+                );
+
+                notificationService.createNotification(admin.getUserId(), teacherSubject, teacherBody);
+                emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues);
+            }
+
         }
         else {
             payment.setStatus(PaymentStatusEnum.CANCELLED);
