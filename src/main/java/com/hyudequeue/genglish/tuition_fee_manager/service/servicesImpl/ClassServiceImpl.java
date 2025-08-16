@@ -37,12 +37,14 @@ public class ClassServiceImpl implements ClassService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final ClassRepository classRepository;
-    public ClassServiceImpl(ClassEnrollmentRepository classEnrollmentRepository, ClassRepository classesRepository, UserRepository userRepository, NotificationService notificationService, ClassRepository classRepository) {
+    private final EmailServiceImpl emailService;
+    public ClassServiceImpl(ClassEnrollmentRepository classEnrollmentRepository, ClassRepository classesRepository, UserRepository userRepository, NotificationService notificationService, ClassRepository classRepository, EmailServiceImpl emailService) {
         this.classEnrollmentRepository = classEnrollmentRepository;
         this.classesRepository = classesRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.classRepository = classRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -152,11 +154,58 @@ public class ClassServiceImpl implements ClassService {
 
         classes.setAmount(req.getAmount());
         classes.setUpdatedAt(LocalDateTime.now());
-
         classesRepository.save(classes);
+
+        // === Notify & Email all students in this class ===
+        List<User> students = userRepository.findAllByEnrolledClass(classes);
+        for (User student : students) {
+            Map<String, String> studentValues = Map.of(
+                    "studentName", student.getFullName(),
+                    "className", classes.getClassName(),
+                    "newAmount", String.valueOf(req.getAmount())
+            );
+
+            String studentSubject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.STUDENT_TUITION_EDITED, studentValues
+            );
+            String studentBody = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.STUDENT_TUITION_EDITED, studentValues
+            );
+
+            notificationService.createNotification(student.getUserId(), studentSubject, studentBody);
+            emailService.sendNotificationEmail(
+                    student.getEmail(),
+                    NotificationTemplateEnum.STUDENT_TUITION_EDITED,
+                    studentValues
+            );
+        }
+
+        // === Notify & Email all admins/teachers once ===
+        Map<String, String> adminValues = Map.of(
+                "className", classes.getClassName(),
+                "newAmount", String.valueOf(req.getAmount())
+        );
+
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.CLASS_TUITION_UPDATED, adminValues
+        );
+        String adminBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.CLASS_TUITION_UPDATED, adminValues
+        );
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.CLASS_TUITION_UPDATED,
+                    adminValues
+            );
+        }
 
         return ClassResponseDto.fromEntity(classes);
     }
+
 
 
     @Override
