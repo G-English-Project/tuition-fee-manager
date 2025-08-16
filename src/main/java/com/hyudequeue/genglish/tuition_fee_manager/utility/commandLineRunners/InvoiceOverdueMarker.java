@@ -2,9 +2,11 @@ package com.hyudequeue.genglish.tuition_fee_manager.utility.commandLineRunners;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl.EmailServiceImpl;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import jakarta.transaction.Transactional;
@@ -23,6 +25,7 @@ public class InvoiceOverdueMarker {
     private final InvoiceRepository invoiceRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final EmailServiceImpl emailService; // thêm email service
 
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Bangkok")
     @Transactional
@@ -35,17 +38,28 @@ public class InvoiceOverdueMarker {
         int affected = invoiceRepository.markOverdueByIds(targetInvoiceIds);
         if (affected <= 0) return;
 
-        // 1. Notify cho TEACHER
-        userRepository.findFirstByRole(RoleEnum.TEACHER).ifPresent(teacher -> {
+        // 1. Notify & Email cho ADMIN
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+
+        if (!admins.isEmpty()) {
             Map<String, String> values = Map.of();
             String subject = NotificationTemplateBuilder.buildSubject(
                     NotificationTemplateEnum.OVERDUE_INVOICE_ALERT, values);
             String body = NotificationTemplateBuilder.buildBody(
                     NotificationTemplateEnum.OVERDUE_INVOICE_ALERT, values);
-            notificationService.createNotification(teacher.getUserId(), subject, body);
-        });
 
-        // 2. Notify từng học sinh bị ảnh hưởng
+            for (User admin : admins) {
+                notificationService.createNotification(admin.getUserId(), subject, body);
+                emailService.sendNotificationEmail(
+                        admin.getEmail(),
+                        NotificationTemplateEnum.OVERDUE_INVOICE_ALERT,
+                        values
+                );
+            }
+        }
+
+
+        // 2. Notify & Email từng học sinh bị ảnh hưởng
         Map<Long, List<String>> userToInvoiceContents =
                 invoiceRepository.mapUserToOverdueInvoiceContents(targetInvoiceIds);
 
@@ -59,8 +73,17 @@ public class InvoiceOverdueMarker {
                     NotificationTemplateEnum.STUDENT_INVOICE_OVERDUE, values);
 
             notificationService.createNotification(userId, subject, body);
+
+            userRepository.findById(userId).ifPresent(student -> {
+                emailService.sendNotificationEmail(
+                        student.getEmail(),
+                        NotificationTemplateEnum.STUDENT_INVOICE_OVERDUE,
+                        values
+                );
+            });
         });
     }
 }
+
 
 

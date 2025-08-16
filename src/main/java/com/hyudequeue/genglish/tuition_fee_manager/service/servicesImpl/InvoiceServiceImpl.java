@@ -5,11 +5,15 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.requ
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceService;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -31,13 +35,17 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final UserRepository userRepository;
     private final ClassRepository classRepository;
+    private final NotificationService notificationService;
+    private final EmailServiceImpl emailService;
     private final ClassEnrollmentRepository classEnrollmentRepository;
 
-    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, UserRepository userRepository, ClassRepository classRepository, ClassEnrollmentRepository classEnrollmentRepository) {
+    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, UserRepository userRepository, ClassRepository classRepository, NotificationService notificationService, ClassEnrollmentRepository classEnrollmentRepository, EmailServiceImpl emailService) {
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
+        this.notificationService = notificationService;
         this.classEnrollmentRepository = classEnrollmentRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -64,6 +72,39 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         invoice.setItems(invoiceItems);
         Invoice saved = invoiceRepository.save(invoice);
+        Map<String, String> values = Map.of(
+                "studentName", user.getFullName(),
+                "invoiceContent", "Học phí tháng " + month
+        );
+
+        // Notify & Email student
+        String studentSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+        );
+        String studentBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+        );
+        notificationService.createNotification(userId, studentSubject, studentBody);
+        emailService.sendNotificationEmail(user.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
+
+        // Notify & Email teacher
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
+        );
+        String adminBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
+        );
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.STUDENT_INVOICE_CREATED,
+                    values
+            );
+        }
+
         return InvoiceResponseDto.toDto(saved);
     }
 
@@ -139,7 +180,42 @@ public class InvoiceServiceImpl implements InvoiceService {
         }).toList();
 
         List<Invoice> saved = invoiceRepository.saveAll(invoices);
+// === Gửi thông báo + email cho từng học sinh ===
+        saved.forEach(invoice -> {
+            User student = invoice.getUser();
+            Map<String, String> values = Map.of(
+                    "studentName", student.getFullName(),
+                    "invoiceContent", "Học phí tháng " + invoice.getMonth()
+            );
 
+            // Notify & Email student
+            String studentSubject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+            );
+            String studentBody = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
+            );
+            notificationService.createNotification(student.getUserId(), studentSubject, studentBody);
+            emailService.sendNotificationEmail(student.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
+        });
+
+        // === Gửi thông báo + email cho admin (chỉ 1 lần) ===
+        Map<String, String> adminValues = Map.of(
+                "className", classes.getClassName()
+        );
+
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
+        );
+        String adminBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
+        );
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues);
+            };
         List<InvoiceResponseDto> responseDtos = saved.stream()
                 .map(InvoiceResponseDto::toDto)
                 .toList();
@@ -208,6 +284,35 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
         invoice.setStatus(InvoiceStatusEnum.CANCELLED);
         invoice.setUpdatedAt(LocalDateTime.now());
+        Map<String, String> teacherValues = Map.of(
+                "invoiceId", invoice.getInvoiceId().toString(),
+                "className", invoice.getClasses().getClassName(),
+                "invoiceContent", "Hóa đơn #" + invoice.getInvoiceId() + " (" + invoice.getClasses().getClassName() + ")"
+        );
+
+
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
+        );
+        String adminrBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
+        );
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+
+        admins.forEach(admin -> {
+            notificationService.createNotification(
+                    admin.getUserId(),
+                    adminSubject,
+                    adminrBody
+            );
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.CLASS_INVOICE_CREATED,
+                    teacherValues
+            );
+        });
+
         invoiceRepository.save(invoice);
     }
 

@@ -20,9 +20,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByRole(RoleEnum roleEnum);
     Optional<User> findByEmail(String email);
-    Page<User> findByRole(RoleEnum role, Pageable pageable);
-
     Optional<User> findFirstByRole(RoleEnum role);
+
+    Page<User> findByRole(RoleEnum role, Pageable pageable);
+    List<User> findByRole(RoleEnum role);
     boolean existsByEmail(String email);
     @Query("""
     SELECT u FROM User u
