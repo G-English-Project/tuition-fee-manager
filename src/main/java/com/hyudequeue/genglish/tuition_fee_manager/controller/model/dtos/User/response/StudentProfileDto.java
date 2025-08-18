@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.time.LocalDateTime;
 
@@ -22,6 +23,7 @@ public class StudentProfileDto {
     private String role;
     private String status;
     private LocalDateTime createdAt;
+    private LocalDate dateOfBirth;
 
     private List<EnrolledClassDto> enrolledClasses;
 }
