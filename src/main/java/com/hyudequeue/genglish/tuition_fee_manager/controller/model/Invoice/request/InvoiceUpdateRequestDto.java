@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class InvoiceUpdateRequestDto {
     private Long invoiceId;
     private List<InvoiceItemRequestDTO> updatedItems;
+    private List<Long> categoryIds;
 
     public Integer calculateTotalAmount() {
         if (updatedItems == null) return 0;

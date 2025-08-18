@@ -46,13 +46,39 @@ public class Invoice {
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InvoiceItem> items;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "invoice_category_map",
+            joinColumns = @JoinColumn(name = "invoice_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private List<InvoiceCategory> categories;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = true)
+    @Column
     private LocalDateTime paidAt;
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_type", nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'BANKING'")
+    @Builder.Default
+    private PaymentMethodEnum paymentType = PaymentMethodEnum.BANKING;
+    @PrePersist
+    private void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+        if (paymentType == null) {
+            paymentType = PaymentMethodEnum.BANKING;
+        }
+    }
+
+    @PreUpdate
+    private void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
