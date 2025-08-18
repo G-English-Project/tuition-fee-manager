@@ -5,9 +5,11 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.requ
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceCategoryRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceService;
@@ -24,36 +26,67 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class InvoiceServiceImpl implements InvoiceService {
+
     private final InvoiceRepository invoiceRepository;
     private final UserRepository userRepository;
     private final ClassRepository classRepository;
     private final NotificationService notificationService;
     private final EmailServiceImpl emailService;
     private final ClassEnrollmentRepository classEnrollmentRepository;
+    private final InvoiceCategoryRepository categoryRepository;
 
-    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, UserRepository userRepository, ClassRepository classRepository, NotificationService notificationService, ClassEnrollmentRepository classEnrollmentRepository, EmailServiceImpl emailService) {
+    public InvoiceServiceImpl(InvoiceRepository invoiceRepository,
+                              UserRepository userRepository,
+                              ClassRepository classRepository,
+                              NotificationService notificationService,
+                              ClassEnrollmentRepository classEnrollmentRepository,
+                              EmailServiceImpl emailService,
+                              InvoiceCategoryRepository categoryRepository) {
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
         this.notificationService = notificationService;
         this.classEnrollmentRepository = classEnrollmentRepository;
         this.emailService = emailService;
+        this.categoryRepository = categoryRepository;
     }
 
+    // =========================
+    // CREATE (single) - giữ hàm cũ để không breaking
+    // =========================
     @Override
-    public InvoiceResponseDto createInvoiceForStudent(Long userId, Long classId, Integer month, LocalDate dueDate, List<InvoiceItemRequestDTO> items) {
+    @Transactional
+    public InvoiceResponseDto createInvoiceForStudent(Long userId,
+                                                      Long classId,
+                                                      Integer month,
+                                                      LocalDate dueDate,
+                                                      List<InvoiceItemRequestDTO> items) {
+        // gọi overload mới với default: không categories, paymentType = BANKING
+        return createInvoiceForStudent(userId, classId, month, dueDate, items, Collections.emptyList(), PaymentMethodEnum.BANKING);
+    }
+
+    // Overload mới: có categoryIds & paymentType
+    @Transactional
+    public InvoiceResponseDto createInvoiceForStudent(Long userId,
+                                                      Long classId,
+                                                      Integer month,
+                                                      LocalDate dueDate,
+                                                      List<InvoiceItemRequestDTO> items,
+                                                      List<Long> categoryIds,
+                                                      PaymentMethodEnum paymentType) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         Classes classes = classRepository.findById(classId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+
+        List<InvoiceCategory> categories = (categoryIds == null || categoryIds.isEmpty())
+                ? List.of()
+                : categoryRepository.findAllById(categoryIds);
 
         Invoice invoice = Invoice.builder()
                 .user(user)
@@ -63,21 +96,25 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .status(InvoiceStatusEnum.UNPAID)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
+                .paymentType(paymentType == null ? PaymentMethodEnum.BANKING : paymentType)
                 .totalAmount(calculateTotalAmount(items))
                 .build();
 
-        List<InvoiceItem> invoiceItems = items.stream()
-                .map(itemDto -> itemDto.toEntity(invoice))
-                .collect(Collectors.toList());
+        // set categories
+        invoice.setCategories(categories);
 
+        // set items
+        List<InvoiceItem> invoiceItems = (items == null ? List.<InvoiceItem>of()
+                : items.stream().map(dto -> dto.toEntity(invoice)).toList());
         invoice.setItems(invoiceItems);
+
         Invoice saved = invoiceRepository.save(invoice);
+
+        // Notify & Email student
         Map<String, String> values = Map.of(
                 "studentName", user.getFullName(),
                 "invoiceContent", "Học phí tháng " + month
         );
-
-        // Notify & Email student
         String studentSubject = NotificationTemplateBuilder.buildSubject(
                 NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
         );
@@ -87,35 +124,31 @@ public class InvoiceServiceImpl implements InvoiceService {
         notificationService.createNotification(userId, studentSubject, studentBody);
         emailService.sendNotificationEmail(user.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
 
-        // Notify & Email teacher
+        // Notify & Email admin
         String adminSubject = NotificationTemplateBuilder.buildSubject(
                 NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
         );
         String adminBody = NotificationTemplateBuilder.buildBody(
                 NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
         );
-
         List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
         for (User admin : admins) {
             notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
-            emailService.sendNotificationEmail(
-                    admin.getEmail(),
-                    NotificationTemplateEnum.STUDENT_INVOICE_CREATED,
-                    values
-            );
+            emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values);
         }
 
         return InvoiceResponseDto.toDto(saved);
     }
 
+    // =========================
+    // CREATE (batch for class)
+    // =========================
     @Override
     @Transactional
-    public Page<InvoiceResponseDto> createInvoicesForClass(
-            Long classId,
-            Integer month,
-            LocalDate dueDate,
-            List<StudentInvoiceRequest> studentRequests
-    ) {
+    public Page<InvoiceResponseDto> createInvoicesForClass(Long classId,
+                                                           Integer month,
+                                                           LocalDate dueDate,
+                                                           List<StudentInvoiceRequest> studentRequests) {
         Classes classes = classRepository.findById(classId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
@@ -123,21 +156,19 @@ public class InvoiceServiceImpl implements InvoiceService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student fee list is empty");
         }
 
-        // month hợp lệ 1..12 (nếu có rule)
+        // Valid month
         if (month != null && (month < 1 || month > 12)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Month must be 1..12");
         }
 
-        // Map userId -> request
+        // Map by userId
         Map<Long, StudentInvoiceRequest> reqByUser = studentRequests.stream()
                 .collect(Collectors.toMap(StudentInvoiceRequest::getUserId, r -> r, (a, b) -> a));
 
         List<Long> userIds = new ArrayList<>(reqByUser.keySet());
 
-        // Lấy các enrollment active cho lớp này & tập user gửi lên
-        List<ClassEnrollment> enrollments =
-                classEnrollmentRepository.findActiveByClassAndUserIds(classId, userIds);
-
+        // Validate enrollments active in this class
+        List<ClassEnrollment> enrollments = classEnrollmentRepository.findActiveByClassAndUserIds(classId, userIds);
         Set<Long> activeUserIds = enrollments.stream()
                 .map(e -> e.getUser().getUserId())
                 .collect(Collectors.toSet());
@@ -153,12 +184,19 @@ public class InvoiceServiceImpl implements InvoiceService {
             );
         }
 
-        // Load user entities cho các id hợp lệ
         List<User> users = userRepository.findAllById(activeUserIds);
 
-        // Tạo invoices theo payload từng user
         List<Invoice> invoices = users.stream().map(user -> {
-            List<InvoiceItemRequestDTO> itemsReq = reqByUser.get(user.getUserId()).getItems();
+            StudentInvoiceRequest sreq = reqByUser.get(user.getUserId());
+            List<InvoiceItemRequestDTO> itemsReq = (sreq == null ? null : sreq.getItems());
+
+            List<Long> categoryIds = (sreq == null ? null : sreq.getCategoryIds());
+            List<InvoiceCategory> categories = (categoryIds == null || categoryIds.isEmpty())
+                    ? List.of()
+                    : categoryRepository.findAllById(categoryIds);
+
+            PaymentMethodEnum paymentType = (sreq == null ? null : sreq.getPaymentType());
+            if (paymentType == null) paymentType = PaymentMethodEnum.BANKING;
 
             Invoice invoice = Invoice.builder()
                     .user(user)
@@ -168,19 +206,22 @@ public class InvoiceServiceImpl implements InvoiceService {
                     .status(InvoiceStatusEnum.UNPAID)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
+                    .paymentType(paymentType)
                     .totalAmount(calculateTotalAmount(itemsReq))
                     .build();
 
-            List<InvoiceItem> invoiceItems = itemsReq.stream()
-                    .map(itemDto -> itemDto.toEntity(invoice))
-                    .collect(Collectors.toList());
+            invoice.setCategories(categories);
 
+            List<InvoiceItem> invoiceItems = (itemsReq == null ? List.<InvoiceItem>of()
+                    : itemsReq.stream().map(dto -> dto.toEntity(invoice)).toList());
             invoice.setItems(invoiceItems);
+
             return invoice;
         }).toList();
 
         List<Invoice> saved = invoiceRepository.saveAll(invoices);
-// === Gửi thông báo + email cho từng học sinh ===
+
+        // Notify & Email students
         saved.forEach(invoice -> {
             User student = invoice.getUser();
             Map<String, String> values = Map.of(
@@ -188,7 +229,6 @@ public class InvoiceServiceImpl implements InvoiceService {
                     "invoiceContent", "Học phí tháng " + invoice.getMonth()
             );
 
-            // Notify & Email student
             String studentSubject = NotificationTemplateBuilder.buildSubject(
                     NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
             );
@@ -199,23 +239,20 @@ public class InvoiceServiceImpl implements InvoiceService {
             emailService.sendNotificationEmail(student.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
         });
 
-        // === Gửi thông báo + email cho admin (chỉ 1 lần) ===
-        Map<String, String> adminValues = Map.of(
-                "className", classes.getClassName()
-        );
-
+        // Notify & Email admins once
+        Map<String, String> adminValues = Map.of("className", classes.getClassName());
         String adminSubject = NotificationTemplateBuilder.buildSubject(
                 NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
         );
         String adminBody = NotificationTemplateBuilder.buildBody(
                 NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
         );
-
         List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
         for (User admin : admins) {
             notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
             emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues);
-            };
+        }
+
         List<InvoiceResponseDto> responseDtos = saved.stream()
                 .map(InvoiceResponseDto::toDto)
                 .toList();
@@ -223,15 +260,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         return new PageImpl<>(responseDtos);
     }
 
-    private int calculateTotalAmount(List<InvoiceItemRequestDTO> items) {
-        return items.stream()
-                .mapToInt(i -> i.getAmount() * i.getQuantity())
-                .sum();
-    }
-
-
-
-
+    // =========================
+    // READ
+    // =========================
     @Override
     public Page<InvoiceResponseDto> getInvoicesByClass(Long classId, Pageable pageable) {
         return invoiceRepository.findByClasses_ClassIdAndStatusNot(classId, InvoiceStatusEnum.CANCELLED, pageable)
@@ -242,28 +273,6 @@ public class InvoiceServiceImpl implements InvoiceService {
     public Page<InvoiceResponseDto> getInvoicesByStudent(Long userId, Pageable pageable) {
         return invoiceRepository.findByUser_UserIdAndStatusNot(userId, InvoiceStatusEnum.CANCELLED, pageable)
                 .map(InvoiceResponseDto::toDto);
-    }
-
-    @Override
-    @Transactional
-    public InvoiceResponseDto updateInvoice(Long invoiceId, List<InvoiceItemRequestDTO> updatedItems) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
-
-        invoice.getItems().clear();
-        
-        invoiceRepository.saveAndFlush(invoice);
-
-        for (InvoiceItemRequestDTO itemDto : updatedItems) {
-            InvoiceItem newItem = itemDto.toEntity(invoice);
-            invoice.getItems().add(newItem);
-        }
-
-        invoice.setTotalAmount(calculateTotalAmount(updatedItems));
-        invoice.setUpdatedAt(LocalDateTime.now());
-
-        Invoice saved = invoiceRepository.save(invoice);
-        return InvoiceResponseDto.toDto(saved);
     }
 
     @Override
@@ -279,36 +288,71 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    public InvoiceResponseDto getInvoiceById(Long invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
+        return InvoiceResponseDto.toDto(invoice);
+    }
+
+    // =========================
+    // UPDATE
+    // =========================
+    @Override
+    @Transactional
+    public InvoiceResponseDto updateInvoice(Long invoiceId, List<InvoiceItemRequestDTO> updatedItems) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
+
+        // Replace items (orphanRemoval)
+        invoice.getItems().clear();
+        invoiceRepository.saveAndFlush(invoice);
+
+        if (updatedItems != null) {
+            for (InvoiceItemRequestDTO itemDto : updatedItems) {
+                InvoiceItem newItem = itemDto.toEntity(invoice);
+                invoice.getItems().add(newItem);
+            }
+        }
+
+        invoice.setTotalAmount(calculateTotalAmount(updatedItems));
+        invoice.setUpdatedAt(LocalDateTime.now());
+
+        Invoice saved = invoiceRepository.save(invoice);
+        return InvoiceResponseDto.toDto(saved);
+    }
+
+    // =========================
+    // DELETE (soft cancel)
+    // =========================
+    @Override
+    @Transactional
     public void deleteInvoice(Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
+
         invoice.setStatus(InvoiceStatusEnum.CANCELLED);
         invoice.setUpdatedAt(LocalDateTime.now());
+
         Map<String, String> teacherValues = Map.of(
                 "invoiceId", invoice.getInvoiceId().toString(),
                 "className", invoice.getClasses().getClassName(),
                 "invoiceContent", "Hóa đơn #" + invoice.getInvoiceId() + " (" + invoice.getClasses().getClassName() + ")"
         );
 
-
         String adminSubject = NotificationTemplateBuilder.buildSubject(
                 NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
         );
-        String adminrBody = NotificationTemplateBuilder.buildBody(
+        String adminBody = NotificationTemplateBuilder.buildBody(
                 NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
         );
 
         List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
-
         admins.forEach(admin -> {
-            notificationService.createNotification(
-                    admin.getUserId(),
-                    adminSubject,
-                    adminrBody
-            );
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            // FIX: dùng đúng template cancelled
             emailService.sendNotificationEmail(
                     admin.getEmail(),
-                    NotificationTemplateEnum.CLASS_INVOICE_CREATED,
+                    NotificationTemplateEnum.INVOICE_CANCELLED_ALERT,
                     teacherValues
             );
         });
@@ -316,21 +360,31 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceRepository.save(invoice);
     }
 
+    // =========================
+    // PROCESS STATUS
+    // =========================
     @Override
+    @Transactional
     public void processInvoiceStatus(Long invoiceId, InvoiceStatusEnum invoiceStatus) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
         invoice.setStatus(invoiceStatus);
+        if (invoiceStatus == InvoiceStatusEnum.PAID) {
+            invoice.setPaidAt(LocalDateTime.now());
+        }
         invoice.setUpdatedAt(LocalDateTime.now());
 
         invoiceRepository.save(invoice);
     }
 
-    @Override
-    public InvoiceResponseDto getInvoiceById(Long invoiceId) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
-        return InvoiceResponseDto.toDto(invoice);
+    // =========================
+    // HELPERS
+    // =========================
+    private int calculateTotalAmount(List<InvoiceItemRequestDTO> items) {
+        if (items == null || items.isEmpty()) return 0;
+        return items.stream()
+                .mapToInt(i -> i.getAmount() * i.getQuantity())
+                .sum();
     }
 }

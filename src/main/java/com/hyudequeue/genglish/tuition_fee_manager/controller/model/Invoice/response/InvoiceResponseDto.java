@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Invoice;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +27,9 @@ public class InvoiceResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime paidAt;
+    private PaymentMethodEnum paymentMethod;
+
+    private List<InvoiceCategoryResponseDTO> categories;
 
     public static InvoiceResponseDto toDto(Invoice invoice) {
         return InvoiceResponseDto.builder()
@@ -39,8 +43,13 @@ public class InvoiceResponseDto {
                 .createdAt(invoice.getCreatedAt())
                 .updatedAt(invoice.getUpdatedAt())
                 .paidAt(invoice.getPaidAt())
-                .items(invoice.getItems().stream().map(InvoiceItemResponseDTO::toDto).toList())
+                .items(invoice.getItems().stream()
+                        .map(InvoiceItemResponseDTO::toDto)
+                        .toList())
+                .paymentMethod(invoice.getPaymentType())
+                .categories(invoice.getCategories().stream()
+                        .map(InvoiceCategoryResponseDTO::toDto)
+                        .toList())
                 .build();
     }
-
 }
