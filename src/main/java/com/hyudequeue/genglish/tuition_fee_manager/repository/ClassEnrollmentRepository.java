@@ -48,7 +48,6 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
     """)
     List<ClassCountProjection> countActiveByClassIds(@Param("classIds") List<Long> classIds);
 
-    // (Tuỳ chọn) Nếu muốn lọc thêm chỉ user đang ACTIVE:
     @Query("""
         SELECT ce.classes.classId AS classId, COUNT(ce) AS cnt
         FROM ClassEnrollment ce
