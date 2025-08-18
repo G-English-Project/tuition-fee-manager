@@ -71,6 +71,7 @@ public class UserServiceImpl implements UserService {
                     .status(u.getStatus().name())
                     .createdAt(u.getCreatedAt())
                     .currentClasses(currentClasses)
+                    .dateOfBirth(u.getDateOfBirth())
                     .build();
         });
     }
@@ -161,6 +162,7 @@ public class UserServiceImpl implements UserService {
                 .status(user.getStatus().name())
                 .createdAt(user.getCreatedAt())
                 .enrolledClasses(enrolledClassDtos)
+                .dateOfBirth(user.getDateOfBirth())
                 .build();
     }
 
@@ -199,6 +201,7 @@ public class UserServiceImpl implements UserService {
                     .status(u.getStatus().name())
                     .createdAt(u.getCreatedAt())
                     .currentClasses(currentClasses)
+                    .dateOfBirth(u.getDateOfBirth())
                     .build();
         });
     }
