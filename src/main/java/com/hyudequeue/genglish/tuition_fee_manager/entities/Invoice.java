@@ -26,6 +26,9 @@ public class Invoice {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "user_name", nullable = true, length = 255)
+    private String userName;
+
     @ManyToOne
     @JoinColumn(name = "class_id", nullable = false)
     private Classes classes;
