@@ -90,6 +90,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         Invoice invoice = Invoice.builder()
                 .user(user)
+                .userName(user.getFullName())
                 .classes(classes)
                 .month(month)
                 .dueDate(dueDate)
@@ -200,6 +201,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
             Invoice invoice = Invoice.builder()
                     .user(user)
+                    .userName(user.getFullName())
                     .classes(classes)
                     .month(month)
                     .dueDate(dueDate)

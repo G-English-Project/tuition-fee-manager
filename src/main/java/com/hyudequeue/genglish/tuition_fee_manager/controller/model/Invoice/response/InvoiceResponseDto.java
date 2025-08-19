@@ -18,6 +18,7 @@ import java.util.List;
 public class InvoiceResponseDto {
     private Long invoiceId;
     private Long userId;
+    private String userName;
     private Long classesId;
     private Integer month;
     private LocalDate dueDate;
@@ -35,6 +36,7 @@ public class InvoiceResponseDto {
         return InvoiceResponseDto.builder()
                 .invoiceId(invoice.getInvoiceId())
                 .userId(invoice.getUser().getUserId())
+                .userName(invoice.getUserName() != null ? invoice.getUserName() : invoice.getUser().getFullName())
                 .classesId(invoice.getClasses().getClassId())
                 .month(invoice.getMonth())
                 .dueDate(invoice.getDueDate())
