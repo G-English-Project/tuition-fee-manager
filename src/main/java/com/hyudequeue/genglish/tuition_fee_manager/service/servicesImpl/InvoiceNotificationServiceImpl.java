@@ -110,4 +110,33 @@ public class InvoiceNotificationServiceImpl {
         }
     }
 
+
+    // Notify khi invoice bị hủy
+    public void notifyInvoiceCancelled(Invoice invoice) {
+        Map<String, String> values = Map.of(
+                "invoiceId", invoice.getInvoiceId().toString(),
+                "className", invoice.getClasses().getClassName(),
+                "invoiceContent", "Hóa đơn #" + invoice.getInvoiceId() + " (" + invoice.getClasses().getClassName() + ")"
+        );
+
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, values
+        );
+        String adminBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, values
+        );
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+
+        admins.forEach(admin -> {
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.INVOICE_CANCELLED_ALERT,
+                    values
+            );
+        });
+    }
+
+
 }

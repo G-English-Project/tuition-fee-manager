@@ -291,29 +291,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setStatus(InvoiceStatusEnum.CANCELLED);
         invoice.setUpdatedAt(LocalDateTime.now());
 
-        Map<String, String> teacherValues = Map.of(
-                "invoiceId", invoice.getInvoiceId().toString(),
-                "className", invoice.getClasses().getClassName(),
-                "invoiceContent", "Hóa đơn #" + invoice.getInvoiceId() + " (" + invoice.getClasses().getClassName() + ")"
-        );
-
-        String adminSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
-        );
-        String adminBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.INVOICE_CANCELLED_ALERT, teacherValues
-        );
-
-        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
-        admins.forEach(admin -> {
-            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
-            // FIX: dùng đúng template cancelled
-            emailService.sendNotificationEmail(
-                    admin.getEmail(),
-                    NotificationTemplateEnum.INVOICE_CANCELLED_ALERT,
-                    teacherValues
-            );
-        });
+        invoiceNotificationService.notifyInvoiceCancelled(invoice);
 
         invoiceRepository.save(invoice);
     }
