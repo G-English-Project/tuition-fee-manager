@@ -9,5 +9,5 @@ public final class ApiPathConstants {
     public static final String INVOICE_API = API + V1 + "/invoice";
     public static final String NOTIFICATION_API = API + V1 + "/notification";
     public static final String PAYMENT_API = API + V1 + "/payment";
-
+    public static final String INVOICE_CATEGORY_API = API + V1 + "/invoice-category";
 }

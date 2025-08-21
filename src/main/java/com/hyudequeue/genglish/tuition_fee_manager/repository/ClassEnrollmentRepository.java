@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.repository;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassCountProjection;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,4 +39,23 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
             "WHERE ce.user.userId = :userId AND ce.unEnrolledAt IS NULL")
     int unEnrollAllActiveByUser(@Param("userId") Long userId, @Param("ts") LocalDateTime ts);
 
+    @Query("""
+        SELECT ce.classes.classId AS classId, COUNT(ce) AS cnt
+        FROM ClassEnrollment ce
+        WHERE ce.classes.classId IN :classIds
+          AND ce.unEnrolledAt IS NULL
+        GROUP BY ce.classes.classId
+    """)
+    List<ClassCountProjection> countActiveByClassIds(@Param("classIds") List<Long> classIds);
+
+    @Query("""
+        SELECT ce.classes.classId AS classId, COUNT(ce) AS cnt
+        FROM ClassEnrollment ce
+        JOIN ce.user u
+        WHERE ce.classes.classId IN :classIds
+          AND ce.unEnrolledAt IS NULL
+          AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
+        GROUP BY ce.classes.classId
+    """)
+    List<ClassCountProjection> countActiveByClassIdsOnlyActiveUsers(@Param("classIds") List<Long> classIds);
 }
