@@ -43,7 +43,7 @@ public class UserController {
     }
 
     @Operation(summary = "Create user by role", description = "Create a new user with given role (ADMIN or STUDENT).")
-    @PostMapping("") 
+    @PostMapping("")
     public ResponseEntity<?> createUserByRole(
             @RequestParam RoleEnum role,
             @Valid @RequestBody UserCreateRequestDto body
@@ -144,5 +144,16 @@ public class UserController {
         userService.changePassword(userId, body.getOldPassword(), body.getNewPassword());
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Get users by role", description = "Paginated users filtered by role (ACTIVE).")
+    @GetMapping("")
+    public ResponseEntity<?> getUsersByRole(
+            @RequestParam RoleEnum role,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ApiResp.success(userService.getAllByRole(role, page, size));
+    }
+    
 
 }

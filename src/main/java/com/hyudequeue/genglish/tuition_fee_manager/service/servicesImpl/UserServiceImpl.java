@@ -244,9 +244,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public Page<UserResponseDto> GetAllAdmin(int page, int size) {
+    public Page<UserResponseDto> getAllByRole(RoleEnum role, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return userRepository
-                .findAllByRoleAndStatus(RoleEnum.ADMIN, UserStatusEnum.ACTIVE, PageRequest.of(page, size))
+                .findByRoleAndStatusOrderByCreatedAtDesc(role, UserStatusEnum.ACTIVE, pageable)
                 .map(UserResponseDto::toDto);
     }
 

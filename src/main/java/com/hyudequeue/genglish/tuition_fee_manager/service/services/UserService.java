@@ -15,6 +15,5 @@ public interface UserService {
     StudentProfileDto getUserProfile(Long userId);
     void changePassword(Long userId, String oldPassword, String newPassword);
     Page<UserWithClassesDto> searchStudents(String keyword, int page, int size);
-    Page<UserResponseDto> GetAllAdmin(int page, int size);
-
+    Page<UserResponseDto> getAllByRole(RoleEnum role, int page, int size);
 }
