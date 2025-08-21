@@ -13,6 +13,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.InvoiceCategoryEndpoints.*;
 import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.INVOICE_CATEGORY_API;
 
@@ -78,10 +80,7 @@ public class InvoiceCategoryController {
 
     @Operation(summary = "Get all ACTIVE categories (paged)")
     @GetMapping(GET_ALL)
-    public ResponseEntity<ApiResp<Page<InvoiceCategoryResponseDTO>>> getAll(
-            @Parameter(description = "Page index (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size
-    ) {
-        return ApiResp.success(categoryService.list(PageRequest.of(page, size)));
+    public ResponseEntity<ApiResp<List<InvoiceCategoryResponseDTO>>> getAll() {
+        return ApiResp.success(categoryService.list());
     }
 }
