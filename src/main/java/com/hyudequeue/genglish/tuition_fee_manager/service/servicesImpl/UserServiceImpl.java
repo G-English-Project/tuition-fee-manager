@@ -123,6 +123,9 @@ public class UserServiceImpl implements UserService {
         if (userDto.getPhone() != null) {
             existingUser.setPhone(userDto.getPhone());
         }
+        if (userDto.getDateOfBirth() != null){
+            existingUser.setDateOfBirth(userDto.getDateOfBirth());
+        }
 
         existingUser.setUpdatedAt(userDto.getUpdatedAt() != null ? userDto.getUpdatedAt() : LocalDateTime.now());
 
