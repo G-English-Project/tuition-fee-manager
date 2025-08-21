@@ -66,11 +66,9 @@ public class InvoiceServiceImpl implements InvoiceService {
                                                       Integer month,
                                                       LocalDate dueDate,
                                                       List<InvoiceItemRequestDTO> items) {
-        // gọi overload mới với default: không categories, paymentType = BANKING
         return createInvoiceForStudent(userId, classId, month, dueDate, items, Collections.emptyList(), PaymentMethodEnum.BANKING);
     }
 
-    // Overload mới: có categoryIds & paymentType
     @Transactional
     public InvoiceResponseDto createInvoiceForStudent(Long userId,
                                                       Long classId,
@@ -101,17 +99,14 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .totalAmount(calculateTotalAmount(items))
                 .build();
 
-        // set categories
         invoice.setCategories(categories);
 
-        // set items
         List<InvoiceItem> invoiceItems = (items == null ? List.<InvoiceItem>of()
                 : items.stream().map(dto -> dto.toEntity(invoice)).toList());
         invoice.setItems(invoiceItems);
 
         Invoice saved = invoiceRepository.save(invoice);
 
-        // Notify & Email student
         Map<String, String> values = Map.of(
                 "studentName", user.getFullName(),
                 "invoiceContent", "Học phí tháng " + month
