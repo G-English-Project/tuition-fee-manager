@@ -95,16 +95,20 @@ public class InvoiceController {
         return ApiResp.success(invoiceService.updateInvoice(invoiceId, updatedItems));
     }
 
-    @Operation(summary = "Get all invoices")
+    @Operation(summary = "Get all invoices with optional filters")
     @GetMapping(GET_ALL)
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> getAllInvoices(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) InvoiceStatusEnum status,
-            @RequestParam(required = false) Integer month
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Long categoryId
     ) {
-        return ApiResp.success(invoiceService.getAllInvoices(PageRequest.of(page, size), status, month));
+        return ApiResp.success(
+                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, categoryId)
+        );
     }
+
 
     @Operation(summary = "Get invoices by status")
     @GetMapping(GET_BY_STATUS)
