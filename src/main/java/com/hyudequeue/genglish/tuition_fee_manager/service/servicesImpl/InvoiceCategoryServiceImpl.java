@@ -66,7 +66,7 @@ public class InvoiceCategoryServiceImpl implements InvoiceCategoryService {
     public void softDelete(Long categoryId) {
         InvoiceCategory entity = repository.findById(categoryId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
-        if (entity.getStatus() == CategoryStatusEnum.INACTIVE) return; // idempotent
+        if (entity.getStatus() == CategoryStatusEnum.INACTIVE) return;
         entity.setStatus(CategoryStatusEnum.INACTIVE);
         repository.save(entity);
     }

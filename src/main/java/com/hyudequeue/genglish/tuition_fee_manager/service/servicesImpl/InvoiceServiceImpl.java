@@ -3,6 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
@@ -384,4 +385,20 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .mapToInt(i -> i.getAmount() * i.getQuantity())
                 .sum();
     }
+
+    @Override
+    public Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable) {
+        return invoiceRepository.sumRevenueGroupByMonth(pageable);
+    }
+
+    @Override
+    public Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable) {
+        return invoiceRepository.sumRevenueGroupByClass(pageable);
+    }
+
+    @Override
+    public Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable) {
+        return invoiceRepository.sumRevenueGroupByWeek(pageable);
+    }
+
 }
