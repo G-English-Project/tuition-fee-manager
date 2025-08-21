@@ -35,7 +35,7 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error",
                     content = @Content(mediaType = "application/json"))
     })
-    @GetMapping(GET_ALL_ENDPOINT)
+    @GetMapping(GET_ALL_STUDENT_ENDPOINT)
     public ResponseEntity<?> getAllStudents(
             @Parameter(description = "Page number", example = "0") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") int size) {
@@ -146,7 +146,7 @@ public class UserController {
     }
 
     @Operation(summary = "Get users by role", description = "Paginated users filtered by role (ACTIVE).")
-    @GetMapping("")
+    @GetMapping(GET_ALL_ENDPOINT)
     public ResponseEntity<?> getUsersByRole(
             @RequestParam RoleEnum role,
             @RequestParam(defaultValue = "0") int page,
