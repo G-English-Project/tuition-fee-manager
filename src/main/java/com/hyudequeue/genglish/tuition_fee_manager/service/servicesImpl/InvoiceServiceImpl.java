@@ -40,14 +40,15 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final EmailServiceImpl emailService;
     private final ClassEnrollmentRepository classEnrollmentRepository;
     private final InvoiceCategoryRepository categoryRepository;
-
+    private final InvoiceNotificationServiceImpl invoiceNotificationService;
     public InvoiceServiceImpl(InvoiceRepository invoiceRepository,
                               UserRepository userRepository,
                               ClassRepository classRepository,
                               NotificationService notificationService,
                               ClassEnrollmentRepository classEnrollmentRepository,
                               EmailServiceImpl emailService,
-                              InvoiceCategoryRepository categoryRepository) {
+                              InvoiceCategoryRepository categoryRepository,
+                              InvoiceNotificationServiceImpl invoiceNotificationService) {
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
@@ -55,6 +56,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         this.classEnrollmentRepository = classEnrollmentRepository;
         this.emailService = emailService;
         this.categoryRepository = categoryRepository;
+        this.invoiceNotificationService = invoiceNotificationService;
     }
 
     // =========================
@@ -108,31 +110,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         Invoice saved = invoiceRepository.save(invoice);
 
-        Map<String, String> values = Map.of(
-                "studentName", user.getFullName(),
-                "invoiceContent", "Học phí tháng " + month
-        );
-        String studentSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-        );
-        String studentBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-        );
-        notificationService.createNotification(userId, studentSubject, studentBody);
-        emailService.sendNotificationEmail(user.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
-
-        // Notify & Email admin
-        String adminSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
-        );
-        String adminBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
-        );
-        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
-        for (User admin : admins) {
-            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
-            emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values);
-        }
+        // Gọi hàm async để gửi mail và notif
+        invoiceNotificationService.notifyInvoiceCreated(user, month);
 
         return InvoiceResponseDto.toDto(saved);
     }
@@ -219,37 +198,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         List<Invoice> saved = invoiceRepository.saveAll(invoices);
 
-        // Notify & Email students
-        saved.forEach(invoice -> {
-            User student = invoice.getUser();
-            Map<String, String> values = Map.of(
-                    "studentName", student.getFullName(),
-                    "invoiceContent", "Học phí tháng " + invoice.getMonth()
-            );
-
-            String studentSubject = NotificationTemplateBuilder.buildSubject(
-                    NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-            );
-            String studentBody = NotificationTemplateBuilder.buildBody(
-                    NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-            );
-            notificationService.createNotification(student.getUserId(), studentSubject, studentBody);
-            emailService.sendNotificationEmail(student.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
-        });
-
-        // Notify & Email admins once
-        Map<String, String> adminValues = Map.of("className", classes.getClassName());
-        String adminSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
-        );
-        String adminBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
-        );
-        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
-        for (User admin : admins) {
-            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
-            emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues);
-        }
+        invoiceNotificationService.sendClassInvoiceNotificationsAsync(saved, classes);
 
         List<InvoiceResponseDto> responseDtos = saved.stream()
                 .map(InvoiceResponseDto::toDto)
@@ -274,9 +223,20 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public Page<InvoiceResponseDto> getAllInvoices(Pageable pageable) {
-        return invoiceRepository.findAllByStatusNot(InvoiceStatusEnum.CANCELLED, pageable)
-                .map(InvoiceResponseDto::toDto);
+    public Page<InvoiceResponseDto> getAllInvoices(Pageable pageable, InvoiceStatusEnum status, Integer month) {
+        Page<Invoice> invoices;
+
+        if (status != null && month != null) {
+            invoices = invoiceRepository.findByStatusAndMonth(status, month, pageable);
+        } else if (status != null) {
+            invoices = invoiceRepository.findByStatus(status, pageable);
+        } else if (month != null) {
+            invoices = invoiceRepository.findByMonth(month, pageable);
+        } else {
+            invoices = invoiceRepository.findAll(pageable);
+        }
+
+        return invoices.map(InvoiceResponseDto::toDto);
     }
 
     @Override
