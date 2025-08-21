@@ -41,13 +41,15 @@ public class ClassServiceImpl implements ClassService {
     private final NotificationService notificationService;
     private final ClassRepository classRepository;
     private final EmailServiceImpl emailService;
-    public ClassServiceImpl(ClassEnrollmentRepository classEnrollmentRepository, ClassRepository classesRepository, UserRepository userRepository, NotificationService notificationService, ClassRepository classRepository, EmailServiceImpl emailService) {
+    private final InvoiceNotificationServiceImpl invoiceNotificationService;
+    public ClassServiceImpl(ClassEnrollmentRepository classEnrollmentRepository, ClassRepository classesRepository, UserRepository userRepository, NotificationService notificationService, ClassRepository classRepository, EmailServiceImpl emailService, InvoiceNotificationServiceImpl invoiceNotificationService) {
         this.classEnrollmentRepository = classEnrollmentRepository;
         this.classesRepository = classesRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.classRepository = classRepository;
         this.emailService = emailService;
+        this.invoiceNotificationService = invoiceNotificationService;
     }
 
     @Override
@@ -169,54 +171,7 @@ public class ClassServiceImpl implements ClassService {
         classes.setAmount(req.getAmount());
         classes.setUpdatedAt(LocalDateTime.now());
         classesRepository.save(classes);
-
-        // === Notify & Email all students in this class ===
-        List<User> students = userRepository.findAllByEnrolledClass(classes);
-        for (User student : students) {
-            Map<String, String> studentValues = Map.of(
-                    "studentName", student.getFullName(),
-                    "className", classes.getClassName(),
-                    "newAmount", String.valueOf(req.getAmount())
-            );
-
-            String studentSubject = NotificationTemplateBuilder.buildSubject(
-                    NotificationTemplateEnum.STUDENT_TUITION_EDITED, studentValues
-            );
-            String studentBody = NotificationTemplateBuilder.buildBody(
-                    NotificationTemplateEnum.STUDENT_TUITION_EDITED, studentValues
-            );
-
-            notificationService.createNotification(student.getUserId(), studentSubject, studentBody);
-            emailService.sendNotificationEmail(
-                    student.getEmail(),
-                    NotificationTemplateEnum.STUDENT_TUITION_EDITED,
-                    studentValues
-            );
-        }
-
-        // === Notify & Email all admins/teachers once ===
-        Map<String, String> adminValues = Map.of(
-                "className", classes.getClassName(),
-                "newAmount", String.valueOf(req.getAmount())
-        );
-
-        String adminSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.CLASS_TUITION_UPDATED, adminValues
-        );
-        String adminBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.CLASS_TUITION_UPDATED, adminValues
-        );
-
-        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
-        for (User admin : admins) {
-            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
-            emailService.sendNotificationEmail(
-                    admin.getEmail(),
-                    NotificationTemplateEnum.CLASS_TUITION_UPDATED,
-                    adminValues
-            );
-        }
-
+        invoiceNotificationService.notifyClassFeeUpdated(classes, req.getAmount());
         return ClassResponseDto.fromEntity(classes);
     }
 
@@ -245,19 +200,8 @@ public class ClassServiceImpl implements ClassService {
                 .build();
 
         newEnrollment = classEnrollmentRepository.save(newEnrollment);
-        Map<String, String> valuesForClass = Map.of(
-                "studentName", user.getFullName(),
-                "className", classes.getClassName() // or however you get the class name
-        );
 
-        // Notify student
-        String studentSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.STUDENT_ADDED_TO_CLASS, valuesForClass
-        );
-        String studentBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.STUDENT_ADDED_TO_CLASS, valuesForClass
-        );
-        notificationService.createNotification(studentId, studentSubject, studentBody);
+        invoiceNotificationService.notifyStudentAssignedToClass(user, classes);
 
         return EnrollmentResponseDto.fromEntity(newEnrollment);
     }
@@ -280,35 +224,7 @@ public class ClassServiceImpl implements ClassService {
         Classes classes = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found"));
 
-        Map<String, String> valuesForClass = Map.of(
-                "studentName", user.getFullName(),
-                "className", classes.getClassName()
-        );
-
-        // Notify student
-        String studentSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS_STUDENT, valuesForClass
-        );
-        String studentBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS_STUDENT, valuesForClass
-        );
-        notificationService.createNotification(studentId, studentSubject, studentBody);
-        // Notify admin(s)
-        String adminSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS, valuesForClass
-        );
-        String adminBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS, valuesForClass
-        );
-
-        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
-        for (User admin : admins) {
-            notificationService.createNotification(
-                    admin.getUserId(),
-                    adminSubject,
-                    adminBody
-            );
-        }
+        invoiceNotificationService.notifyStudentRemovedFromClass(user, classes);
 
         // Save the updated enrollment
         classEnrollmentRepository.save(enrollment);
