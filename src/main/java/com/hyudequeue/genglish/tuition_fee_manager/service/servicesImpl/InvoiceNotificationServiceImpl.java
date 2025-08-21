@@ -3,6 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Invoice;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Payment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
@@ -137,6 +138,169 @@ public class InvoiceNotificationServiceImpl {
             );
         });
     }
+
+    @Async
+    public void notifyPaymentSuccess(Invoice invoice, Payment payment) {
+        // --- Notify Student ---
+        Long studentId = invoice.getUser().getUserId();
+        Map<String, String> studentValues = Map.of(
+                "studentName", invoice.getUser().getFullName(),
+                "invoiceId", String.valueOf(invoice.getInvoiceId()),
+                "amount", String.valueOf(payment.getAmount())
+        );
+
+        String studentSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
+        );
+        String studentBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
+        );
+
+        notificationService.createNotification(studentId, studentSubject, studentBody);
+        emailService.sendNotificationEmail(
+                invoice.getUser().getEmail(),
+                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT,
+                studentValues
+        );
+
+        // --- Notify Admin ---
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            Map<String, String> adminValues = Map.of(
+                    "teacherName", admin.getFullName(),
+                    "studentName", invoice.getUser().getFullName(),
+                    "invoiceId", String.valueOf(invoice.getInvoiceId()),
+                    "amount", String.valueOf(payment.getAmount())
+            );
+
+            String adminSubject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
+            );
+            String adminBody = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
+            );
+
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.STUDENT_PAID_INVOICE,
+                    adminValues
+            );
+        }
+    }
+
+    @Async
+    public void notifyClassFeeUpdated(Classes classes, Integer newAmount) {
+        // Notify & Email all students in this class
+        List<User> students = userRepository.findAllByEnrolledClass(classes);
+        for (User student : students) {
+            Map<String, String> studentValues = Map.of(
+                    "studentName", student.getFullName(),
+                    "className", classes.getClassName(),
+                    "newAmount", String.valueOf(newAmount)
+            );
+
+            String studentSubject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.STUDENT_TUITION_EDITED, studentValues
+            );
+            String studentBody = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.STUDENT_TUITION_EDITED, studentValues
+            );
+
+            notificationService.createNotification(student.getUserId(), studentSubject, studentBody);
+            emailService.sendNotificationEmail(
+                    student.getEmail(),
+                    NotificationTemplateEnum.STUDENT_TUITION_EDITED,
+                    studentValues
+            );
+        }
+
+        // Notify & Email all admins once
+        Map<String, String> adminValues = Map.of(
+                "className", classes.getClassName(),
+                "newAmount", String.valueOf(newAmount)
+        );
+
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.CLASS_TUITION_UPDATED, adminValues
+        );
+        String adminBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.CLASS_TUITION_UPDATED, adminValues
+        );
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.CLASS_TUITION_UPDATED,
+                    adminValues
+            );
+        }
+    }
+
+    @Async
+    public void notifyStudentAssignedToClass(User student, Classes classes) {
+        Map<String, String> values = Map.of(
+                "studentName", student.getFullName(),
+                "className", classes.getClassName()
+        );
+
+        String studentSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_ADDED_TO_CLASS, values
+        );
+        String studentBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_ADDED_TO_CLASS, values
+        );
+
+        notificationService.createNotification(student.getUserId(), studentSubject, studentBody);
+        emailService.sendNotificationEmail(
+                student.getEmail(),
+                NotificationTemplateEnum.STUDENT_ADDED_TO_CLASS,
+                values
+        );
+    }
+
+    @Async
+    public void notifyStudentRemovedFromClass(User student, Classes classes) {
+        Map<String, String> values = Map.of(
+                "studentName", student.getFullName(),
+                "className", classes.getClassName()
+        );
+
+        // Notify student
+        String studentSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS_STUDENT, values
+        );
+        String studentBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS_STUDENT, values
+        );
+        notificationService.createNotification(student.getUserId(), studentSubject, studentBody);
+        emailService.sendNotificationEmail(
+                student.getEmail(),
+                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS_STUDENT,
+                values
+        );
+
+        // Notify admins
+        String adminSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS, values
+        );
+        String adminBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS, values
+        );
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        admins.forEach(admin -> {
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.STUDENT_REMOVED_FROM_CLASS,
+                    values
+            );
+        });
+    }
+
 
 
 }

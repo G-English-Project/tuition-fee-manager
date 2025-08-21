@@ -222,22 +222,33 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .map(InvoiceResponseDto::toDto);
     }
 
-    @Override
-    public Page<InvoiceResponseDto> getAllInvoices(Pageable pageable, InvoiceStatusEnum status, Integer month) {
+    public Page<InvoiceResponseDto> getAllInvoices(Pageable pageable,
+                                                   InvoiceStatusEnum status,
+                                                   Integer month,
+                                                   Long categoryId) {
         Page<Invoice> invoices;
 
-        if (status != null && month != null) {
+        if (status != null && month != null && categoryId != null) {
+            invoices = invoiceRepository.findByStatusAndMonthAndCategoryId(status, month, categoryId, pageable);
+        } else if (status != null && month != null) {
             invoices = invoiceRepository.findByStatusAndMonth(status, month, pageable);
+        } else if (status != null && categoryId != null) {
+            invoices = invoiceRepository.findByStatusAndCategoryId(status, categoryId, pageable);
+        } else if (month != null && categoryId != null) {
+            invoices = invoiceRepository.findByMonthAndCategoryId(month, categoryId, pageable);
         } else if (status != null) {
             invoices = invoiceRepository.findByStatus(status, pageable);
         } else if (month != null) {
             invoices = invoiceRepository.findByMonth(month, pageable);
+        } else if (categoryId != null) {
+            invoices = invoiceRepository.findByCategoryId(categoryId, pageable);
         } else {
             invoices = invoiceRepository.findAll(pageable);
         }
 
         return invoices.map(InvoiceResponseDto::toDto);
     }
+
 
     @Override
     public Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus) {
