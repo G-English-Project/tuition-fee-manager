@@ -5,6 +5,8 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.CategoryStatus
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface InvoiceCategoryService {
 
     InvoiceCategoryResponseDTO create(String name, String colorHex);
@@ -13,5 +15,5 @@ public interface InvoiceCategoryService {
     void softDelete(Long categoryId);
     InvoiceCategoryResponseDTO getById(Long categoryId);
 
-    Page<InvoiceCategoryResponseDTO> list(Pageable pageable);
+    public List<InvoiceCategoryResponseDTO> list();
 }

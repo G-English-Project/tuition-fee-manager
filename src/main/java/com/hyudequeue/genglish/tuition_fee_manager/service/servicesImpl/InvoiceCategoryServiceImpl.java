@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 public class InvoiceCategoryServiceImpl implements InvoiceCategoryService {
 
@@ -77,9 +79,13 @@ public class InvoiceCategoryServiceImpl implements InvoiceCategoryService {
     }
 
     @Override
-    public Page<InvoiceCategoryResponseDTO> list(Pageable pageable) {
-        return repository.findAll(pageable).map(InvoiceCategoryResponseDTO::toDto);
+    public List<InvoiceCategoryResponseDTO> list() {
+        return repository.findAllByStatus(CategoryStatusEnum.ACTIVE)
+                .stream()
+                .map(InvoiceCategoryResponseDTO::toDto)
+                .toList();
     }
+
 
     // ===== Helpers =====
     private void validateHex(String hex) {
