@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -39,6 +40,10 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final NotificationService notificationService;
     private final EmailServiceImpl emailService;
     private final ClassEnrollmentRepository classEnrollmentRepository;
+    private final InvoiceNotificationServiceImpl invoiceNotificationService;
+
+    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, UserRepository userRepository, ClassRepository classRepository, NotificationService notificationService, ClassEnrollmentRepository classEnrollmentRepository, EmailServiceImpl emailService, InvoiceNotificationServiceImpl invoiceNotificationService) {
+
     private final InvoiceCategoryRepository categoryRepository;
 
     public InvoiceServiceImpl(InvoiceRepository invoiceRepository,
@@ -48,12 +53,14 @@ public class InvoiceServiceImpl implements InvoiceService {
                               ClassEnrollmentRepository classEnrollmentRepository,
                               EmailServiceImpl emailService,
                               InvoiceCategoryRepository categoryRepository) {
+
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
         this.notificationService = notificationService;
         this.classEnrollmentRepository = classEnrollmentRepository;
         this.emailService = emailService;
+        this.invoiceNotificationService = invoiceNotificationService;
         this.categoryRepository = categoryRepository;
     }
 
@@ -62,6 +69,9 @@ public class InvoiceServiceImpl implements InvoiceService {
     // =========================
     @Override
     @Transactional
+
+    public InvoiceResponseDto createInvoiceForStudent(Long userId, Long classId, Integer month, LocalDate dueDate, List<InvoiceItemRequestDTO> items) {
+
     public InvoiceResponseDto createInvoiceForStudent(Long userId,
                                                       Long classId,
                                                       Integer month,
@@ -78,6 +88,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                                                       List<InvoiceItemRequestDTO> items,
                                                       List<Long> categoryIds,
                                                       PaymentMethodEnum paymentType) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         Classes classes = classRepository.findById(classId)
@@ -108,31 +119,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         Invoice saved = invoiceRepository.save(invoice);
 
-        Map<String, String> values = Map.of(
-                "studentName", user.getFullName(),
-                "invoiceContent", "Học phí tháng " + month
-        );
-        String studentSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-        );
-        String studentBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-        );
-        notificationService.createNotification(userId, studentSubject, studentBody);
-        emailService.sendNotificationEmail(user.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
-
-        // Notify & Email admin
-        String adminSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
-        );
-        String adminBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values
-        );
-        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
-        for (User admin : admins) {
-            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
-            emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.STUDENT_INVOICE_CREATED, values);
-        }
+        // Gọi hàm async để gửi mail và notif
+        invoiceNotificationService.notifyInvoiceCreated(user, month);
 
         return InvoiceResponseDto.toDto(saved);
     }
@@ -218,39 +206,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         }).toList();
 
         List<Invoice> saved = invoiceRepository.saveAll(invoices);
-
-        // Notify & Email students
-        saved.forEach(invoice -> {
-            User student = invoice.getUser();
-            Map<String, String> values = Map.of(
-                    "studentName", student.getFullName(),
-                    "invoiceContent", "Học phí tháng " + invoice.getMonth()
-            );
-
-            String studentSubject = NotificationTemplateBuilder.buildSubject(
-                    NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-            );
-            String studentBody = NotificationTemplateBuilder.buildBody(
-                    NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values
-            );
-            notificationService.createNotification(student.getUserId(), studentSubject, studentBody);
-            emailService.sendNotificationEmail(student.getEmail(), NotificationTemplateEnum.NEW_INVOICE_NOTIFICATION, values);
-        });
-
-        // Notify & Email admins once
-        Map<String, String> adminValues = Map.of("className", classes.getClassName());
-        String adminSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
-        );
-        String adminBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues
-        );
-        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
-        for (User admin : admins) {
-            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
-            emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.CLASS_INVOICE_CREATED, adminValues);
-        }
-
+        invoiceNotificationService.sendClassInvoiceNotificationsAsync(saved, classes);
         List<InvoiceResponseDto> responseDtos = saved.stream()
                 .map(InvoiceResponseDto::toDto)
                 .toList();
@@ -322,6 +278,30 @@ public class InvoiceServiceImpl implements InvoiceService {
     // =========================
     // DELETE (soft cancel)
     // =========================
+    @Override
+    public Page<InvoiceResponseDto> getAllInvoices(Pageable pageable, InvoiceStatusEnum status, Integer month) {
+        Page<Invoice> invoices;
+
+        if (status != null && month != null) {
+            invoices = invoiceRepository.findByStatusAndMonth(status, month, pageable);
+        } else if (status != null) {
+            invoices = invoiceRepository.findByStatus(status, pageable);
+        } else if (month != null) {
+            invoices = invoiceRepository.findByMonth(month, pageable);
+        } else {
+            invoices = invoiceRepository.findAll(pageable);
+        }
+
+        return invoices.map(InvoiceResponseDto::toDto);
+    }
+
+
+    @Override
+    public Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus) {
+        return invoiceRepository.findByStatus(invoiceStatus, pageable)
+                .map(InvoiceResponseDto::toDto);
+    }
+
     @Override
     @Transactional
     public void deleteInvoice(Long invoiceId) {
