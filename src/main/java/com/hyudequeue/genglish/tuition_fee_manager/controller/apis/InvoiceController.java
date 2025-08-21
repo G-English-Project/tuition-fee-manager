@@ -99,11 +99,8 @@ public class InvoiceController {
     @GetMapping(GET_ALL)
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> getAllInvoices(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) InvoiceStatusEnum status,
-            @RequestParam(required = false) Integer month
-    ) {
-        return ApiResp.success(invoiceService.getAllInvoices(PageRequest.of(page, size), status, month));
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResp.success(invoiceService.getAllInvoices(PageRequest.of(page, size)));
     }
 
     @Operation(summary = "Get invoices by status")
