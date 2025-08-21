@@ -28,7 +28,7 @@ public interface InvoiceService {
 
     InvoiceResponseDto updateInvoice(Long invoiceId, List<InvoiceItemRequestDTO> updatedItems);
 
-    Page<InvoiceResponseDto> getAllInvoices(Pageable pageable);
+    Page<InvoiceResponseDto> getAllInvoices(Pageable pageable, InvoiceStatusEnum status, Integer month);
 
     Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus);
 
