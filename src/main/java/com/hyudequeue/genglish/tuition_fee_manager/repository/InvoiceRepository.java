@@ -25,7 +25,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     Page<Invoice> findByUser_UserIdAndStatusNot(Long userId, InvoiceStatusEnum status, Pageable pageable);
     Page<Invoice> findAllByStatusNot(InvoiceStatusEnum status, Pageable pageable);
     Page<Invoice> findByStatus(InvoiceStatusEnum status, Pageable pageable);
-
+    Page<Invoice> findByMonth(Integer month, Pageable pageable);
+    Page<Invoice> findByStatusAndMonth(InvoiceStatusEnum status, Integer month, Pageable pageable);
     @Modifying
     @Query("""
         UPDATE Invoice i
@@ -88,5 +89,27 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             "CONCAT(FUNCTION('YEAR', i.dueDate), '-W', FUNCTION('WEEK', i.dueDate)), SUM(i.totalAmount)) " +
             "FROM Invoice i WHERE i.status = 'PAID' GROUP BY FUNCTION('YEAR', i.dueDate), FUNCTION('WEEK', i.dueDate)")
     Page<RevenueSummaryDto> sumRevenueGroupByWeek(Pageable pageable);
+
+    @Query("SELECT DISTINCT i FROM Invoice i JOIN i.categories c WHERE c.categoryId = :categoryId")
+    Page<Invoice> findByCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);
+
+    @Query("SELECT DISTINCT i FROM Invoice i JOIN i.categories c " +
+            "WHERE i.status = :status AND c.categoryId = :categoryId")
+    Page<Invoice> findByStatusAndCategoryId(@Param("status") InvoiceStatusEnum status,
+                                            @Param("categoryId") Long categoryId,
+                                            Pageable pageable);
+
+    @Query("SELECT DISTINCT i FROM Invoice i JOIN i.categories c " +
+            "WHERE i.month = :month AND c.categoryId = :categoryId")
+    Page<Invoice> findByMonthAndCategoryId(@Param("month") Integer month,
+                                           @Param("categoryId") Long categoryId,
+                                           Pageable pageable);
+
+    @Query("SELECT DISTINCT i FROM Invoice i JOIN i.categories c " +
+            "WHERE i.status = :status AND i.month = :month AND c.categoryId = :categoryId")
+    Page<Invoice> findByStatusAndMonthAndCategoryId(@Param("status") InvoiceStatusEnum status,
+                                                    @Param("month") Integer month,
+                                                    @Param("categoryId") Long categoryId,
+                                                    Pageable pageable);
 
 }
