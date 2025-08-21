@@ -5,6 +5,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.requ
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.InvoiceEndpoints.*;
@@ -37,8 +39,18 @@ public class InvoiceController {
             @Parameter(description = "Month of invoice (1-12)") @RequestParam Integer month,
             @Parameter(description = "Due date (e.g., last day of current month)", example = "2025-08-31")
             @RequestParam LocalDate dueDate,
-            @RequestBody List<InvoiceItemRequestDTO> items) {
-        return ApiResp.success(invoiceService.createInvoiceForStudent(userId, classId, month, dueDate, items));
+            @Parameter(description = "Optional category IDs for this invoice")
+            @RequestParam(required = false) List<Long> categoryIds,
+            @Parameter(description = "Optional payment type (default=BANKING)")
+            @RequestParam(required = false) PaymentMethodEnum paymentType,
+            @RequestBody(required = false) List<InvoiceItemRequestDTO> items
+    ) {
+        List<Long> safeCategoryIds = (categoryIds == null) ? Collections.emptyList() : categoryIds;
+        return ApiResp.success(
+                invoiceService.createInvoiceForStudent(
+                        userId, classId, month, dueDate, items, safeCategoryIds, paymentType
+                )
+        );
     }
 
     @Operation(summary = "Create invoices for a class (per-student fee list)")
