@@ -10,13 +10,19 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodE
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -137,21 +143,76 @@ public class InvoiceController {
         return ApiResp.success("Invoice status updated");
     }
 
-    @Operation(summary = "Revenue summary by month")
-    @GetMapping("/summary")
-    public ResponseEntity<ApiResp<Page<RevenueSummaryDto>>> getRevenueSummaryByMonth(
-            @RequestParam(defaultValue = "month") String groupBy,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    @Validated
+    @Operation(
+            summary = "Revenue summary (groupBy = month | class | week)",
+            description = """
+        Trả về thống kê doanh thu đã thanh toán (status = PAID), nhóm theo:
+        - month: nhóm theo tháng dạng yyyy-MM (mốc thời gian ưu tiên paidAt, fallback dueDate)
+        - class: nhóm theo tên lớp (className)
+        - week : nhóm theo tuần ISO dạng yyyy-Www
 
-        if ("month".equalsIgnoreCase(groupBy)) {
-            return ApiResp.success(invoiceService.getRevenueSummaryByMonth(PageRequest.of(page, size)));
-        } else if ("class".equalsIgnoreCase(groupBy)) {
-            return ApiResp.success(invoiceService.getRevenueSummaryByClass(PageRequest.of(page, size)));
-        } else if ("week".equalsIgnoreCase(groupBy)) {
-            return ApiResp.success(invoiceService.getRevenueSummaryByWeek(PageRequest.of(page, size)));
+        Ghi chú:
+        - Chỉ tính các hóa đơn PAID để phản ánh doanh thu đã ghi nhận.
+        - Phân trang trên tập kết quả đã nhóm (không phải trên bản ghi invoice thô).
+        - Tham số page/size dùng phân trang chuẩn Spring (page bắt đầu từ 0).
+        """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK - Trả về Page<RevenueSummaryDto>"),
+            @ApiResponse(responseCode = "400", description = "Bad Request - groupBy không hợp lệ hoặc tham số không hợp lệ")
+    })
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResp<Page<RevenueSummaryDto>>> getRevenueSummary(
+            @Parameter(
+                    name = "groupBy",
+                    description = "Kiểu nhóm dữ liệu",
+                    example = "month",
+                    required = false,
+                    schema = @Schema(allowableValues = {"month", "class", "week"}, defaultValue = "month")
+            )
+            @RequestParam(defaultValue = "month") String groupBy,
+
+            @Parameter(
+                    name = "page",
+                    description = "Trang (bắt đầu từ 0)",
+                    example = "0"
+            )
+            @RequestParam(defaultValue = "0")
+            @Min(value = 0, message = "page phải >= 0")
+            int page,
+
+            @Parameter(
+                    name = "size",
+                    description = "Số phần tử mỗi trang (1–200)",
+                    example = "10"
+            )
+            @RequestParam(defaultValue = "10")
+            @Min(value = 1,  message = "size phải >= 1")
+            @Max(value = 200, message = "size tối đa 200")
+            int size
+    ) {
+        // Chuẩn hóa đầu vào: cắt trim và lower-case để so khớp dễ dàng
+        final String key = groupBy == null ? "month" : groupBy.trim().toLowerCase();
+
+        // Tạo PageRequest dùng chung
+        final PageRequest pageable = PageRequest.of(page, size);
+
+        // Điều hướng tới service phù hợp; ném 400 nếu không hợp lệ
+        switch (key) {
+            case "month":
+                return ApiResp.success(invoiceService.getRevenueSummaryByMonth(pageable));
+            case "class":
+                return ApiResp.success(invoiceService.getRevenueSummaryByClass(pageable));
+            case "week":
+                return ApiResp.success(invoiceService.getRevenueSummaryByWeek(pageable));
+            default:
+                // Nên dùng ResponseStatusException để Swagger hiển thị response 400 đẹp
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid groupBy. Use one of: month | class | week"
+                );
         }
-        throw new IllegalArgumentException("Invalid groupBy param. Use: month, class, or week");
     }
 
 }
