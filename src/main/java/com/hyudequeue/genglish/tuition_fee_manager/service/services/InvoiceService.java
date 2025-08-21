@@ -3,9 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.services;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -14,19 +12,7 @@ import java.util.List;
 
 public interface InvoiceService {
 
-    InvoiceResponseDto createInvoiceForStudent(Long userId,
-                                               Long classId,
-                                               Integer month,
-                                               LocalDate dueDate,
-                                               List<InvoiceItemRequestDTO> items);
-
-    InvoiceResponseDto createInvoiceForStudent(Long userId,
-                                               Long classId,
-                                               Integer month,
-                                               LocalDate dueDate,
-                                               List<InvoiceItemRequestDTO> items,
-                                               List<Long> categoryIds,
-                                               PaymentMethodEnum paymentType);
+    InvoiceResponseDto createInvoiceForStudent(Long userId, Long classId, Integer month, LocalDate dueDate, List<InvoiceItemRequestDTO> items);
 
     Page<InvoiceResponseDto> createInvoicesForClass(
             Long classId,
@@ -50,10 +36,4 @@ public interface InvoiceService {
 
     void processInvoiceStatus(Long invoiceId, InvoiceStatusEnum invoiceStatus);
     InvoiceResponseDto getInvoiceById(Long invoiceId);
-
-    Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable);
-
-    Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable);
-
-    Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable);
 }

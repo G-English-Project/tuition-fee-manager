@@ -5,7 +5,6 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -48,7 +47,4 @@ public class User {
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean changedDefaultPassword;
-
-    @Column(nullable = true)
-    private LocalDate dateOfBirth;
 }

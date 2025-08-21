@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -23,7 +22,6 @@ public class UserResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private boolean changedDefaultPassword;
-    private LocalDate dateOfBirth;
 
     public static UserResponseDto toDto(User user) {
         if (user == null) return null;
@@ -37,8 +35,7 @@ public class UserResponseDto {
                 user.getStatus(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
-                user.isChangedDefaultPassword(),
-                user.getDateOfBirth()
+                user.isChangedDefaultPassword()
         );
     }
 }

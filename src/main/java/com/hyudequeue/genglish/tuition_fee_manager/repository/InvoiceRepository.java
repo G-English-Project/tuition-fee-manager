@@ -1,6 +1,5 @@
 package com.hyudequeue.genglish.tuition_fee_manager.repository;
 
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Invoice;
 import org.springframework.data.domain.Page;
@@ -74,20 +73,4 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
         }
         return result;
     }
-
-    @Query("SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(" +
-            "CONCAT(FUNCTION('YEAR', i.dueDate), '-', LPAD(FUNCTION('MONTH', i.dueDate),2,'0')), SUM(i.totalAmount)) " +
-            "FROM Invoice i WHERE i.status = 'PAID' GROUP BY FUNCTION('YEAR', i.dueDate), FUNCTION('MONTH', i.dueDate)")
-    Page<RevenueSummaryDto> sumRevenueGroupByMonth(Pageable pageable);
-
-    @Query("SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(" +
-            "i.classes.className, SUM(i.totalAmount)) " +
-            "FROM Invoice i WHERE i.status = 'PAID' GROUP BY i.classes.className")
-    Page<RevenueSummaryDto> sumRevenueGroupByClass(Pageable pageable);
-
-    @Query("SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(" +
-            "CONCAT(FUNCTION('YEAR', i.dueDate), '-W', FUNCTION('WEEK', i.dueDate)), SUM(i.totalAmount)) " +
-            "FROM Invoice i WHERE i.status = 'PAID' GROUP BY FUNCTION('YEAR', i.dueDate), FUNCTION('WEEK', i.dueDate)")
-    Page<RevenueSummaryDto> sumRevenueGroupByWeek(Pageable pageable);
-
 }

@@ -3,7 +3,6 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.r
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,6 +15,5 @@ public class UserWithClassesDto {
     private String phone;
     private String status;
     private LocalDateTime createdAt;
-    private LocalDate dateOfBirth;
     private List<EnrolledClassLiteDto> currentClasses;
 }

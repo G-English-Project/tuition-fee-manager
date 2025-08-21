@@ -3,10 +3,8 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.InvoiceEndpoints.*;
@@ -40,18 +37,8 @@ public class InvoiceController {
             @Parameter(description = "Month of invoice (1-12)") @RequestParam Integer month,
             @Parameter(description = "Due date (e.g., last day of current month)", example = "2025-08-31")
             @RequestParam LocalDate dueDate,
-            @Parameter(description = "Optional category IDs for this invoice")
-            @RequestParam(required = false) List<Long> categoryIds,
-            @Parameter(description = "Optional payment type (default=BANKING)")
-            @RequestParam(required = false) PaymentMethodEnum paymentType,
-            @RequestBody(required = false) List<InvoiceItemRequestDTO> items
-    ) {
-        List<Long> safeCategoryIds = (categoryIds == null) ? Collections.emptyList() : categoryIds;
-        return ApiResp.success(
-                invoiceService.createInvoiceForStudent(
-                        userId, classId, month, dueDate, items, safeCategoryIds, paymentType
-                )
-        );
+            @RequestBody List<InvoiceItemRequestDTO> items) {
+        return ApiResp.success(invoiceService.createInvoiceForStudent(userId, classId, month, dueDate, items));
     }
 
     @Operation(summary = "Create invoices for a class (per-student fee list)")
@@ -136,22 +123,4 @@ public class InvoiceController {
         invoiceService.processInvoiceStatus(invoiceId, status);
         return ApiResp.success("Invoice status updated");
     }
-
-    @Operation(summary = "Revenue summary by month")
-    @GetMapping("/summary")
-    public ResponseEntity<ApiResp<Page<RevenueSummaryDto>>> getRevenueSummaryByMonth(
-            @RequestParam(defaultValue = "month") String groupBy,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        if ("month".equalsIgnoreCase(groupBy)) {
-            return ApiResp.success(invoiceService.getRevenueSummaryByMonth(PageRequest.of(page, size)));
-        } else if ("class".equalsIgnoreCase(groupBy)) {
-            return ApiResp.success(invoiceService.getRevenueSummaryByClass(PageRequest.of(page, size)));
-        } else if ("week".equalsIgnoreCase(groupBy)) {
-            return ApiResp.success(invoiceService.getRevenueSummaryByWeek(PageRequest.of(page, size)));
-        }
-        throw new IllegalArgumentException("Invalid groupBy param. Use: month, class, or week");
-    }
-
 }

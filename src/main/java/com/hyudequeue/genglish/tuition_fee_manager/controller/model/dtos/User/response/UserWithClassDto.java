@@ -2,7 +2,6 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.r
 
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data

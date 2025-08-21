@@ -20,7 +20,6 @@ public class InvoiceCreateRequestDTO {
     private LocalDate dueDate;
     private Integer month;
     private List<InvoiceItemRequestDTO> items;
-    private List<Long> categoryIds;
 
     public Invoice toEntity() {
         return Invoice.builder()

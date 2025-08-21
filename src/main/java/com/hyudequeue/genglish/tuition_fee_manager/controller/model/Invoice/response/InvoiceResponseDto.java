@@ -1,7 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Invoice;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +17,6 @@ import java.util.List;
 public class InvoiceResponseDto {
     private Long invoiceId;
     private Long userId;
-    private String userName;
     private Long classesId;
     private Integer month;
     private LocalDate dueDate;
@@ -28,15 +26,11 @@ public class InvoiceResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime paidAt;
-    private PaymentMethodEnum paymentMethod;
-
-    private List<InvoiceCategoryResponseDTO> categories;
 
     public static InvoiceResponseDto toDto(Invoice invoice) {
         return InvoiceResponseDto.builder()
                 .invoiceId(invoice.getInvoiceId())
                 .userId(invoice.getUser().getUserId())
-                .userName(invoice.getUserName() != null ? invoice.getUserName() : invoice.getUser().getFullName())
                 .classesId(invoice.getClasses().getClassId())
                 .month(invoice.getMonth())
                 .dueDate(invoice.getDueDate())
@@ -45,13 +39,8 @@ public class InvoiceResponseDto {
                 .createdAt(invoice.getCreatedAt())
                 .updatedAt(invoice.getUpdatedAt())
                 .paidAt(invoice.getPaidAt())
-                .items(invoice.getItems().stream()
-                        .map(InvoiceItemResponseDTO::toDto)
-                        .toList())
-                .paymentMethod(invoice.getPaymentType())
-                .categories(invoice.getCategories().stream()
-                        .map(InvoiceCategoryResponseDTO::toDto)
-                        .toList())
+                .items(invoice.getItems().stream().map(InvoiceItemResponseDTO::toDto).toList())
                 .build();
     }
+
 }

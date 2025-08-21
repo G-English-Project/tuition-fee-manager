@@ -5,7 +5,6 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.re
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentProfileDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,13 +41,20 @@ public class UserController {
         return ApiResp.success(userService.GetAllStudent(page, size));
     }
 
-    @Operation(summary = "Create user by role", description = "Create a new user with given role (ADMIN or STUDENT).")
-    @PostMapping("")
-    public ResponseEntity<?> createUserByRole(
-            @RequestParam RoleEnum role,
-            @Valid @RequestBody UserCreateRequestDto body
-    ) {
-        return ApiResp.success(userService.createUserByRole(body, role));
+    @Operation(summary = "Create new student", description = "Create a new user with student role.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Student created successfully",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping(CREATE_ENDPOINT)
+    public ResponseEntity<?> CreateStudent(
+            @Parameter(description = "User creation request body", required = true)
+            @RequestBody UserCreateRequestDto userCreate) {
+        return ApiResp.success(userService.CreateStudent(userCreate));
     }
 
     @Operation(summary = "Edit user profile", description = "Update an existing user profile by user ID.")
@@ -144,16 +150,5 @@ public class UserController {
         userService.changePassword(userId, body.getOldPassword(), body.getNewPassword());
         return ResponseEntity.noContent().build();
     }
-
-    @Operation(summary = "Get users by role", description = "Paginated users filtered by role (ACTIVE).")
-    @GetMapping("")
-    public ResponseEntity<?> getUsersByRole(
-            @RequestParam RoleEnum role,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        return ApiResp.success(userService.getAllByRole(role, page, size));
-    }
-    
 
 }

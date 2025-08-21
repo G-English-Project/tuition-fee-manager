@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,7 +18,6 @@ public class UserEditRequestDto {
     private String passwordHash;
     private String fullName;
     private LocalDateTime updatedAt;
-    private LocalDate dateOfBirth;
 
     public User toEntity(User existingUser) {
         if (existingUser == null) return null;
@@ -36,7 +34,6 @@ public class UserEditRequestDto {
                 .role(existingUser.getRole())
                 .createdAt(existingUser.getCreatedAt())
                 .updatedAt(this.updatedAt != null ? this.updatedAt : LocalDateTime.now())
-                .dateOfBirth(this.dateOfBirth)
                 .build();
     }
 }

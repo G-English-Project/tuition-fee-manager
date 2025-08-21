@@ -3,17 +3,16 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.services;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.*;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import org.springframework.data.domain.Page;
 
 public interface UserService {
     Page<UserWithClassesDto> GetAllStudent(int page, int size);
-    UserResponseDto createUserByRole(UserCreateRequestDto req, RoleEnum role);
+    StudentAccountResponseDto CreateStudent(UserCreateRequestDto user);
     UserResponseDto EditProfile(UserEditRequestDto user, Long userId);
     void DeleteStudent(Long userId);
     StudentProfileDto getUserProfile(Long userId);
     void changePassword(Long userId, String oldPassword, String newPassword);
     Page<UserWithClassesDto> searchStudents(String keyword, int page, int size);
-    Page<UserResponseDto> getAllByRole(RoleEnum role, int page, int size);
+
 }

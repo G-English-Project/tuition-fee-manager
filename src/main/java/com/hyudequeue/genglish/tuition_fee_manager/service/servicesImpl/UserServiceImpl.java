@@ -36,32 +36,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
-    public UserResponseDto createUserByRole(UserCreateRequestDto req, RoleEnum role) {
-        userRepository.findByEmail(req.getEmail()).ifPresent(u -> {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
-        });
-
-        String defaultPassword = switch (role) {
-            case ADMIN -> CommonConstants.ADMIN_DEFAULT_PASSWORD;
-            case STUDENT -> CommonConstants.STUDENT_DEFAULT_PASSWORD;
-            default -> CommonConstants.STUDENT_DEFAULT_PASSWORD;
-        };
-
-        String hashedPassword = BCrypt.withDefaults().hashToString(12, defaultPassword.toCharArray());
-
-        User entity = req.toEntityWithPassword(hashedPassword);
-        entity.setRole(role);
-        entity.setStatus(UserStatusEnum.ACTIVE);
-        entity.setChangedDefaultPassword(false);
-        if (entity.getCreatedAt() == null) entity.setCreatedAt(LocalDateTime.now());
-        entity.setUpdatedAt(LocalDateTime.now());
-
-        User saved = userRepository.save(entity);
-        return UserResponseDto.toDto(saved);
-    }
-
-    @Override
     public Page<UserWithClassesDto> GetAllStudent(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
@@ -97,9 +71,21 @@ public class UserServiceImpl implements UserService {
                     .status(u.getStatus().name())
                     .createdAt(u.getCreatedAt())
                     .currentClasses(currentClasses)
-                    .dateOfBirth(u.getDateOfBirth())
                     .build();
         });
+    }
+
+
+
+    @Override
+    public StudentAccountResponseDto CreateStudent(UserCreateRequestDto user) {
+        String randomPassword = CommonConstants.STUDENT_DEFAULT_PASSWORD;
+        String hashedPassword = BCrypt.withDefaults().hashToString(12, randomPassword.toCharArray());
+        User userSave = user.toEntityWithPassword(hashedPassword);
+        userSave.setChangedDefaultPassword(false);
+        User createdUser = userRepository.save(userSave);
+        createdUser.setPasswordHash(randomPassword);
+        return StudentAccountResponseDto.toDto(createdUser);
     }
 
     @Override
@@ -122,9 +108,6 @@ public class UserServiceImpl implements UserService {
 
         if (userDto.getPhone() != null) {
             existingUser.setPhone(userDto.getPhone());
-        }
-        if (userDto.getDateOfBirth() != null){
-            existingUser.setDateOfBirth(userDto.getDateOfBirth());
         }
 
         existingUser.setUpdatedAt(userDto.getUpdatedAt() != null ? userDto.getUpdatedAt() : LocalDateTime.now());
@@ -178,7 +161,6 @@ public class UserServiceImpl implements UserService {
                 .status(user.getStatus().name())
                 .createdAt(user.getCreatedAt())
                 .enrolledClasses(enrolledClassDtos)
-                .dateOfBirth(user.getDateOfBirth())
                 .build();
     }
 
@@ -217,7 +199,6 @@ public class UserServiceImpl implements UserService {
                     .status(u.getStatus().name())
                     .createdAt(u.getCreatedAt())
                     .currentClasses(currentClasses)
-                    .dateOfBirth(u.getDateOfBirth())
                     .build();
         });
     }
@@ -243,15 +224,6 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         user.setChangedDefaultPassword(true);
         userRepository.save(user);
-    }
-
-    @Override
-    @Transactional
-    public Page<UserResponseDto> getAllByRole(RoleEnum role, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return userRepository
-                .findByRoleAndStatusOrderByCreatedAtDesc(role, UserStatusEnum.ACTIVE, pageable)
-                .map(UserResponseDto::toDto);
     }
 
 }

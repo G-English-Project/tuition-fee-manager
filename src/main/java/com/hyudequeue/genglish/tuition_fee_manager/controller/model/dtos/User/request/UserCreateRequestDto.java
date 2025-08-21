@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
@@ -20,7 +19,6 @@ public class UserCreateRequestDto {
     private UserStatusEnum status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private LocalDate dateOfBirth;
 
     public User toEntityWithPassword(String rawPasswordHash) {
         return User.builder()
@@ -32,7 +30,6 @@ public class UserCreateRequestDto {
                 .passwordHash(rawPasswordHash)
                 .createdAt(this.createdAt != null ? this.createdAt : LocalDateTime.now())
                 .updatedAt(this.updatedAt != null ? this.updatedAt : LocalDateTime.now())
-                .dateOfBirth(this.dateOfBirth)
                 .build();
     }
 }
