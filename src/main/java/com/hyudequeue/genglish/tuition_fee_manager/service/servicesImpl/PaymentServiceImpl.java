@@ -54,12 +54,31 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentPayOSResponse createPayment(CreatePaymentRequest req) throws Exception {
         log.info(">>> [createTransaction] called");
-        PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
-        Invoice invoice = invoiceRepository.findById(req.getInvoiceId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404),"Invoice not found"));
 
-        Payment payment = paymentRepository.save(Payment.fromCreateRequest(req, invoice, payOSProperties));
-        PaymentData data = Payment.toPaymentData(payment);
+        PayOS payOS = new PayOS(
+                payOSProperties.getClientId(),
+                payOSProperties.getApiKey(),
+                payOSProperties.getChecksumKey()
+        );
+
+        Invoice invoice = invoiceRepository.findById(req.getInvoiceId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Invoice not found"));
+
+        Payment payment = paymentRepository.save(
+                Payment.fromCreateRequest(req, invoice, payOSProperties)
+        );
+
+        long nowSeconds = System.currentTimeMillis() / 1000;
+        long effectiveExpiredAt = (req.getExpiredAt() != null)
+                ? req.getExpiredAt()
+                : nowSeconds + 15 * 60; // mặc định +15 phút
+
+        if (effectiveExpiredAt <= nowSeconds) {
+            throw new ResponseStatusException(HttpStatusCode.valueOf(400),
+                    "expiredAt must be a future unix time in seconds");
+        }
+
+        PaymentData data = Payment.toPaymentData(payment, effectiveExpiredAt);
 
         CheckoutResponseData checkoutData = payOS.createPaymentLink(data);
         return PaymentPayOSResponse.builder()
@@ -67,6 +86,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .payOsResponse(checkoutData)
                 .build();
     }
+
 
     @Override
     public boolean cancelPayment(Long paymentId) throws Exception {

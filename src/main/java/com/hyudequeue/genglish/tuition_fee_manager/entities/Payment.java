@@ -71,11 +71,15 @@ public class Payment {
      * Convert CreatePaymentRequest -> Payment entity
      */
     public static Payment fromCreateRequest(CreatePaymentRequest req, Invoice invoice, PayOSProperties properties) {
+        String desc = (req.getDescription() != null && !req.getDescription().isBlank())
+                ? req.getDescription().trim()
+                : ("THANH TOAN HOA DON " + invoice.getInvoiceId());
+
         return Payment.builder()
                 .invoice(invoice)
                 .amount(invoice.getTotalAmount())
                 .currency("VND")
-                .description("THANH TOAN HOA DON " + invoice.getInvoiceId())
+                .description(desc)
                 .buyerName(req.getBuyerName())
                 .buyerEmail(req.getBuyerEmail())
                 .buyerPhone(req.getBuyerPhone())
@@ -85,21 +89,18 @@ public class Payment {
                 .createdAt(LocalDateTime.now())
                 .build();
     }
-    /**
-     * Convert Payment entity -> PayOS PaymentData
-     */
-    public static PaymentData toPaymentData(Payment payment) {
-        PaymentData.PaymentDataBuilder builder =
-                vn.payos.type.PaymentData.builder()
-                        .orderCode(payment.getPaymentId())
-                        .amount(payment.getAmount())
-                        .description(payment.getDescription())
-                        .cancelUrl(payment.getCancelUrl())
-                        .returnUrl(payment.getReturnUrl())
-                        .buyerName(payment.getBuyerName())
-                        .buyerEmail(payment.getBuyerEmail())
-                        .buyerPhone(payment.getBuyerPhone())
-                        .expiredAt(System.currentTimeMillis() / 1000 + 15 * 60);
+
+    public static PaymentData toPaymentData(Payment payment, long expiredAtSeconds) {
+        PaymentData.PaymentDataBuilder builder = vn.payos.type.PaymentData.builder()
+                .orderCode(payment.getPaymentId())
+                .amount(payment.getAmount())
+                .description(payment.getDescription())
+                .cancelUrl(payment.getCancelUrl())
+                .returnUrl(payment.getReturnUrl())
+                .buyerName(payment.getBuyerName())
+                .buyerEmail(payment.getBuyerEmail())
+                .buyerPhone(payment.getBuyerPhone())
+                .expiredAt(expiredAtSeconds);
 
         for (InvoiceItem item : payment.getInvoiceItems()) {
             builder.item(
