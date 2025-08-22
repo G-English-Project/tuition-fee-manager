@@ -41,14 +41,16 @@ public class PaymentServiceImpl implements PaymentService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final EmailServiceImpl emailService;
+    private final InvoiceNotificationServiceImpl invoiceNotificationService;
 
-    public PaymentServiceImpl(PayOSProperties payOSProperties, PaymentRepository paymentRepository, InvoiceRepository invoiceRepository, UserRepository userRepository, NotificationService notificationService, EmailServiceImpl emailService) {
+    public PaymentServiceImpl(PayOSProperties payOSProperties, PaymentRepository paymentRepository, InvoiceRepository invoiceRepository, UserRepository userRepository, NotificationService notificationService, EmailServiceImpl emailService, InvoiceNotificationServiceImpl invoiceNotificationService) {
         this.payOSProperties = payOSProperties;
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.emailService = emailService;
+        this.invoiceNotificationService = invoiceNotificationService;
     }
 
     @Override
@@ -104,46 +106,7 @@ public class PaymentServiceImpl implements PaymentService {
         if(webhook.getSuccess()){
             payment.setStatus(PaymentStatusEnum.PAID);
             invoice.setStatus(InvoiceStatusEnum.PAID);
-            // --- Notify Student ---
-            Long studentId = invoice.getUser().getUserId(); // userId của invoice
-            Map<String, String> studentValues = Map.of(
-                    "studentName", invoice.getUser().getFullName(),
-                    "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                    "amount", String.valueOf(payment.getAmount())
-            );
-            String studentSubject = NotificationTemplateBuilder.buildSubject(
-                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
-            );
-            String studentBody = NotificationTemplateBuilder.buildBody(
-                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
-            );
-            notificationService.createNotification(studentId, studentSubject, studentBody);
-            emailService.sendNotificationEmail(invoice.getUser().getEmail(), NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues);
-
-            List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
-            if (admins.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found");
-            }
-
-            for (User admin : admins) {
-                Map<String, String> adminValues = Map.of(
-                        "teacherName", admin.getFullName(),
-                        "studentName", invoice.getUser().getFullName(),
-                        "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                        "amount", String.valueOf(payment.getAmount())
-                );
-
-                String teacherSubject = NotificationTemplateBuilder.buildSubject(
-                        NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
-                );
-                String teacherBody = NotificationTemplateBuilder.buildBody(
-                        NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
-                );
-
-                notificationService.createNotification(admin.getUserId(), teacherSubject, teacherBody);
-                emailService.sendNotificationEmail(admin.getEmail(), NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues);
-            }
-
+            invoiceNotificationService.notifyPaymentSuccess(invoice, payment);
         }
         else {
             payment.setStatus(PaymentStatusEnum.CANCELLED);
