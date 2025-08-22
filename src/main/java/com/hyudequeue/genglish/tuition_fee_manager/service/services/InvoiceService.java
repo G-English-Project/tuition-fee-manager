@@ -60,4 +60,7 @@ public interface InvoiceService {
     Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable);
 
     Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable);
+
+    void manualConfirmInvoice(Long invoiceId);
+
 }

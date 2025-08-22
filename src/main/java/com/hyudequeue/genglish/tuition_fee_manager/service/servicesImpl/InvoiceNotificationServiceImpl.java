@@ -301,6 +301,55 @@ public class InvoiceNotificationServiceImpl {
         });
     }
 
+    @Async
+    public void notifyManualConfirm(Invoice invoice) {
+        // --- Notify Student ---
+        Long studentId = invoice.getUser().getUserId();
+        Map<String, String> studentValues = Map.of(
+                "studentName", invoice.getUser().getFullName(),
+                "invoiceId", String.valueOf(invoice.getInvoiceId()),
+                "amount", String.valueOf(invoice.getTotalAmount())
+        );
+
+        String studentSubject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
+        );
+        String studentBody = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
+        );
+
+        notificationService.createNotification(studentId, studentSubject, studentBody);
+        emailService.sendNotificationEmail(
+                invoice.getUser().getEmail(),
+                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT,
+                studentValues
+        );
+
+        // --- Notify Admin ---
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            Map<String, String> adminValues = Map.of(
+                    "teacherName", admin.getFullName(),
+                    "studentName", invoice.getUser().getFullName(),
+                    "invoiceId", String.valueOf(invoice.getInvoiceId()),
+                    "amount", String.valueOf(invoice.getTotalAmount())
+            );
+
+            String adminSubject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
+            );
+            String adminBody = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
+            );
+
+            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.STUDENT_PAID_INVOICE,
+                    adminValues
+            );
+        }
+    }
 
 
 }
