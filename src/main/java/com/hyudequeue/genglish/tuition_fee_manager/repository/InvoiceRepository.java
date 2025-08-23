@@ -68,7 +68,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
         for (Object[] row : rows) {
             Long userId = (Long) row[0];
             Long invoiceId = (Long) row[1];
-            // Format thành "Mã hóa đơn #id"
             String formatted = "Mã hóa đơn #" + invoiceId;
             result.computeIfAbsent(userId, k -> new ArrayList<>()).add(formatted);
         }
@@ -76,45 +75,45 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     }
 
     @Query("""
-select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%Y-%m'),
-  sum(i.totalAmount)
-)
-from Invoice i
-where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-group by function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%Y-%m')
-order by 1 desc
-""")
+        select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+          function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%Y-%m'),
+          sum(i.totalAmount)
+        )
+        from Invoice i
+        where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+        group by function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%Y-%m')
+        order by 1 desc
+        """)
     Page<RevenueSummaryDto> sumRevenueGroupByMonth(Pageable pageable);
 
     @Query("""
-select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  i.classes.className,
-  sum(i.totalAmount)
-)
-from Invoice i
-where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-group by i.classes.className
-order by 2 desc
-""")
+        select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+          i.classes.className,
+          sum(i.totalAmount)
+        )
+        from Invoice i
+        where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+        group by i.classes.className
+        order by 2 desc
+        """)
     Page<RevenueSummaryDto> sumRevenueGroupByClass(Pageable pageable);
 
     @Query("""
-select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  function('concat',
-    function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%x'),
-    '-W',
-    function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%v')
-  ),
-  sum(i.totalAmount)
-)
-from Invoice i
-where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-group by
-  function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%x'),
-  function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%v')
-order by 1 desc
-""")
+        select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+          function('concat',
+            function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%x'),
+            '-W',
+            function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%v')
+          ),
+          sum(i.totalAmount)
+        )
+        from Invoice i
+        where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+        group by
+          function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%x'),
+          function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%v')
+        order by 1 desc
+        """)
     Page<RevenueSummaryDto> sumRevenueGroupByWeek(Pageable pageable);
 
 

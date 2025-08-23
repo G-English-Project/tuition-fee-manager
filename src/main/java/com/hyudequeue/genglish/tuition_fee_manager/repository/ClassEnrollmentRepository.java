@@ -21,7 +21,6 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
     List<ClassEnrollment> findByUser_UserIdInAndUnEnrolledAtIsNull(List<Long> userIds);
     Page<ClassEnrollment> findByUser_UserId(Long userId, Pageable pageable);
     Optional<ClassEnrollment> findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(Long classId, Long userId);
-    Optional<ClassEnrollment> findByUser_UserIdAndUnEnrolledAtIsNull(Long userId);
     List<ClassEnrollment> findByUserUserId(Long userId);
 
     @Query("SELECT ce FROM ClassEnrollment ce " +
@@ -30,9 +29,6 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
             "AND ce.unEnrolledAt IS NULL")
     List<ClassEnrollment> findActiveByClassAndUserIds(@Param("classId") Long classId,
                                                       @Param("userIds") List<Long> userIds);
-    boolean existsByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(Long classId, Long userId);
-    List<ClassEnrollment> findByClasses_ClassIdAndUnEnrolledAtIsNull(Long classId);
-
     @Modifying
     @Query("UPDATE ClassEnrollment ce " +
             "SET ce.unEnrolledAt = :ts " +
@@ -48,14 +44,4 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
     """)
     List<ClassCountProjection> countActiveByClassIds(@Param("classIds") List<Long> classIds);
 
-    @Query("""
-        SELECT ce.classes.classId AS classId, COUNT(ce) AS cnt
-        FROM ClassEnrollment ce
-        JOIN ce.user u
-        WHERE ce.classes.classId IN :classIds
-          AND ce.unEnrolledAt IS NULL
-          AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
-        GROUP BY ce.classes.classId
-    """)
-    List<ClassCountProjection> countActiveByClassIdsOnlyActiveUsers(@Param("classIds") List<Long> classIds);
 }
