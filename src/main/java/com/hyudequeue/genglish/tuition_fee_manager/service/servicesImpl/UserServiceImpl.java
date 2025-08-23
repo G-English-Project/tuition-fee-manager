@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -42,11 +43,16 @@ public class UserServiceImpl implements UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
         });
 
-        String defaultPassword = switch (role) {
-            case ADMIN -> CommonConstants.ADMIN_DEFAULT_PASSWORD;
-            case STUDENT -> CommonConstants.STUDENT_DEFAULT_PASSWORD;
-            default -> CommonConstants.STUDENT_DEFAULT_PASSWORD;
-        };
+        String defaultPassword;
+        if (role == RoleEnum.STUDENT && req.getDateOfBirth() != null) {
+            defaultPassword = req.getDateOfBirth().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+        } else {
+            defaultPassword = switch (role) {
+                case ADMIN -> CommonConstants.ADMIN_DEFAULT_PASSWORD;
+                case STUDENT -> CommonConstants.STUDENT_DEFAULT_PASSWORD;
+                default -> CommonConstants.STUDENT_DEFAULT_PASSWORD;
+            };
+        }
 
         String hashedPassword = BCrypt.withDefaults().hashToString(12, defaultPassword.toCharArray());
 
@@ -60,6 +66,7 @@ public class UserServiceImpl implements UserService {
         User saved = userRepository.save(entity);
         return UserResponseDto.toDto(saved);
     }
+
 
     @Override
     public Page<UserWithClassesDto> GetAllStudent(int page, int size) {
