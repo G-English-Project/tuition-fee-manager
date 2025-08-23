@@ -75,20 +75,48 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
         return result;
     }
 
-    @Query("SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(" +
-            "CONCAT(FUNCTION('YEAR', i.dueDate), '-', LPAD(FUNCTION('MONTH', i.dueDate),2,'0')), SUM(i.totalAmount)) " +
-            "FROM Invoice i WHERE i.status = 'PAID' GROUP BY FUNCTION('YEAR', i.dueDate), FUNCTION('MONTH', i.dueDate)")
+    @Query("""
+select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+  function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%Y-%m'),
+  sum(i.totalAmount)
+)
+from Invoice i
+where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+group by function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%Y-%m')
+order by 1 desc
+""")
     Page<RevenueSummaryDto> sumRevenueGroupByMonth(Pageable pageable);
 
-    @Query("SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(" +
-            "i.classes.className, SUM(i.totalAmount)) " +
-            "FROM Invoice i WHERE i.status = 'PAID' GROUP BY i.classes.className")
+    @Query("""
+select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+  i.classes.className,
+  sum(i.totalAmount)
+)
+from Invoice i
+where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+group by i.classes.className
+order by 2 desc
+""")
     Page<RevenueSummaryDto> sumRevenueGroupByClass(Pageable pageable);
 
-    @Query("SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(" +
-            "CONCAT(FUNCTION('YEAR', i.dueDate), '-W', FUNCTION('WEEK', i.dueDate)), SUM(i.totalAmount)) " +
-            "FROM Invoice i WHERE i.status = 'PAID' GROUP BY FUNCTION('YEAR', i.dueDate), FUNCTION('WEEK', i.dueDate)")
+    @Query("""
+select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+  function('concat',
+    function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%x'),
+    '-W',
+    function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%v')
+  ),
+  sum(i.totalAmount)
+)
+from Invoice i
+where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+group by
+  function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%x'),
+  function('date_format', coalesce(function('date', i.paidAt), i.dueDate), '%v')
+order by 1 desc
+""")
     Page<RevenueSummaryDto> sumRevenueGroupByWeek(Pageable pageable);
+
 
     @Query("SELECT DISTINCT i FROM Invoice i JOIN i.categories c WHERE c.categoryId = :categoryId")
     Page<Invoice> findByCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);
