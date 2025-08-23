@@ -71,14 +71,15 @@ public class PaymentServiceImpl implements PaymentService {
         );
 
         long nowSeconds = System.currentTimeMillis() / 1000;
-        long effectiveExpiredAt = (req.getExpiredAt() != null)
-                ? req.getExpiredAt()
-                : nowSeconds + 15 * 60; // mặc định +15 phút
 
-        if (effectiveExpiredAt <= nowSeconds) {
+        long ttlSeconds = (req.getExpiredAt() != null) ? req.getExpiredAt() : 15 * 60;
+
+        if (ttlSeconds <= 0) {
             throw new ResponseStatusException(HttpStatusCode.valueOf(400),
-                    "expiredAt must be a future unix time in seconds");
+                    "expiredAt (seconds) must be a positive number");
         }
+
+        long effectiveExpiredAt = nowSeconds + ttlSeconds;
 
         PaymentData data = Payment.toPaymentData(payment, effectiveExpiredAt);
 
@@ -88,6 +89,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .payOsResponse(checkoutData)
                 .build();
     }
+
 
 
     @Override

@@ -350,4 +350,18 @@ public class InvoiceServiceImpl implements InvoiceService {
         return invoiceRepository.sumRevenueGroupByWeek(pageable);
     }
 
+    @Override
+    public void manualConfirmInvoice(Long invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Invoice not found"));
+
+        // Cập nhật trạng thái và phương thức
+        invoice.setStatus(InvoiceStatusEnum.PAID);
+        invoice.setPaymentType(PaymentMethodEnum.MANUAL);
+        invoice.setPaidAt(LocalDateTime.now()); // nếu bạn có field paidAt
+        invoiceRepository.save(invoice);
+        invoiceNotificationService.notifyManualConfirm(invoice);
+    }
+
 }

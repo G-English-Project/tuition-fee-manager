@@ -219,4 +219,14 @@ public class InvoiceController {
         }
     }
 
+    @Operation(summary = "Manual confirm invoice (cash payment)")
+    @PutMapping("/manual-confirm")
+    public ResponseEntity<ApiResp<String>> manualConfirmInvoice(
+            @RequestParam Long invoiceId
+    ) {
+        invoiceService.manualConfirmInvoice(invoiceId);
+        return ApiResp.success("Invoice confirmed as PAID (CASH)");
+    }
+
+
 }

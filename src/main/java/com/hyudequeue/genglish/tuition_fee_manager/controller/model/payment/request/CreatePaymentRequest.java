@@ -30,6 +30,6 @@ public class CreatePaymentRequest {
     @Size(max = 24, message = "Description must not exceed 24 characters")
     private String description;
 
-    @Positive(message = "expiredAt must be a positive unix timestamp in seconds")
+    @Positive(message = "expiredAt (seconds) must be a positive number")
     private Long expiredAt;
 }
