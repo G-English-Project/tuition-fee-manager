@@ -147,7 +147,6 @@ public class InvoiceController {
         return ApiResp.success("Invoice status updated");
     }
 
-    @Validated
     @Operation(
             summary = "Revenue summary (groupBy = month | class | week)",
             description = """
