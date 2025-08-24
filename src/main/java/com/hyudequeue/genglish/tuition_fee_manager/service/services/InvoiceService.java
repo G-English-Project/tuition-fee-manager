@@ -7,6 +7,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.resp
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
@@ -64,4 +65,5 @@ public interface InvoiceService {
 
     void manualConfirmInvoice(Long invoiceId);
 
+    Page<RevenueSummaryDto> getRevenueSummaryByYear(PageRequest pageable);
 }
