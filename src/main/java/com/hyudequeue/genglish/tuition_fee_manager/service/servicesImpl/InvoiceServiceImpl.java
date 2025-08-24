@@ -22,6 +22,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -366,6 +367,11 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    public Page<RevenueSummaryDto> getRevenueSummaryByYear(PageRequest pageable) {
+        return invoiceRepository.sumRevenueGroupByYear(pageable);
+    }
+
+    @Override
     public void manualConfirmInvoice(Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -378,5 +384,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceRepository.save(invoice);
         invoiceNotificationService.notifyManualConfirm(invoice);
     }
+
+
 
 }

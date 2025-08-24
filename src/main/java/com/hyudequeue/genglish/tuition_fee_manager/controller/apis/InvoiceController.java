@@ -150,18 +150,19 @@ public class InvoiceController {
     }
 
     @Operation(
-            summary = "Revenue summary (groupBy = month | class | week)",
+            summary = "Revenue summary (groupBy = month | class | week | year)",
             description = """
-            Trả về thống kê doanh thu đã thanh toán (status = PAID), nhóm theo:
-            - month: nhóm theo yyyy-MM (mốc thời gian ưu tiên paidAt, fallback dueDate)
-            - class: nhóm theo tên lớp (className)
-            - week : tuần ISO yyyy-Www
+        Trả về thống kê doanh thu đã thanh toán (status = PAID), nhóm theo:
+        - month: nhóm theo yyyy-MM (mốc thời gian ưu tiên paidAt, fallback dueDate)
+        - class: nhóm theo tên lớp (className)
+        - week : tuần ISO yyyy-Www
+        - year : nhóm theo năm yyyy
 
-            Ghi chú:
-            - Chỉ tính hoá đơn PAID.
-            - Phân trang trên tập kết quả đã nhóm.
-            - page bắt đầu từ 0.
-        """
+        Ghi chú:
+        - Chỉ tính hoá đơn PAID.
+        - Phân trang trên tập kết quả đã nhóm.
+        - page bắt đầu từ 0.
+    """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK - Trả về Page<RevenueSummaryDto>"),
@@ -172,7 +173,10 @@ public class InvoiceController {
             @Parameter(
                     name = "groupBy",
                     description = "Kiểu nhóm dữ liệu",
-                    schema = @Schema(allowableValues = {"month","class","week"}, defaultValue = "month")
+                    schema = @Schema(
+                            allowableValues = {"month","class","week","year"},
+                            defaultValue = "month"
+                    )
             )
             @RequestParam(defaultValue = "month") String groupBy,
 
@@ -202,12 +206,14 @@ public class InvoiceController {
             case "month" -> ApiResp.success(invoiceService.getRevenueSummaryByMonth(pageable));
             case "class" -> ApiResp.success(invoiceService.getRevenueSummaryByClass(pageable));
             case "week"  -> ApiResp.success(invoiceService.getRevenueSummaryByWeek(pageable));
+            case "year"  -> ApiResp.success(invoiceService.getRevenueSummaryByYear(pageable));
             default -> throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Invalid groupBy. Use one of: month | class | week"
+                    "Invalid groupBy. Use one of: month | class | week | year"
             );
         };
     }
+
 
     @Operation(summary = "Manual confirm invoice (cash payment)")
     @PutMapping("/manual-confirm")

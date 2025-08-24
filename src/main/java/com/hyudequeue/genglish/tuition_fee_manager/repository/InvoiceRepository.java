@@ -137,5 +137,17 @@ order by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as times
                                                     @Param("month") Integer month,
                                                     @Param("categoryId") Long categoryId,
                                                     Pageable pageable);
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+        CAST(FUNCTION('YEAR', i.paidAt) AS string),
+        SUM(CAST(i.totalAmount AS big_decimal))
+    )
+    FROM Invoice i
+    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+    GROUP BY FUNCTION('YEAR', i.paidAt)
+    ORDER BY FUNCTION('YEAR', i.paidAt)
+""")
+    Page<RevenueSummaryDto> sumRevenueGroupByYear(Pageable pageable);
+
 
 }
