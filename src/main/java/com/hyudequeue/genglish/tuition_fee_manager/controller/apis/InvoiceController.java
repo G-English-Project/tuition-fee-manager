@@ -108,12 +108,14 @@ public class InvoiceController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) InvoiceStatusEnum status,
             @RequestParam(required = false) Integer month,
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) List<Long> categoryIds
     ) {
         return ApiResp.success(
-                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, categoryId)
+                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, categoryIds)
         );
     }
+
 
 
     @Operation(summary = "Get invoices by status")

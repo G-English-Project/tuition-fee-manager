@@ -17,10 +17,13 @@ import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceServi
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -222,32 +225,44 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .map(InvoiceResponseDto::toDto);
     }
 
-    public Page<InvoiceResponseDto> getAllInvoices(Pageable pageable,
-                                                   InvoiceStatusEnum status,
-                                                   Integer month,
-                                                   Long categoryId) {
-        Page<Invoice> invoices;
+    @Override
+    public Page<InvoiceResponseDto> getAllInvoices(
+            Pageable pageable,
+            InvoiceStatusEnum status,
+            Integer month,
+            Integer year,
+            List<Long> categoryIds
+    ) {
+        Specification<Invoice> spec = Specification.where(null);
 
-        if (status != null && month != null && categoryId != null) {
-            invoices = invoiceRepository.findByStatusAndMonthAndCategoryId(status, month, categoryId, pageable);
-        } else if (status != null && month != null) {
-            invoices = invoiceRepository.findByStatusAndMonth(status, month, pageable);
-        } else if (status != null && categoryId != null) {
-            invoices = invoiceRepository.findByStatusAndCategoryId(status, categoryId, pageable);
-        } else if (month != null && categoryId != null) {
-            invoices = invoiceRepository.findByMonthAndCategoryId(month, categoryId, pageable);
-        } else if (status != null) {
-            invoices = invoiceRepository.findByStatus(status, pageable);
-        } else if (month != null) {
-            invoices = invoiceRepository.findByMonth(month, pageable);
-        } else if (categoryId != null) {
-            invoices = invoiceRepository.findByCategoryId(categoryId, pageable);
-        } else {
-            invoices = invoiceRepository.findAll(pageable);
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
+
+        if (month != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.function("MONTH", Integer.class, root.get("createdAt")), month)
+            );
+        }
+
+        if (year != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.function("YEAR", Integer.class, root.get("createdAt")), year)
+            );
+        }
+
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            spec = spec.and((root, query, cb) -> {
+                Join<Object, Object> categoryJoin = root.join("categories", JoinType.INNER);
+                return categoryJoin.get("categoryId").in(categoryIds);
+            });
+        }
+
+        Page<Invoice> invoices = invoiceRepository.findAll(spec, pageable);
 
         return invoices.map(InvoiceResponseDto::toDto);
     }
+
 
 
     @Override
