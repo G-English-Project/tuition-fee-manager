@@ -138,16 +138,19 @@ order by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as times
                                                     @Param("categoryId") Long categoryId,
                                                     Pageable pageable);
     @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CAST(FUNCTION('YEAR', i.paidAt) AS string),
-        SUM(CAST(i.totalAmount AS big_decimal))
-    )
-    FROM Invoice i
-    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-    GROUP BY FUNCTION('YEAR', i.paidAt)
-    ORDER BY FUNCTION('YEAR', i.paidAt)
+select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+  cast(function('year', coalesce(i.paidAt, i.dueDate)) as string),
+  sum(cast(i.totalAmount as big_decimal))
+)
+from Invoice i
+where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+group by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
+order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 """)
     Page<RevenueSummaryDto> sumRevenueGroupByYear(Pageable pageable);
+
+
+
 
 
 }
