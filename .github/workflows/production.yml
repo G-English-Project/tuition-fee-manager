@@ -56,7 +56,7 @@ jobs:
             run: |
               ssh ${{ secrets.SSH_USER_PRODUCTION }}@${{ secrets.SSH_HOST_PRODUCTION }} << EOF
                 set -e
-                cd /home/tuitionfee
+                cd /home/${{ secrets.SSH_USER_PRODUCTION }}/tuitionfee
                 echo "${{ secrets.SSH_PASS_PRODUCTION }}" | sudo -S docker compose pull ${{ secrets.DOCKERHUB_REPOSITORY }}
                 echo "${{ secrets.SSH_PASS_PRODUCTION }}" | sudo -S docker compose up -d
               EOF
