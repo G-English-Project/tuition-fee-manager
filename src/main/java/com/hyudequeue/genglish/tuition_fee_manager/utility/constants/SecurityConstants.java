@@ -22,7 +22,16 @@ public class SecurityConstants {
             "/api/v1/login/non-type",
             "/api/auth/**",
             "/api/auth/*",
-            "/api/user/v1/**"
+            "/api/user/v1/**",
+            "/v2/api-docs/**",
+            "/v3/api-docs",
+            "/v3/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/swagger-resources",
+            "/swagger-resources/**",
+            "/swagger-ui/index.html#/**",
+            "/swagger-ui/index.html/**"
     };
     public static final String ACCESS_DENIED_PAGE = "/access-denied";
     public static final String TEACHER_URL_PREFIX = "/teacher/**";
