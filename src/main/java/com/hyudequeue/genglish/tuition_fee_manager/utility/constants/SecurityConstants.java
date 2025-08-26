@@ -5,7 +5,9 @@ public class SecurityConstants {
             "http://localhost:2707",
             "https://genglish.threemusketeer.click",
             "https://genglish-internal.threemusketeer.click",
-            "http://localhost:1600"
+            "http://localhost:1600",
+            "https://portal-internal.gsenglish.org",
+            "https://portal.gsenglish.org",
     };
     public static final long CORS_MAX_AGE = 3600;
 

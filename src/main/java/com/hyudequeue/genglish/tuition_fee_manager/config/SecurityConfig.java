@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.config;
 
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.AllowedEndpoint;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.SecurityConstants;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.exception.CustomAccessDeniedHandler;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.jwt.CustomAuthenticationProvider;
@@ -25,19 +26,27 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig {
+
     private final JwtConfig jwtConfig;
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final CustomAuthenticationProvider customAuthenticationProvider;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtConfig jwtConfig, JwtService jwtService, UserRepository userRepository, CustomAuthenticationProvider customAuthenticationProvider, CorsConfigurationSource corsConfigurationSource) {
+    public SecurityConfig(
+            JwtConfig jwtConfig,
+            JwtService jwtService,
+            UserRepository userRepository,
+            CustomAuthenticationProvider customAuthenticationProvider,
+            CorsConfigurationSource corsConfigurationSource
+    ) {
         this.jwtConfig = jwtConfig;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.customAuthenticationProvider = customAuthenticationProvider;
         this.corsConfigurationSource = corsConfigurationSource;
     }
+
     @Bean
     public AuthenticationManager authManager(HttpSecurity http) throws Exception {
         AuthenticationManagerBuilder authBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
@@ -51,10 +60,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
-                        .requestMatchers(SecurityConstants.TEACHER_URL_PREFIX).hasAuthority(SecurityConstants.ROLE_TEACHER)
-                        .requestMatchers(SecurityConstants.STUDENT_URL_PREFIX).hasAuthority(SecurityConstants.ROLE_STUDENT)
-                        .anyRequest().permitAll()
+                        .requestMatchers(AllowedEndpoint.GENERAL).permitAll()
+                        .requestMatchers(AllowedEndpoint.STUDENT).hasAnyAuthority("STUDENT","ADMIN")
+                        .anyRequest().hasAuthority("ADMIN") // mọi thứ còn lại ADMIN
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .exceptionHandling(ex -> ex
@@ -83,4 +91,3 @@ public class SecurityConfig {
         return http.build();
     }
 }
-
