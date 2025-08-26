@@ -57,6 +57,6 @@ jobs:
               ssh ${{ secrets.SSH_USER_PRODUCTION }}@${{ secrets.SSH_HOST_PRODUCTION }} << EOF
                 set -e
                 cd /${{ secrets.SSH_USER_PRODUCTION }}/tuitionfee
-                echo "${{ secrets.SSH_PASS_PRODUCTION }}" | sudo -S docker compose pull ${{ secrets.DOCKERHUB_REPOSITORY }}
+                echo "${{ secrets.SSH_PASS_PRODUCTION }}" | sudo -S docker compose pull ${{ secrets.DOCKER_SERVICE_PRODUCTION }}
                 echo "${{ secrets.SSH_PASS_PRODUCTION }}" | sudo -S docker compose up -d
               EOF
