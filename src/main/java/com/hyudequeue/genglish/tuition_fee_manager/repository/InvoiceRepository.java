@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -150,6 +151,13 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
     Page<RevenueSummaryDto> sumRevenueGroupByYear(Pageable pageable);
 
 
+    @Query("""
+    SELECT COALESCE(SUM(i.totalAmount),0)
+    FROM Invoice i
+    WHERE i.status = 'PAID'
+      AND (COALESCE(i.paidAt, i.dueDate) BETWEEN :fromDate AND :toDate)
+""")
+    Integer sumRevenueByDateRange(LocalDateTime fromDate, LocalDateTime toDate);
 
 
 

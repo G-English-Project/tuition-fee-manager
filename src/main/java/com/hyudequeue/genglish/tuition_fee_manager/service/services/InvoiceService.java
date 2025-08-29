@@ -47,7 +47,8 @@ public interface InvoiceService {
                                             InvoiceStatusEnum status,
                                             Integer month,
                                             Integer year,
-                                            List<Long> categoryIds);
+                                            List<Long> categoryIds,
+                                            String username);
 
 
     Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus);
@@ -62,6 +63,8 @@ public interface InvoiceService {
     Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable);
 
     Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable);
+
+    Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable);
 
     void manualConfirmInvoice(Long invoiceId);
 

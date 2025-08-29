@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -109,10 +110,11 @@ public class InvoiceController {
             @RequestParam(required = false) InvoiceStatusEnum status,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) List<Long> categoryIds
+            @RequestParam(required = false) List<Long> categoryIds,
+            @RequestParam(required = false) String username
     ) {
         return ApiResp.success(
-                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, categoryIds)
+                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, categoryIds, username)
         );
     }
 
@@ -150,19 +152,21 @@ public class InvoiceController {
     }
 
     @Operation(
-            summary = "Revenue summary (groupBy = month | class | week | year)",
+            summary = "Revenue summary (groupBy = month | class | week | year | daterange)",
             description = """
-        Trả về thống kê doanh thu đã thanh toán (status = PAID), nhóm theo:
-        - month: nhóm theo yyyy-MM (mốc thời gian ưu tiên paidAt, fallback dueDate)
-        - class: nhóm theo tên lớp (className)
-        - week : tuần ISO yyyy-Www
-        - year : nhóm theo năm yyyy
+    Trả về thống kê doanh thu đã thanh toán (status = PAID), nhóm theo:
+    - month: nhóm theo yyyy-MM (mốc thời gian ưu tiên paidAt, fallback dueDate)
+    - class: nhóm theo tên lớp (className)
+    - week : tuần ISO yyyy-Www
+    - year : nhóm theo năm yyyy
+    - daterange: thống kê tổng doanh thu trong khoảng fromDate–toDate
 
-        Ghi chú:
-        - Chỉ tính hoá đơn PAID.
-        - Phân trang trên tập kết quả đã nhóm.
-        - page bắt đầu từ 0.
-    """
+    Ghi chú:
+    - Chỉ tính hoá đơn PAID.
+    - Có thể lọc theo khoảng ngày (fromDate, toDate).
+    - Phân trang trên tập kết quả đã nhóm.
+    - page bắt đầu từ 0.
+"""
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK - Trả về Page<RevenueSummaryDto>"),
@@ -174,11 +178,29 @@ public class InvoiceController {
                     name = "groupBy",
                     description = "Kiểu nhóm dữ liệu",
                     schema = @Schema(
-                            allowableValues = {"month","class","week","year"},
+                            allowableValues = {"month","class","week","year","daterange"},
                             defaultValue = "month"
                     )
             )
             @RequestParam(defaultValue = "month") String groupBy,
+
+            @Parameter(
+                    name = "fromDate",
+                    description = "Ngày bắt đầu lọc (yyyy-MM-dd)",
+                    example = "2025-01-01"
+            )
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fromDate,
+
+            @Parameter(
+                    name = "toDate",
+                    description = "Ngày kết thúc lọc (yyyy-MM-dd)",
+                    example = "2025-12-31"
+            )
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate toDate,
 
             @Parameter(
                     name = "page",
@@ -203,16 +225,19 @@ public class InvoiceController {
         final PageRequest pageable = PageRequest.of(page, size);
 
         return switch (key) {
-            case "month" -> ApiResp.success(invoiceService.getRevenueSummaryByMonth(pageable));
-            case "class" -> ApiResp.success(invoiceService.getRevenueSummaryByClass(pageable));
-            case "week"  -> ApiResp.success(invoiceService.getRevenueSummaryByWeek(pageable));
-            case "year"  -> ApiResp.success(invoiceService.getRevenueSummaryByYear(pageable));
+            case "month"     -> ApiResp.success(invoiceService.getRevenueSummaryByMonth( pageable));
+            case "class"     -> ApiResp.success(invoiceService.getRevenueSummaryByClass( pageable));
+            case "week"      -> ApiResp.success(invoiceService.getRevenueSummaryByWeek(pageable));
+            case "year"      -> ApiResp.success(invoiceService.getRevenueSummaryByYear( pageable));
+            case "daterange" -> ApiResp.success(invoiceService.getRevenueSummaryByDateRange(fromDate,toDate,pageable));
             default -> throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Invalid groupBy. Use one of: month | class | week | year"
+                    "Invalid groupBy. Use one of: month | class | week | year | daterange"
             );
         };
     }
+
+
 
 
     @Operation(summary = "Manual confirm invoice (cash payment)")

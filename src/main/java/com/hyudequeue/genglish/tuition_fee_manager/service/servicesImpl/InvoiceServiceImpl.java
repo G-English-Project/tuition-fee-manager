@@ -232,7 +232,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             InvoiceStatusEnum status,
             Integer month,
             Integer year,
-            List<Long> categoryIds
+            List<Long> categoryIds,
+            String username // vẫn để tên biến là username cho dễ gọi API
     ) {
         Specification<Invoice> spec = Specification.where(null);
 
@@ -259,10 +260,18 @@ public class InvoiceServiceImpl implements InvoiceService {
             });
         }
 
-        Page<Invoice> invoices = invoiceRepository.findAll(spec, pageable);
+        // 🔥 Filter theo fullName (vì User không có username)
+        if (username != null && !username.isBlank()) {
+            spec = spec.and((root, query, cb) -> {
+                Join<Invoice, User> userJoin = root.join("user", JoinType.INNER);
+                return cb.like(cb.lower(userJoin.get("fullName")), "%" + username.toLowerCase() + "%");
+            });
+        }
 
+        Page<Invoice> invoices = invoiceRepository.findAll(spec, pageable);
         return invoices.map(InvoiceResponseDto::toDto);
     }
+
 
 
 
@@ -365,6 +374,32 @@ public class InvoiceServiceImpl implements InvoiceService {
     public Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable) {
         return invoiceRepository.sumRevenueGroupByWeek(pageable);
     }
+
+    @Override
+    public Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable) {
+        if (fromDate == null) {
+            fromDate = LocalDate.of(1970, 1, 1);
+        }
+        if (toDate == null) {
+            toDate = LocalDate.now();
+        }
+
+        // Repository actually returns Integer
+        Integer totalRevenue = invoiceRepository.sumRevenueByDateRange(
+                fromDate.atStartOfDay(),
+                toDate.plusDays(1).atStartOfDay()
+        );
+
+        RevenueSummaryDto dto = new RevenueSummaryDto(
+                fromDate + " ~ " + toDate,
+                totalRevenue
+        );
+
+        return new PageImpl<>(List.of(dto), pageable, 1);
+    }
+
+
+
 
     @Override
     public Page<RevenueSummaryDto> getRevenueSummaryByYear(PageRequest pageable) {

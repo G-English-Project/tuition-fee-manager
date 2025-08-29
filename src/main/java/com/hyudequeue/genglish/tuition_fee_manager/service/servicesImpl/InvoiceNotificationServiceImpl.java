@@ -146,7 +146,8 @@ public class InvoiceNotificationServiceImpl {
         Map<String, String> studentValues = Map.of(
                 "studentName", invoice.getUser().getFullName(),
                 "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                "amount", String.valueOf(payment.getAmount())
+                "amount", String.valueOf(payment.getAmount()),
+                "invoiceContent", invoice.getInvoiceContent()
         );
 
         String studentSubject = NotificationTemplateBuilder.buildSubject(
@@ -170,7 +171,8 @@ public class InvoiceNotificationServiceImpl {
                     "teacherName", admin.getFullName(),
                     "studentName", invoice.getUser().getFullName(),
                     "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                    "amount", String.valueOf(payment.getAmount())
+                    "amount", String.valueOf(payment.getAmount()),
+                    "invoiceContent", invoice.getInvoiceContent()
             );
 
             String adminSubject = NotificationTemplateBuilder.buildSubject(
