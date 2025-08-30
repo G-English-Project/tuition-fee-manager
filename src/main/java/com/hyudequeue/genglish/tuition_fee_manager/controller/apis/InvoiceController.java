@@ -151,27 +151,6 @@ public class InvoiceController {
         return ApiResp.success("Invoice status updated");
     }
 
-    @Operation(
-            summary = "Revenue summary (groupBy = month | class | week | year | daterange)",
-            description = """
-    Trả về thống kê doanh thu đã thanh toán (status = PAID), nhóm theo:
-    - month: nhóm theo yyyy-MM (mốc thời gian ưu tiên paidAt, fallback dueDate)
-    - class: nhóm theo tên lớp (className)
-    - week : tuần ISO yyyy-Www
-    - year : nhóm theo năm yyyy
-    - daterange: thống kê tổng doanh thu trong khoảng fromDate–toDate
-
-    Ghi chú:
-    - Chỉ tính hoá đơn PAID.
-    - Có thể lọc theo khoảng ngày (fromDate, toDate).
-    - Phân trang trên tập kết quả đã nhóm.
-    - page bắt đầu từ 0.
-"""
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK - Trả về Page<RevenueSummaryDto>"),
-            @ApiResponse(responseCode = "400", description = "Bad Request - groupBy không hợp lệ hoặc tham số không hợp lệ")
-    })
     @GetMapping("/summary")
     public ResponseEntity<ApiResp<Page<RevenueSummaryDto>>> getRevenueSummary(
             @Parameter(
@@ -221,21 +200,30 @@ public class InvoiceController {
             @jakarta.validation.constraints.Max(200)
             int size
     ) {
+        // 🔎 Validate fromDate <= toDate
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "fromDate must be before or equal to toDate"
+            );
+        }
+
         final String key = (groupBy == null ? "month" : groupBy).trim().toLowerCase();
         final PageRequest pageable = PageRequest.of(page, size);
 
         return switch (key) {
-            case "month"     -> ApiResp.success(invoiceService.getRevenueSummaryByMonth( pageable));
-            case "class"     -> ApiResp.success(invoiceService.getRevenueSummaryByClass( pageable));
+            case "month"     -> ApiResp.success(invoiceService.getRevenueSummaryByMonth(pageable));
+            case "class"     -> ApiResp.success(invoiceService.getRevenueSummaryByClass(pageable));
             case "week"      -> ApiResp.success(invoiceService.getRevenueSummaryByWeek(pageable));
-            case "year"      -> ApiResp.success(invoiceService.getRevenueSummaryByYear( pageable));
-            case "daterange" -> ApiResp.success(invoiceService.getRevenueSummaryByDateRange(fromDate,toDate,pageable));
+            case "year"      -> ApiResp.success(invoiceService.getRevenueSummaryByYear(pageable));
+            case "daterange" -> ApiResp.success(invoiceService.getRevenueSummaryByDateRange(fromDate, toDate, pageable));
             default -> throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Invalid groupBy. Use one of: month | class | week | year | daterange"
             );
         };
     }
+
 
 
 
