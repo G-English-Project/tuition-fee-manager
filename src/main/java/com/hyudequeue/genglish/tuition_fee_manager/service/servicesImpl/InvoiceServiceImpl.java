@@ -233,26 +233,28 @@ public class InvoiceServiceImpl implements InvoiceService {
             Integer month,
             Integer year,
             List<Long> categoryIds,
-            String username // vẫn để tên biến là username cho dễ gọi API
+            String username
     ) {
         Specification<Invoice> spec = Specification.where(null);
 
+        // ✅ Filter by status
         if (status != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
 
+        // ✅ Use the "month" field directly (instead of MONTH(createdAt))
         if (month != null) {
-            spec = spec.and((root, query, cb) ->
-                    cb.equal(cb.function("MONTH", Integer.class, root.get("createdAt")), month)
-            );
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("month"), month));
         }
 
+        // ✅ Use createdAt for year filter
         if (year != null) {
             spec = spec.and((root, query, cb) ->
                     cb.equal(cb.function("YEAR", Integer.class, root.get("createdAt")), year)
             );
         }
 
+        // ✅ Filter by categories
         if (categoryIds != null && !categoryIds.isEmpty()) {
             spec = spec.and((root, query, cb) -> {
                 Join<Object, Object> categoryJoin = root.join("categories", JoinType.INNER);
@@ -260,7 +262,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             });
         }
 
-        // 🔥 Filter theo fullName (vì User không có username)
+        // ✅ Filter by user fullName
         if (username != null && !username.isBlank()) {
             spec = spec.and((root, query, cb) -> {
                 Join<Invoice, User> userJoin = root.join("user", JoinType.INNER);
