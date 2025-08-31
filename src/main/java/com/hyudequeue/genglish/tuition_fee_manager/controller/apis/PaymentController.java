@@ -76,12 +76,12 @@ public class PaymentController {
             @RequestBody Webhook webhook
     ) {
         try{
-//            log.info("Webhook called");
-//            PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
-//            payOS.verifyPaymentWebhookData(webhook);
-//            log.info("Pass verify");
-//            paymentService.handleWebhook(webhook);
-//            log.info("Webhook success");
+            log.info("Webhook called");
+            PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
+            payOS.verifyPaymentWebhookData(webhook);
+            log.info("Pass verify");
+            paymentService.handleWebhook(webhook);
+            log.info("Webhook success");
             return ApiResp.success("OK");
         }
         catch (Exception e){
