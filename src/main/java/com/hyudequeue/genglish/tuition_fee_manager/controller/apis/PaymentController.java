@@ -116,7 +116,7 @@ public class PaymentController {
         ObjectNode response = objectMapper.createObjectNode();
         PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
         try {
-            String str = payOS.confirmWebhook("https://genglish-internal.threemusketeer.click/api/v1/payment/webhook");
+            String str = payOS.confirmWebhook("https://portal-internal.gsenglish.org/api/v1/payment/webhook");
             response.set("data", objectMapper.valueToTree(str));
             response.put("error", 0);
             response.put("message", "ok");
