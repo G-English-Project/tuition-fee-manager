@@ -8,6 +8,7 @@ public class SecurityConstants {
             "http://localhost:1600",
             "https://portal-internal.gsenglish.org",
             "https://portal.gsenglish.org",
+            "http://localhost:3000"
     };
     public static final long CORS_MAX_AGE = 3600;
 
