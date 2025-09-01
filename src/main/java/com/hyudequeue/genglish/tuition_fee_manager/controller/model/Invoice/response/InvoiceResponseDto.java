@@ -17,6 +17,7 @@ import java.util.List;
 @Builder
 public class InvoiceResponseDto {
     private Long invoiceId;
+    private String shownId;
     private Long userId;
     private String userName;
     private Long classesId;
@@ -35,6 +36,7 @@ public class InvoiceResponseDto {
     public static InvoiceResponseDto toDto(Invoice invoice) {
         return InvoiceResponseDto.builder()
                 .invoiceId(invoice.getInvoiceId())
+                .shownId(invoice.getShownId())
                 .userId(invoice.getUser().getUserId())
                 .userName(invoice.getUserName() != null ? invoice.getUserName() : invoice.getUser().getFullName())
                 .classesId(invoice.getClasses().getClassId())

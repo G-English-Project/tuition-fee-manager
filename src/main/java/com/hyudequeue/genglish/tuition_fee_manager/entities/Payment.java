@@ -24,6 +24,9 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long paymentId;
 
+    @Column(nullable = true, length = 6, unique = true)
+    private String shownId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
@@ -50,6 +53,13 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatusEnum status;
+
+    @PostPersist
+    private void generateShownId() {
+        if (this.paymentId != null && (this.shownId == null || this.shownId.isEmpty())) {
+            this.shownId = String.format("%06d", this.paymentId);
+        }
+    }
 
     @PrePersist
     public void prePersist() {

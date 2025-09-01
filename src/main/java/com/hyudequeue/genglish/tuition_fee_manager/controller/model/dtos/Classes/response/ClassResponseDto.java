@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Data
 public class ClassResponseDto {
     private Long classId;
+    private String shownId;
     private String className;
     private String description;
     private ClassStatusEnum status;
@@ -28,6 +29,7 @@ public class ClassResponseDto {
 
         return new ClassResponseDto(
                 classes.getClassId(),
+                classes.getShownId(),
                 classes.getClassName(),
                 classes.getDescription(),
                 classes.getStatus(),

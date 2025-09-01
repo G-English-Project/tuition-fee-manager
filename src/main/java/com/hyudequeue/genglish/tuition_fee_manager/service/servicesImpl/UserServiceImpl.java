@@ -64,6 +64,8 @@ public class UserServiceImpl implements UserService {
         entity.setUpdatedAt(LocalDateTime.now());
 
         User saved = userRepository.save(entity);
+        saved.setShownId(String.format("%06d", saved.getUserId()));
+        saved = userRepository.save(saved);
         return UserResponseDto.toDto(saved);
     }
 

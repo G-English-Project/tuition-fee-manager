@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class UserResponseDto {
     private Long userId;
+    private String shownId;
     private String email;
     private String phone;
     private String fullName;
@@ -30,6 +31,7 @@ public class UserResponseDto {
 
         return new UserResponseDto(
                 user.getUserId(),
+                user.getShownId(),
                 user.getEmail(),
                 user.getPhone(),
                 user.getFullName(),

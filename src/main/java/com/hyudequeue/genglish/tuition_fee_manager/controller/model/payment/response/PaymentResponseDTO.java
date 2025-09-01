@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PaymentResponseDTO {
     private Long paymentId;
+    private String shownId;
     private int amount;
     private String currency;
     private String description;
@@ -31,6 +32,7 @@ public class PaymentResponseDTO {
     public static PaymentResponseDTO toResponseDTO(Payment payment) {
         return PaymentResponseDTO.builder()
                 .paymentId(payment.getPaymentId())
+                .shownId(payment.getShownId())
                 .amount(payment.getAmount())
                 .currency(payment.getCurrency())
                 .description(payment.getDescription())

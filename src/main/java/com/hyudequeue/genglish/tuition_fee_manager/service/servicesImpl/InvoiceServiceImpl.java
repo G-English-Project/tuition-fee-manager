@@ -89,9 +89,10 @@ public class InvoiceServiceImpl implements InvoiceService {
         Classes classes = classRepository.findById(classId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
+        // Use mutable list for categories
         List<InvoiceCategory> categories = (categoryIds == null || categoryIds.isEmpty())
-                ? List.of()
-                : categoryRepository.findAllById(categoryIds);
+                ? new ArrayList<>()
+                : new ArrayList<>(categoryRepository.findAllById(categoryIds));
 
         Invoice invoice = Invoice.builder()
                 .user(user)
@@ -108,21 +109,27 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         invoice.setCategories(categories);
 
-        List<InvoiceItem> invoiceItems = (items == null ? List.<InvoiceItem>of()
-                : items.stream().map(dto -> dto.toEntity(invoice)).toList());
+        // Use mutable list for invoice items
+        List<InvoiceItem> invoiceItems = (items == null
+                ? new ArrayList<>()
+                : items.stream().map(dto -> dto.toEntity(invoice)).collect(Collectors.toList()));
         invoice.setItems(invoiceItems);
 
         Invoice saved = invoiceRepository.save(invoice);
 
-        // Gọi hàm async để gửi mail và notif
-        invoiceNotificationService.notifyInvoiceCreated(user, month);
+        // Set shownId if null
+        if (saved.getInvoiceId() != null && (saved.getShownId() == null || saved.getShownId().isEmpty())) {
+            saved.setShownId(String.format("%06d", saved.getInvoiceId()));
+            invoiceRepository.save(saved); // save again to update shownId
+        }
 
         return InvoiceResponseDto.toDto(saved);
     }
 
+
     // =========================
-    // CREATE (batch for class)
-    // =========================
+// CREATE (batch for class)
+// =========================
     @Override
     @Transactional
     public Page<InvoiceResponseDto> createInvoicesForClass(Long classId,
@@ -155,7 +162,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         List<Long> invalidUserIds = userIds.stream()
                 .filter(uid -> !activeUserIds.contains(uid))
-                .toList();
+                .collect(Collectors.toList());
 
         if (!invalidUserIds.isEmpty()) {
             throw new ResponseStatusException(
@@ -166,16 +173,20 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         List<User> users = userRepository.findAllById(activeUserIds);
 
-        List<Invoice> invoices = users.stream().map(user -> {
+        List<Invoice> invoices = new ArrayList<>();
+        for (User user : users) {
             StudentInvoiceRequest sreq = reqByUser.get(user.getUserId());
-            List<InvoiceItemRequestDTO> itemsReq = (sreq == null ? null : sreq.getItems());
+            List<InvoiceItemRequestDTO> itemsReq = (sreq == null ? new ArrayList<>() : sreq.getItems());
+            if (itemsReq == null) itemsReq = new ArrayList<>();
 
-            List<Long> categoryIds = (sreq == null ? null : sreq.getCategoryIds());
-            List<InvoiceCategory> categories = (categoryIds == null || categoryIds.isEmpty())
-                    ? List.of()
-                    : categoryRepository.findAllById(categoryIds);
+            List<Long> categoryIds = (sreq == null ? new ArrayList<>() : sreq.getCategoryIds());
+            if (categoryIds == null) categoryIds = new ArrayList<>();
+            List<InvoiceCategory> categories = new ArrayList<>();
+            if (!categoryIds.isEmpty()) {
+                categories.addAll(categoryRepository.findAllById(categoryIds));
+            }
 
-            PaymentMethodEnum paymentType = (sreq == null ? null : sreq.getPaymentType());
+            PaymentMethodEnum paymentType = (sreq == null ? PaymentMethodEnum.BANKING : sreq.getPaymentType());
             if (paymentType == null) paymentType = PaymentMethodEnum.BANKING;
 
             Invoice invoice = Invoice.builder()
@@ -193,23 +204,35 @@ public class InvoiceServiceImpl implements InvoiceService {
 
             invoice.setCategories(categories);
 
-            List<InvoiceItem> invoiceItems = (itemsReq == null ? List.<InvoiceItem>of()
-                    : itemsReq.stream().map(dto -> dto.toEntity(invoice)).toList());
+            List<InvoiceItem> invoiceItems = new ArrayList<>();
+            if (itemsReq != null && !itemsReq.isEmpty()) {
+                for (InvoiceItemRequestDTO dto : itemsReq) {
+                    invoiceItems.add(dto.toEntity(invoice));
+                }
+            }
             invoice.setItems(invoiceItems);
 
-            return invoice;
-        }).toList();
+            invoices.add(invoice);
+        }
 
         List<Invoice> saved = invoiceRepository.saveAll(invoices);
 
-        invoiceNotificationService.sendClassInvoiceNotificationsAsync(saved, classes);
+        // Gán shownId cho từng invoice và lưu lại
+        for (Invoice inv : saved) {
+            if (inv.getInvoiceId() != null && (inv.getShownId() == null || inv.getShownId().isEmpty())) {
+                inv.setShownId(String.format("%06d", inv.getInvoiceId()));
+            }
+        }
+        invoiceRepository.saveAll(saved);
 
-        List<InvoiceResponseDto> responseDtos = saved.stream()
-                .map(InvoiceResponseDto::toDto)
-                .toList();
+        List<InvoiceResponseDto> responseDtos = new ArrayList<>();
+        for (Invoice inv : saved) {
+            responseDtos.add(InvoiceResponseDto.toDto(inv));
+        }
 
         return new PageImpl<>(responseDtos);
     }
+
 
     // =========================
     // READ
