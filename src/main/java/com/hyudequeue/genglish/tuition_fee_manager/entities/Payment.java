@@ -107,9 +107,27 @@ public class Payment {
     }
 
     public static Payment fromCreateRequest(CreatePaymentRequest req, Invoice invoice, PayOSProperties properties) {
-        String desc = (req.getDescription() != null && !req.getDescription().isBlank())
-                ? req.getDescription().trim()
-                : buildDefaultDescription(invoice);
+        String desc;
+        if (req.getDescription() != null && !req.getDescription().isBlank()) {
+            desc = req.getDescription().trim();
+        } else {
+            String fullName = invoice.getUser() != null ? invoice.getUser().getFullName() : "Hoc vien";
+            String[] parts = fullName.trim().split("\\s+");
+
+            // Lấy 2 từ cuối nếu tên có nhiều hơn 1 từ, ngược lại lấy 1 từ
+            String shortName;
+            if (parts.length >= 2) {
+                shortName = parts[parts.length - 2] + " " + parts[parts.length - 1];
+            } else {
+                shortName = parts[0];
+            }
+
+            String shownId = invoice.getShownId() != null
+                    ? invoice.getShownId()
+                    : String.format("%06d", invoice.getInvoiceId());
+
+            desc = shortName + " #" + shownId;
+        }
 
         return Payment.builder()
                 .invoice(invoice)
@@ -125,6 +143,7 @@ public class Payment {
                 .createdAt(LocalDateTime.now())
                 .build();
     }
+
 
 
     public static PaymentData toPaymentData(Payment payment, long expiredAtSeconds) {

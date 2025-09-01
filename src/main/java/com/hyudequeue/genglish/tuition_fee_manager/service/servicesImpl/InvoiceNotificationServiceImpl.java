@@ -151,16 +151,16 @@ public class InvoiceNotificationServiceImpl {
         );
 
         String studentSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
+                NotificationTemplateEnum.STUDENT_PAID_INVOICE, studentValues
         );
         String studentBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
+                NotificationTemplateEnum.STUDENT_PAID_INVOICE, studentValues
         );
 
         notificationService.createNotification(studentId, studentSubject, studentBody);
         emailService.sendNotificationEmail(
                 invoice.getUser().getEmail(),
-                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT,
+                NotificationTemplateEnum.STUDENT_PAID_INVOICE,
                 studentValues
         );
 
@@ -176,16 +176,16 @@ public class InvoiceNotificationServiceImpl {
             );
 
             String adminSubject = NotificationTemplateBuilder.buildSubject(
-                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
+                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, adminValues
             );
             String adminBody = NotificationTemplateBuilder.buildBody(
-                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
+                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, adminValues
             );
 
             notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
             emailService.sendNotificationEmail(
                     admin.getEmail(),
-                    NotificationTemplateEnum.STUDENT_PAID_INVOICE,
+                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT,
                     adminValues
             );
         }
