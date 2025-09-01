@@ -8,5 +8,7 @@ public final class UserEndpoints {
     public static final String DELETE_ENDPOINT = "{userId}";
     public static final String PROFILE_ENDPOINT = "/profile/{userId}";
     public static final String SEARCH_ENDPOINT = "search";
+    public static final String CHANGE_PASSWORD_ENDPOINT = "/{userId}/password";
+
 
 }

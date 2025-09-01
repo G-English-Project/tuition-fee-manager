@@ -135,7 +135,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Invalid input data",
                     content = @Content(mediaType = "application/json"))
     })
-    @PatchMapping("/{userId}/password")
+    @PatchMapping(CHANGE_PASSWORD_ENDPOINT)
     public ResponseEntity<?> changePassword(
             @Parameter(description = "ID of the user to change password", required = true)
             @PathVariable Long userId,
