@@ -9,7 +9,8 @@ public final class AllowedEndpoint {
     public static final String[] GENERAL = {
             ApiPathConstants.AUTH_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.AuthEndpoints.LOGIN_ENDPOINT,
             ApiPathConstants.PAYMENT_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.WEBHOOK,
-            ApiPathConstants.USER_API + UserEndpoints.CHANGE_PASSWORD_ENDPOINT
+            ApiPathConstants.USER_API + UserEndpoints.CHANGE_PASSWORD_ENDPOINT,
+            ApiPathConstants.PAYMENT_API + PaymentEndpoints.CREATE
     };
 
     // 👨‍🎓 Student
@@ -24,7 +25,6 @@ public final class AllowedEndpoint {
             ApiPathConstants.INVOICE_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.InvoiceEndpoints.GET_BY_STATUS,
 
             // Payment
-            ApiPathConstants.PAYMENT_API + PaymentEndpoints.CREATE,
             ApiPathConstants.PAYMENT_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.GET_BY_ID,
             ApiPathConstants.PAYMENT_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.GET_LATEST_BY_INVOICE,
 
