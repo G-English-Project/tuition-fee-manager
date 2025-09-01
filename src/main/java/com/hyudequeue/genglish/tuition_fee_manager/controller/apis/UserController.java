@@ -43,7 +43,7 @@ public class UserController {
     }
 
     @Operation(summary = "Create user by role", description = "Create a new user with given role (ADMIN or STUDENT).")
-    @PostMapping("")
+    @PostMapping(CREATE_ENDPOINT)
     public ResponseEntity<?> createUserByRole(
             @RequestParam RoleEnum role,
             @Valid @RequestBody UserCreateRequestDto body

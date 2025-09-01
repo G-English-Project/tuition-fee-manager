@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.utility.constants;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints;
 
 public final class AllowedEndpoint {
@@ -23,6 +24,7 @@ public final class AllowedEndpoint {
             ApiPathConstants.INVOICE_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.InvoiceEndpoints.GET_BY_STATUS,
 
             // Payment
+            ApiPathConstants.PAYMENT_API + PaymentEndpoints.CREATE,
             ApiPathConstants.PAYMENT_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.GET_BY_ID,
             ApiPathConstants.PAYMENT_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.GET_LATEST_BY_INVOICE,
 
