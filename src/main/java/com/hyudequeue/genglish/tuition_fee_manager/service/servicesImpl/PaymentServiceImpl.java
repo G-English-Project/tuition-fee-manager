@@ -57,40 +57,46 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentPayOSResponse createPayment(CreatePaymentRequest req) throws Exception {
         log.info(">>> [createTransaction] called");
 
-        PayOS payOS = new PayOS(
-                payOSProperties.getClientId(),
-                payOSProperties.getApiKey(),
-                payOSProperties.getChecksumKey()
-        );
-
+        // 1) Validate cơ bản
         Invoice invoice = invoiceRepository.findById(req.getInvoiceId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Invoice not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
-        Payment payment = paymentRepository.save(
-                Payment.fromCreateRequest(req, invoice, payOSProperties)
-        );
-
-        long nowSeconds = System.currentTimeMillis() / 1000;
-
-        long ttlSeconds = (req.getExpiredAt() != null) ? req.getExpiredAt() : 15 * 60;
-
-        if (ttlSeconds <= 0) {
-            throw new ResponseStatusException(HttpStatusCode.valueOf(400),
-                    "expiredAt (seconds) must be a positive number");
+        if (invoice.getStatus() == InvoiceStatusEnum.PAID) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Invoice is already PAID");
+        }
+        if (invoice.getTotalAmount() == null || invoice.getTotalAmount() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invoice totalAmount must be > 0");
         }
 
+        if (req.getBuyerName() == null || req.getBuyerName().isBlank()) {
+            req.setBuyerName(invoice.getUserName() != null && !invoice.getUserName().isBlank()
+                    ? invoice.getUserName()
+                    : (invoice.getUser() != null ? invoice.getUser().getFullName() : "HOC VIEN"));
+        }
+        if (req.getBuyerEmail() == null || req.getBuyerEmail().isBlank()) {
+            req.setBuyerEmail(invoice.getUser() != null ? invoice.getUser().getEmail() : null);
+        }
+        if (req.getBuyerPhone() == null || req.getBuyerPhone().isBlank()) {
+            req.setBuyerPhone(invoice.getUser() != null ? invoice.getUser().getPhone() : null);
+        }
+
+        Payment payment = paymentRepository.save(Payment.fromCreateRequest(req, invoice, payOSProperties));
+
+        long nowSeconds = System.currentTimeMillis() / 1000;
+        long ttlSeconds = (req.getExpiredAt() != null) ? req.getExpiredAt() : 15 * 60;
+        if (ttlSeconds <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "expiredAt (seconds) must be a positive number");
+        }
         long effectiveExpiredAt = nowSeconds + ttlSeconds;
 
+        PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
         PaymentData data = Payment.toPaymentData(payment, effectiveExpiredAt);
-
         CheckoutResponseData checkoutData = payOS.createPaymentLink(data);
         return PaymentPayOSResponse.builder()
                 .paymentId(payment.getPaymentId())
                 .payOsResponse(checkoutData)
                 .build();
     }
-
-
 
     @Override
     public boolean cancelPayment(Long paymentId) throws Exception {

@@ -63,17 +63,43 @@ public class Payment {
         return (invoice != null && invoice.getItems() != null) ? invoice.getItems() : List.of();
     }
 
-    // ===========================
-    // STATIC CONVERTER METHODS
-    // ===========================
+    private static String onlyGivenName(String fullName) {
+        if (fullName == null) return "HOC VIEN";
+        String trimmed = fullName.trim().replaceAll("\\s+", " ");
+        if (trimmed.isEmpty()) return "HOC VIEN";
+        String[] parts = trimmed.split(" ");
+        return parts[parts.length - 1];
+    }
 
     /**
-     * Convert CreatePaymentRequest -> Payment entity
+     * Mặc định: "<Tên> | <Tên lớp> | <Mã hóa đơn/ID>"
+     * Nếu dài > 24 ký tự thì bỏ tên lớp => "<Tên> | <Mã hóa đơn/ID>"
      */
+    private static String buildDefaultDescription(Invoice invoice) {
+        String nameSource = (invoice.getUserName() != null && !invoice.getUserName().isBlank())
+                ? invoice.getUserName()
+                : (invoice.getUser() != null ? invoice.getUser().getFullName() : null);
+        String givenName = onlyGivenName(nameSource);
+
+        String className = (invoice.getClasses() != null && invoice.getClasses().getClassName() != null)
+                ? invoice.getClasses().getClassName().trim()
+                : "LOP";
+
+        String code = String.valueOf(invoice.getInvoiceId());
+
+        String fullDesc = String.format("%s | %s | %s", givenName, className, code);
+
+        if (fullDesc.length() > 24) {
+            fullDesc = String.format("%s | %s", givenName, code);
+        }
+
+        return fullDesc;
+    }
+
     public static Payment fromCreateRequest(CreatePaymentRequest req, Invoice invoice, PayOSProperties properties) {
         String desc = (req.getDescription() != null && !req.getDescription().isBlank())
                 ? req.getDescription().trim()
-                : ("THANH TOAN HOA DON " + invoice.getInvoiceId());
+                : buildDefaultDescription(invoice);
 
         return Payment.builder()
                 .invoice(invoice)
@@ -89,6 +115,7 @@ public class Payment {
                 .createdAt(LocalDateTime.now())
                 .build();
     }
+
 
     public static PaymentData toPaymentData(Payment payment, long expiredAtSeconds) {
         PaymentData.PaymentDataBuilder builder = vn.payos.type.PaymentData.builder()
