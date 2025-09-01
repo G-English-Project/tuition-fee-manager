@@ -1,11 +1,14 @@
 package com.hyudequeue.genglish.tuition_fee_manager.utility.constants;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints;
+
 public final class AllowedEndpoint {
 
     // 🟢 Public (không cần token)
     public static final String[] GENERAL = {
             ApiPathConstants.AUTH_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.AuthEndpoints.LOGIN_ENDPOINT,
-            ApiPathConstants.PAYMENT_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.WEBHOOK
+            ApiPathConstants.PAYMENT_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.WEBHOOK,
+            ApiPathConstants.USER_API + UserEndpoints.CHANGE_PASSWORD_ENDPOINT
     };
 
     // 👨‍🎓 Student

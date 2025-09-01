@@ -180,6 +180,7 @@ public class UserServiceImpl implements UserService {
         return StudentProfileDto.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
+                .phone(user.getPhone())
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
                 .status(user.getStatus().name())
