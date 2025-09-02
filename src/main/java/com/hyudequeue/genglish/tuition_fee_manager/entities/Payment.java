@@ -107,33 +107,34 @@ public class Payment {
     }
 
     public static Payment fromCreateRequest(CreatePaymentRequest req, Invoice invoice, PayOSProperties properties) {
-        String desc;
-        if (req.getDescription() != null && !req.getDescription().isBlank()) {
-            desc = req.getDescription().trim();
+        String fullName = invoice.getUser() != null ? invoice.getUser().getFullName() : "Hoc vien";
+        String[] parts = fullName.trim().split("\\s+");
+
+        // Lấy 2 từ cuối nếu tên có nhiều hơn 1 từ, ngược lại lấy 1 từ
+        String shortName;
+        if (parts.length >= 2) {
+            shortName = parts[parts.length - 2] + " " + parts[parts.length - 1];
         } else {
-            String fullName = invoice.getUser() != null ? invoice.getUser().getFullName() : "Hoc vien";
-            String[] parts = fullName.trim().split("\\s+");
-
-            // Lấy 2 từ cuối nếu tên có nhiều hơn 1 từ, ngược lại lấy 1 từ
-            String shortName;
-            if (parts.length >= 2) {
-                shortName = parts[parts.length - 2] + " " + parts[parts.length - 1];
-            } else {
-                shortName = parts[0];
-            }
-
-            String shownId = invoice.getShownId() != null
-                    ? invoice.getShownId()
-                    : String.format("%06d", invoice.getInvoiceId());
-
-            desc = shortName + " #" + shownId;
+            shortName = parts[0];
         }
+
+        String shownId = invoice.getShownId() != null
+                ? invoice.getShownId()
+                : String.format("%06d", invoice.getInvoiceId());
+
+        // Lấy tên lớp (nếu có)
+        String className = (invoice.getClasses() != null && invoice.getClasses().getClassName() != null)
+                ? invoice.getClasses().getClassName().trim()
+                : "LOP";
+
+        // Format description: "<Tên ngắn> | <Tên lớp> | <Mã hóa đơn>"
+        String desc = String.format("%s | %s | %s", shortName, className, shownId);
 
         return Payment.builder()
                 .invoice(invoice)
                 .amount(invoice.getTotalAmount())
                 .currency("VND")
-                .description(desc)
+                .description(desc)   // 🚀 luôn do BE build
                 .buyerName(req.getBuyerName())
                 .buyerEmail(req.getBuyerEmail())
                 .buyerPhone(req.getBuyerPhone())
@@ -143,6 +144,8 @@ public class Payment {
                 .createdAt(LocalDateTime.now())
                 .build();
     }
+
+
 
 
 
