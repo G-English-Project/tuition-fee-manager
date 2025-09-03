@@ -77,5 +77,7 @@ public enum NotificationTemplateEnum {
     /**
      * Đơn học phí đã được chỉnh sửa
      */
-    STUDENT_TUITION_EDITED
+    STUDENT_TUITION_EDITED,
+
+    NEW_FEEDBACK_RECEIVED
 }

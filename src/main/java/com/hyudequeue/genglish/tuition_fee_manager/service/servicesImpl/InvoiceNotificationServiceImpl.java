@@ -354,4 +354,30 @@ public class InvoiceNotificationServiceImpl {
     }
 
 
+    @Async
+    public void notifyAdminNewFeedback(User student, Classes classes, String content) {
+        Map<String, String> values = Map.of(
+                "studentName", student.getFullName(),
+                "className", classes.getClassName(),
+                "feedbackContent", content
+        );
+
+        String subject = NotificationTemplateBuilder.buildSubject(
+                NotificationTemplateEnum.NEW_FEEDBACK_RECEIVED, values
+        );
+        String body = NotificationTemplateBuilder.buildBody(
+                NotificationTemplateEnum.NEW_FEEDBACK_RECEIVED, values
+        );
+
+        List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+        for (User admin : admins) {
+            notificationService.createNotification(admin.getUserId(), subject, body);
+            emailService.sendNotificationEmail(
+                    admin.getEmail(),
+                    NotificationTemplateEnum.NEW_FEEDBACK_RECEIVED,
+                    values
+            );
+        }
+    }
+
 }
