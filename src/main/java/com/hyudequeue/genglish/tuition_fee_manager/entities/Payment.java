@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.request.CreatePaymentRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PayOSProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,8 +25,6 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long paymentId;
 
-    @Column(nullable = true, length = 6, unique = true)
-    private String shownId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id", nullable = false)
@@ -54,12 +53,6 @@ public class Payment {
     @Column(nullable = false)
     private PaymentStatusEnum status;
 
-    @PostPersist
-    private void generateShownId() {
-        if (this.paymentId != null && (this.shownId == null || this.shownId.isEmpty())) {
-            this.shownId = String.format("%06d", this.paymentId);
-        }
-    }
 
     @PrePersist
     public void prePersist() {
@@ -118,9 +111,7 @@ public class Payment {
             shortName = parts[0];
         }
 
-        String shownId = invoice.getShownId() != null
-                ? invoice.getShownId()
-                : String.format("%06d", invoice.getInvoiceId());
+        String shownId = GenerateId.formatId(invoice.getInvoiceId());
 
         // Lấy tên lớp (nếu có)
         String className = (invoice.getClasses() != null && invoice.getClasses().getClassName() != null)

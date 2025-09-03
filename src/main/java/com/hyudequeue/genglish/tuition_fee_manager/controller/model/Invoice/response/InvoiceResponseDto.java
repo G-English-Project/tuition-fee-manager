@@ -3,6 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.res
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Invoice;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,13 +12,14 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class InvoiceResponseDto {
     private Long invoiceId;
-    private String shownId;
+    private String shownId; // thêm field này
     private Long userId;
     private String userName;
     private Long classesId;
@@ -36,7 +38,7 @@ public class InvoiceResponseDto {
     public static InvoiceResponseDto toDto(Invoice invoice) {
         return InvoiceResponseDto.builder()
                 .invoiceId(invoice.getInvoiceId())
-                .shownId(invoice.getShownId())
+                .shownId(GenerateId.formatId(invoice.getInvoiceId())) // gán shownId
                 .userId(invoice.getUser().getUserId())
                 .userName(invoice.getUserName() != null ? invoice.getUserName() : invoice.getUser().getFullName())
                 .classesId(invoice.getClasses().getClassId())

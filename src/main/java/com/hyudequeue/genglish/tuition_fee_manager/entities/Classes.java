@@ -43,13 +43,4 @@ public class Classes {
     @Column(nullable = true)
     private LocalDateTime updatedAt;
 
-    @Column(nullable = true, length = 6, unique = true)
-    private String shownId;
-
-    @PostPersist
-    private void generateShownId() {
-        if (this.classId != null && (this.shownId == null || this.shownId.isEmpty())) {
-            this.shownId = String.format("%06d", this.classId);
-        }
-    }
 }

@@ -117,12 +117,6 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         Invoice saved = invoiceRepository.save(invoice);
 
-        // Set shownId if null
-        if (saved.getInvoiceId() != null && (saved.getShownId() == null || saved.getShownId().isEmpty())) {
-            saved.setShownId(String.format("%06d", saved.getInvoiceId()));
-            invoiceRepository.save(saved); // save again to update shownId
-        }
-
         return InvoiceResponseDto.toDto(saved);
     }
 
@@ -217,12 +211,6 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         List<Invoice> saved = invoiceRepository.saveAll(invoices);
 
-        // Gán shownId cho từng invoice và lưu lại
-        for (Invoice inv : saved) {
-            if (inv.getInvoiceId() != null && (inv.getShownId() == null || inv.getShownId().isEmpty())) {
-                inv.setShownId(String.format("%06d", inv.getInvoiceId()));
-            }
-        }
         invoiceRepository.saveAll(saved);
 
         List<InvoiceResponseDto> responseDtos = new ArrayList<>();

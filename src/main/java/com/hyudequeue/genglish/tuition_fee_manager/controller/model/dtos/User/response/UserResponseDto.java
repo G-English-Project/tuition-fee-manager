@@ -3,6 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.r
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,7 +32,7 @@ public class UserResponseDto {
 
         return new UserResponseDto(
                 user.getUserId(),
-                user.getShownId(),
+                GenerateId.formatId(user.getUserId()),
                 user.getEmail(),
                 user.getPhone(),
                 user.getFullName(),

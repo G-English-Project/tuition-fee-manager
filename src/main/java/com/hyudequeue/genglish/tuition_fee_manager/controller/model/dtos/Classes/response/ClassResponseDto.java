@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classe
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,7 +30,7 @@ public class ClassResponseDto {
 
         return new ClassResponseDto(
                 classes.getClassId(),
-                classes.getShownId(),
+                GenerateId.formatId(classes.getClassId()),
                 classes.getClassName(),
                 classes.getDescription(),
                 classes.getStatus(),

@@ -3,6 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.res
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Invoice;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Payment;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,7 +33,7 @@ public class PaymentResponseDTO {
     public static PaymentResponseDTO toResponseDTO(Payment payment) {
         return PaymentResponseDTO.builder()
                 .paymentId(payment.getPaymentId())
-                .shownId(payment.getShownId())
+                .shownId(GenerateId.formatId(payment.getPaymentId()))
                 .amount(payment.getAmount())
                 .currency(payment.getCurrency())
                 .description(payment.getDescription())

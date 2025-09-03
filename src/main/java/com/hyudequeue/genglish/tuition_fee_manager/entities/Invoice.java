@@ -22,9 +22,6 @@ public class Invoice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long invoiceId;
 
-    @Column(nullable = true, length = 6, unique = true)
-    private String shownId;
-
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
