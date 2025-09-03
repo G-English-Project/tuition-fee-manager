@@ -35,6 +35,7 @@ public class NotificationTemplateBuilder {
             case CLASS_TUITION_UPDATED -> "Đã cập nhật học phí lớp {className}";
             case INVOICE_CANCELLED_ALERT -> "Hóa đơn bị hủy: {invoiceContent}";
 
+            case NEW_FEEDBACK_RECEIVED -> "Feedback mới từ {studentName}";
             // --- HỌC SINH ---
             case NEW_INVOICE_NOTIFICATION -> "Bạn có hóa đơn mới: {invoiceContent}";
             case STUDENT_SUCCESSFUL_PAYMENT -> "Đã thanh toán: {invoiceContent}";
@@ -66,7 +67,8 @@ public class NotificationTemplateBuilder {
                     "Đã cập nhật học phí cho lớp {className} – tổng số học sinh: {studentCount}.";
             case INVOICE_CANCELLED_ALERT ->
                     "Hóa đơn với nội dung {invoiceContent} đã bị hủy. Vui lòng kiểm tra.";
-
+            case NEW_FEEDBACK_RECEIVED ->
+                    "Feedback mới từ {studentName}";
             // --- HỌC SINH ---
             case NEW_INVOICE_NOTIFICATION ->
                     "Bạn có hóa đơn thanh toán mới với nội dung {invoiceContent}, vui lòng kiểm tra.";
