@@ -5,13 +5,14 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedbac
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedback.response.FeedbackResponseDto;
 
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.FeedbackService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping(FeedbackEndpoints.BASE)
+@RequestMapping(ApiPathConstants.FEEDBACK_API) // "/api/v1/feedback"
 @RequiredArgsConstructor
 public class FeedbackController {
 
@@ -33,5 +34,20 @@ public class FeedbackController {
     @GetMapping(FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT)
     public List<FeedbackResponseDto> getFeedbacksByStudent(@PathVariable Long studentId) {
         return feedbackService.getFeedbacksByStudent(studentId);
+    }
+
+    // 4. Update feedback
+    @PutMapping(FeedbackEndpoints.UPDATE_FEEDBACK)
+    public FeedbackResponseDto updateFeedback(
+            @PathVariable Long feedbackId,
+            @RequestBody FeedbackRequestDto dto
+    ) {
+        return feedbackService.updateFeedback(feedbackId, dto);
+    }
+
+    // 5. Delete feedback
+    @DeleteMapping(FeedbackEndpoints.DELETE_FEEDBACK)
+    public void deleteFeedback(@PathVariable Long feedbackId) {
+        feedbackService.deleteFeedback(feedbackId);
     }
 }

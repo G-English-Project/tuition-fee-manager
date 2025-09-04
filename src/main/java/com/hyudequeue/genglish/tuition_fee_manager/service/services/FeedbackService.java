@@ -9,4 +9,6 @@ public interface FeedbackService {
     FeedbackResponseDto createFeedback(FeedbackRequestDto dto);
     List<FeedbackResponseDto> getAllFeedbacks();
     List<FeedbackResponseDto> getFeedbacksByStudent(Long studentId);
+    FeedbackResponseDto updateFeedback(Long feedbackId, FeedbackRequestDto dto);
+    void deleteFeedback(Long feedbackId);
 }

@@ -10,7 +10,8 @@ public final class AllowedEndpoint {
             ApiPathConstants.AUTH_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.AuthEndpoints.LOGIN_ENDPOINT,
             ApiPathConstants.PAYMENT_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.WEBHOOK,
             ApiPathConstants.USER_API + UserEndpoints.CHANGE_PASSWORD_ENDPOINT,
-            ApiPathConstants.PAYMENT_API + PaymentEndpoints.CREATE
+            ApiPathConstants.PAYMENT_API + PaymentEndpoints.CREATE,
+            ApiPathConstants.FEEDBACK_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.FeedbackEndpoints.CREATE_FEEDBACK,
     };
 
     // 👨‍🎓 Student
@@ -36,7 +37,11 @@ public final class AllowedEndpoint {
             ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.COUNT_UNREAD,
 
             // User profile
-            ApiPathConstants.USER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.PROFILE_ENDPOINT
+            ApiPathConstants.USER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.PROFILE_ENDPOINT,
+
+            //Feedback
+            ApiPathConstants.FEEDBACK_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT
+
     };
 
     private AllowedEndpoint() {

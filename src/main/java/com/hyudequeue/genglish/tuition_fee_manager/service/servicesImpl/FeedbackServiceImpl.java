@@ -67,6 +67,27 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public FeedbackResponseDto updateFeedback(Long feedbackId, FeedbackRequestDto dto) {
+        Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new RuntimeException("Feedback not found"));
+
+        // nếu cho phép update class/student thì giữ lại, còn không thì chỉ update content + rating
+        feedback.setContent(dto.getContent());
+        feedback.setRating(dto.getRating());
+
+        Feedback updated = feedbackRepository.save(feedback);
+        return toDto(updated);
+    }
+
+    @Override
+    public void deleteFeedback(Long feedbackId) {
+        Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new RuntimeException("Feedback not found"));
+        feedbackRepository.delete(feedback);
+    }
+
+
     private FeedbackResponseDto toDto(Feedback f) {
         return FeedbackResponseDto.builder()
                 .feedbackId(f.getFeedbackId())
