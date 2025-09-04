@@ -24,6 +24,7 @@ public class SecurityConstants {
             "/api/auth/**",
             "/api/auth/*",
             "/api/user/v1/**",
+            "/api/v1/feedback/all",
             "/v2/api-docs/**",
             "/v3/api-docs",
             "/v3/**",
