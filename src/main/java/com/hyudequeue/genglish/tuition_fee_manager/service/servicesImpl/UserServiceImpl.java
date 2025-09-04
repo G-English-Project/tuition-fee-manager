@@ -13,6 +13,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.CommonConstants;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PasswordUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.*;
@@ -179,6 +180,7 @@ public class UserServiceImpl implements UserService {
 
         return StudentProfileDto.builder()
                 .userId(user.getUserId())
+                .shownId(GenerateId.formatId(user.getUserId()))
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .fullName(user.getFullName())

@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 public class StudentProfileDto {
 
     private Long userId;
+    private String shownId;
     private String email;
     private String phone;
     private String fullName;
