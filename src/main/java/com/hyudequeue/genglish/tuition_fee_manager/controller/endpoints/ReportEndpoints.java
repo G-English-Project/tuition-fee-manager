@@ -2,7 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints;
 
 public class ReportEndpoints {
 
-    public static final String REPORT_API = "/api/reports";
+    public static final String REPORT_API = "/api/v1/reports";
 
     public static final String CREATE_REPORT = "/create";
     public static final String UPDATE_REPORT = "/update/{reportId}";
