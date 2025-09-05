@@ -48,6 +48,7 @@ public class ReportServiceImpl implements ReportService {
                 .content(req.getContent())
                 .student(student)
                 .classRoom(clazz)
+                .point(req.getPoint())
                 .hasImage(false)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -68,6 +69,7 @@ public class ReportServiceImpl implements ReportService {
 
         if (req.getTitle() != null) report.setTitle(req.getTitle());
         if (req.getContent() != null) report.setContent(req.getContent());
+        if (req.getPoint() != null) report.setPoint(req.getPoint());
 
         if (req.getImageThumbBase64() != null || req.getImageBase64() != null || req.getMimeType() != null) {
             if (isDeleteImage(req)) {
@@ -156,6 +158,7 @@ public class ReportServiceImpl implements ReportService {
                 .studentName(r.getStudent().getFullName())
                 .classId(r.getClassRoom().getClassId())
                 .className(r.getClassRoom().getClassName())
+                .point(r.getPoint())
                 .createdAt(r.getCreatedAt())
                 .build();
     }

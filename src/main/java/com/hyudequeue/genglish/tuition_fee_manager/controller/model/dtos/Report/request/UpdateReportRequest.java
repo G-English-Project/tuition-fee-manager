@@ -6,6 +6,8 @@ import lombok.Data;
 public class UpdateReportRequest {
     private String title;
     private String content;
+    
+    private Double point;
 
     private String imageThumbBase64;
     private String imageBase64;

@@ -43,6 +43,9 @@ public class Report {
     @JoinColumn(name = "class_id", nullable = false)
     private Classes classRoom;
 
+    @Column(nullable = true)
+    private Double point;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
