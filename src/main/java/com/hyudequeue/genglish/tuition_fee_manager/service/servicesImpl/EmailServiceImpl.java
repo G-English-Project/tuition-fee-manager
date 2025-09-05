@@ -27,7 +27,7 @@ public class EmailServiceImpl {
         try {
             // Build subject & HTML body
             String subject = MailTemplateBuilder.buildHtml(template, values);
-            String body = "";
+            String body = MailTemplateBuilder.buildHtml(template, values);
 
             // Create HTML email
             MimeMessage mimeMessage = mailSender.createMimeMessage();
