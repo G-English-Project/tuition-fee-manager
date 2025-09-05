@@ -21,5 +21,7 @@ public class ReportResponseDTO {
     private Long classId;
     private String className;
 
+    private Double point;
+
     private LocalDateTime createdAt;
 }

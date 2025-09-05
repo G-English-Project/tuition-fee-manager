@@ -12,6 +12,8 @@ public class CreateReportRequest {
     @NotBlank private String title;
     @NotBlank private String content;
 
+    private Double point;
+
     private String imageThumbBase64;
     private String imageBase64;
     private String mimeType;
