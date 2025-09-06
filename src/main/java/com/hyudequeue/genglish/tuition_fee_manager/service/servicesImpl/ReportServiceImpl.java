@@ -71,12 +71,15 @@ public class ReportServiceImpl implements ReportService {
         if (req.getContent() != null) report.setContent(req.getContent());
         if (req.getPoint() != null) report.setPoint(req.getPoint());
 
-        if (req.getImageThumbBase64() != null || req.getImageBase64() != null || req.getMimeType() != null) {
-            if (isDeleteImage(req)) {
+        boolean hasImageData = hasAnyImage(req.getImageThumbBase64(), req.getImageBase64());
+        boolean isExplicitDelete = isDeleteImage(req);
+        
+        if (hasImageData || isExplicitDelete) {
+            if (isExplicitDelete) {
                 Optional.ofNullable(report.getImage()).ifPresent(reportImageRepository::delete);
                 report.setImage(null);
                 report.setHasImage(false);
-            } else if (hasAnyImage(req.getImageThumbBase64(), req.getImageBase64())) {
+            } else if (hasImageData) {
                 upsertImage(report, req.getImageThumbBase64(), req.getImageBase64(), req.getMimeType());
             }
         }
