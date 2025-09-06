@@ -1,4 +1,4 @@
-package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedback.response;
+package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Review.response;
 
 
 import lombok.Builder;
@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class FeedbackResponseDto {
-    private Long feedbackId;
+public class ReviewResponseDto {
+    private Long reviewId;
     private String className;
     private String studentName;
     private String content;

@@ -1,17 +1,16 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedback.request.FeedbackRequestDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedback.response.FeedbackResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Review.request.ReviewRequestDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Review.response.ReviewResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Feedback;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Review;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
-import com.hyudequeue.genglish.tuition_fee_manager.repository.FeedbackRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.repository.ReviewRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
-import com.hyudequeue.genglish.tuition_fee_manager.service.services.FeedbackService;
-import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,28 +19,29 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class FeedbackServiceImpl implements FeedbackService {
+public class ReviewServiceImpl implements ReviewService {
 
-    private final FeedbackRepository feedbackRepository;
+    private final ReviewRepository reviewRepository;
     private final ClassRepository classRepository;
     private final UserRepository userRepository;
     private final InvoiceNotificationServiceImpl invoiceNotificationService;
 
+
     @Override
-    public FeedbackResponseDto createFeedback(FeedbackRequestDto dto) {
+    public ReviewResponseDto createReview(ReviewRequestDto dto) {
         Classes classes = classRepository.findById(dto.getClassId())
                 .orElseThrow(() -> new RuntimeException("Class not found"));
         User student = userRepository.findById(dto.getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        Feedback feedback = Feedback.builder()
+        Review review = Review.builder()
                 .classes(classes)
                 .student(student)
                 .content(dto.getContent())
                 .rating(dto.getRating())
                 .build();
 
-        Feedback saved = feedbackRepository.save(feedback);
+        Review saved = reviewRepository.save(review);
 
 
         // 🔔 Notify admin khi có feedback mới
@@ -54,43 +54,43 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public List<FeedbackResponseDto> getAllFeedbacks() {
-        return feedbackRepository.findAll().stream()
+    public List<ReviewResponseDto> getAllReviews() {
+        return reviewRepository.findAll().stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<FeedbackResponseDto> getFeedbacksByStudent(Long studentId) {
-        return feedbackRepository.findByStudent_UserId(studentId).stream()
+    public List<ReviewResponseDto> getReviewsByStudent(Long studentId) {
+        return reviewRepository.findByStudent_UserId(studentId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public FeedbackResponseDto updateFeedback(Long feedbackId, FeedbackRequestDto dto) {
-        Feedback feedback = feedbackRepository.findById(feedbackId)
+    public ReviewResponseDto updateReview(Long reviewId, ReviewRequestDto dto) {
+        Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Feedback not found"));
 
         // nếu cho phép update class/student thì giữ lại, còn không thì chỉ update content + rating
-        feedback.setContent(dto.getContent());
-        feedback.setRating(dto.getRating());
+        review.setContent(dto.getContent());
+        review.setRating(dto.getRating());
 
-        Feedback updated = feedbackRepository.save(feedback);
+        Review updated = reviewRepository.save(review);
         return toDto(updated);
     }
 
     @Override
-    public void deleteFeedback(Long feedbackId) {
-        Feedback feedback = feedbackRepository.findById(feedbackId)
+    public void deleteReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Feedback not found"));
-        feedbackRepository.delete(feedback);
+        reviewRepository.delete(review);
     }
 
 
-    private FeedbackResponseDto toDto(Feedback f) {
-        return FeedbackResponseDto.builder()
-                .feedbackId(f.getFeedbackId())
+    private ReviewResponseDto toDto(Review f) {
+        return ReviewResponseDto.builder()
+                .reviewId(f.getReviewId())
                 .className(f.getClasses().getClassName())
                 .studentName(f.getStudent().getFullName())
                 .content(f.getContent())
