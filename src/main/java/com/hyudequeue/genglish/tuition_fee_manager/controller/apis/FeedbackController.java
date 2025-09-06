@@ -1,0 +1,54 @@
+package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
+
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedback.request.FeedbackRequestDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedback.response.FeedbackResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.FeedbackService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.FeedbackEndpoints.*;
+
+@RestController
+@RequestMapping(BASE)
+@RequiredArgsConstructor
+public class FeedbackController {
+
+    private final FeedbackService feedbackService;
+
+    @PostMapping(CREATE_FEEDBACK)
+    public FeedbackResponseDto createFeedback(@RequestBody FeedbackRequestDto dto) {
+        return feedbackService.createFeedback(dto);
+    }
+
+    @GetMapping(GET_FEEDBACK_BY_ID)
+    public FeedbackResponseDto getFeedbackById(@PathVariable Long feedbackId) {
+        return feedbackService.getFeedbackById(feedbackId);
+    }
+
+    @GetMapping(GET_ALL_FEEDBACKS)
+    public List<FeedbackResponseDto> getAllFeedbacks() {
+        return feedbackService.getAllFeedbacks();
+    }
+
+    @PutMapping(UPDATE_FEEDBACK)
+    public FeedbackResponseDto updateFeedback(@PathVariable Long feedbackId, @RequestBody FeedbackRequestDto dto) {
+        return feedbackService.updateFeedback(feedbackId, dto);
+    }
+
+    @DeleteMapping(DELETE_FEEDBACK)
+    public void deleteFeedback(@PathVariable Long feedbackId) {
+        feedbackService.deleteFeedback(feedbackId);
+    }
+
+    @GetMapping(GET_FEEDBACKS_BY_STUDENT)
+    public List<FeedbackResponseDto> getFeedbacksByStudentId(@PathVariable Long studentId) {
+        return feedbackService.getFeedbacksByStudentId(studentId);
+    }
+
+    @GetMapping(GET_FEEDBACKS_BY_TEACHER)
+    public List<FeedbackResponseDto> getFeedbacksByTeacherId(@PathVariable Long teacherId) {
+        return feedbackService.getFeedbacksByTeacherId(teacherId);
+    }
+}

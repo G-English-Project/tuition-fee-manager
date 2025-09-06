@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.utility.constants;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.FeedbackEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ReviewEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints;
@@ -13,6 +14,9 @@ public final class AllowedEndpoint {
             ApiPathConstants.USER_API + UserEndpoints.CHANGE_PASSWORD_ENDPOINT,
             ApiPathConstants.PAYMENT_API + PaymentEndpoints.CREATE,
             ApiPathConstants.REVIEW_API + ReviewEndpoints.CREATE_REVIEW,
+            ApiPathConstants.REVIEW_API + ReviewEndpoints.GET_ALL_REVIEWS,
+            ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.CREATE_FEEDBACK,
+
     };
 
     // 👨‍🎓 Student
@@ -41,8 +45,11 @@ public final class AllowedEndpoint {
             ApiPathConstants.USER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.PROFILE_ENDPOINT,
             ApiPathConstants.USER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.EDIT_ENDPOINT,
 
-            //Feedback
-            ApiPathConstants.REVIEW_API + ReviewEndpoints.GET_REVIEWS_BY_STUDENT
+            //Review
+            ApiPathConstants.REVIEW_API + ReviewEndpoints.GET_REVIEWS_BY_STUDENT,
+
+            // Feedback
+            ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT
 
     };
 
