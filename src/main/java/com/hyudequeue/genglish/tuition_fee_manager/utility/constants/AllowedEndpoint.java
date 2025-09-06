@@ -38,6 +38,7 @@ public final class AllowedEndpoint {
 
             // User profile
             ApiPathConstants.USER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.PROFILE_ENDPOINT,
+            ApiPathConstants.USER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.EDIT_ENDPOINT,
 
             //Feedback
             ApiPathConstants.FEEDBACK_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT
