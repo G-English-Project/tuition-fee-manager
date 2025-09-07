@@ -74,58 +74,117 @@ public class Payment {
         return parts[parts.length - 1];
     }
 
-    /**
-     * Mặc định: "<Tên> | <Tên lớp> | <Mã hóa đơn/ID>"
-     * Nếu dài > 24 ký tự thì bỏ tên lớp => "<Tên> | <Mã hóa đơn/ID>"
-     */
-    private static String buildDefaultDescription(Invoice invoice) {
-        String nameSource = (invoice.getUserName() != null && !invoice.getUserName().isBlank())
-                ? invoice.getUserName()
-                : (invoice.getUser() != null ? invoice.getUser().getFullName() : null);
-        String givenName = onlyGivenName(nameSource);
+    // ======================= Helpers =======================
 
-        String className = (invoice.getClasses() != null && invoice.getClasses().getClassName() != null)
-                ? invoice.getClasses().getClassName().trim()
-                : "LOP";
+    // ======================= Helpers =======================
 
-        String code = String.valueOf(invoice.getInvoiceId());
-
-        String fullDesc = String.format("%s | %s | %s", givenName, className, code);
-
-        if (fullDesc.length() > 24) {
-            fullDesc = String.format("%s | %s", givenName, code);
-        }
-
-        return fullDesc;
+    private static String lastToken(String s) {
+        if (s == null) return null;
+        String[] parts = s.trim().split("\\s+");
+        return parts.length == 0 ? null : parts[parts.length - 1];
     }
 
-    public static Payment fromCreateRequest(CreatePaymentRequest req, Invoice invoice, PayOSProperties properties) {
-        String fullName = invoice.getUser() != null ? invoice.getUser().getFullName() : "Hoc vien";
-        String[] parts = fullName.trim().split("\\s+");
+    /** Format mã hoá đơn: # + 6 chữ số (bù 0 ở đầu) */
+    private static String formatInvoiceCode(Long invoiceId) {
+        if (invoiceId == null) return "#000000";
+        return String.format("#%06d", invoiceId);
+    }
 
-        // Lấy 2 từ cuối nếu tên có nhiều hơn 1 từ, ngược lại lấy 1 từ
-        String shortName;
-        if (parts.length >= 2) {
-            shortName = parts[parts.length - 2] + " " + parts[parts.length - 1];
-        } else {
-            shortName = parts[0];
+    /**
+     * Build theo rule chung (không xét baseDesc):
+     * Primary: "<nameLast> | <classLast> | <code>"
+     * >24  ->  "<nameLast> | <code>"
+     * >24  ->  "HOA DON | <code>"
+     */
+    private static String buildCore(String nameLast, String classLast, String code) {
+        String n = (nameLast == null || nameLast.isBlank()) ? "HV" : nameLast;
+        String c = (classLast == null || classLast.isBlank()) ? "LOP" : classLast;
+
+        String primary = String.format("%s | %s | %s", n, c, code);
+        if (primary.length() <= 24) return primary;
+
+        String noClass = String.format("%s | %s", n, code);
+        if (noClass.length() <= 24) return noClass;
+
+        return String.format("HOA DON | %s", code);
+    }
+
+    /**
+     * Nếu có baseDesc:
+     *  - Thử "<baseDesc> | <code>"
+     *  - Nếu <=24: dùng luôn
+     *  - Nếu >24: bỏ baseDesc và quay về buildCore (Name/Class rules)
+     * Nếu không có baseDesc: dùng buildCore.
+     */
+    private static String buildDescriptionWithRules(
+            String nameLast, String classLast, String baseDescOrNull, String code) {
+
+        if (baseDescOrNull != null && !baseDescOrNull.isBlank()) {
+            String candidate = String.format("%s | %s", baseDescOrNull.trim(), code);
+            if (candidate.length() <= 24) {
+                return candidate;
+            }
+            // >24: bỏ baseDesc và dùng rule chuẩn
+            return buildCore(nameLast, classLast, code);
         }
 
-        String shownId = GenerateId.formatId(invoice.getInvoiceId());
+        return buildCore(nameLast, classLast, code);
+    }
 
-        // Lấy tên lớp (nếu có)
-        String className = (invoice.getClasses() != null && invoice.getClasses().getClassName() != null)
+// ======================= Default description (có thể tái dùng) =======================
+
+    private static String buildDefaultDescription(Invoice invoice, String baseDescOrNull) {
+        // Lấy tên cuối từ fullName; fallback userName; rồi "HV"
+        String fullName = (invoice.getUser() != null) ? invoice.getUser().getFullName() : null;
+        String nameLast = lastToken(fullName);
+        if (nameLast == null) {
+            String nameSource = (invoice.getUserName() != null && !invoice.getUserName().isBlank())
+                    ? invoice.getUserName()
+                    : null;
+            nameLast = lastToken(nameSource);
+        }
+        if (nameLast == null || nameLast.isBlank()) nameLast = "HV";
+
+        // Lấy class cuối
+        String classNameRaw = (invoice.getClasses() != null && invoice.getClasses().getClassName() != null)
                 ? invoice.getClasses().getClassName().trim()
                 : "LOP";
+        String classLast = lastToken(classNameRaw);
+        if (classLast == null || classLast.isBlank()) classLast = "LOP";
 
-        // Format description: "<Tên ngắn> | <Tên lớp> | <Mã hóa đơn>"
-        String desc = String.format("%s | %s | %s", shortName, className, shownId);
+        // Mã hoá đơn (# + 6 số)
+        String code = formatInvoiceCode(invoice.getInvoiceId());
+
+        return buildDescriptionWithRules(nameLast, classLast, baseDescOrNull, code);
+    }
+
+// ======================= fromCreateRequest =======================
+
+    public static Payment fromCreateRequest(CreatePaymentRequest req, Invoice invoice, PayOSProperties properties) {
+        // nameLast: từ cuối của fullName
+        String fullName = (invoice.getUser() != null) ? invoice.getUser().getFullName() : "Hoc vien";
+        String nameLast = lastToken(fullName);
+        if (nameLast == null || nameLast.isBlank()) nameLast = "HV";
+
+        String classNameRaw = (invoice.getClasses() != null && invoice.getClasses().getClassName() != null)
+                ? invoice.getClasses().getClassName().trim()
+                : "LOP";
+        String classLast = lastToken(classNameRaw);
+        if (classLast == null || classLast.isBlank()) classLast = "LOP";
+
+        String code = formatInvoiceCode(invoice.getInvoiceId());
+
+        String baseDesc = (req.getDescription() != null && !req.getDescription().isBlank())
+                ? req.getDescription().trim()
+                : null;
+
+        String desc = buildDescriptionWithRules(nameLast, classLast, baseDesc, code);
 
         return Payment.builder()
                 .invoice(invoice)
                 .amount(invoice.getTotalAmount())
                 .currency("VND")
-                .description(desc)   // 🚀 luôn do BE build
+                .description(desc) 
                 .buyerName(req.getBuyerName())
                 .buyerEmail(req.getBuyerEmail())
                 .buyerPhone(req.getBuyerPhone())
@@ -135,10 +194,6 @@ public class Payment {
                 .createdAt(LocalDateTime.now())
                 .build();
     }
-
-
-
-
 
     public static PaymentData toPaymentData(Payment payment, long expiredAtSeconds) {
         PaymentData.PaymentDataBuilder builder = vn.payos.type.PaymentData.builder()
