@@ -36,9 +36,12 @@ public final class AllowedEndpoint {
 
             // Notifications
             ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.GET_ALL_BY_USER,
+            ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.GET_ACTIVE_BY_USER,
             ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.MARK_AS_READ,
             ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.MARK_MULTIPLE_AS_READ,
             ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.MARK_ALL_AS_READ,
+            ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.MARK_AS_DELETE,
+            ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.MARK_ALL_AS_DELETE,
             ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.COUNT_UNREAD,
 
             // User profile

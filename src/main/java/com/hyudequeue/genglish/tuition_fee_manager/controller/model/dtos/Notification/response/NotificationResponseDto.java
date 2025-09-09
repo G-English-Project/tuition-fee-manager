@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Notification.response;
 
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.NotificationDeleteEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.NotificationStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Notification;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
@@ -21,6 +22,7 @@ public class NotificationResponseDto {
     private String body;
     private LocalDateTime sentAt;
     private NotificationStatusEnum status;
+    private NotificationDeleteEnum delete;
 
     public static NotificationResponseDto ToDto(Notification notification){
         return NotificationResponseDto.builder()
@@ -30,6 +32,7 @@ public class NotificationResponseDto {
                 .body(notification.getBody())
                 .sentAt(notification.getSentAt())
                 .status(notification.getStatus())
+                .delete(notification.getDelete())
                 .build();
     }
 }

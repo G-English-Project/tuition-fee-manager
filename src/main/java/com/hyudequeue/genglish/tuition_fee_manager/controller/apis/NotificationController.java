@@ -10,8 +10,10 @@
     import lombok.RequiredArgsConstructor;
     import org.springframework.data.domain.Page;
     import org.springframework.data.domain.PageRequest;
+    import org.springframework.http.HttpStatus;
     import org.springframework.http.ResponseEntity;
     import org.springframework.web.bind.annotation.*;
+    import org.springframework.web.server.ResponseStatusException;
 
     import java.util.List;
 
@@ -89,8 +91,26 @@
         @DeleteMapping(MARK_AS_DELETE)
         public ResponseEntity<ApiResp<String>> markAsDelete(
                 @Parameter(description = "Notification ID") @PathVariable Long notificationId) {
-            notificationService.markAsDelete(notificationId);
-            return ApiResp.success("Marked as deleted.");
+            try {
+                notificationService.markAsDelete(notificationId);
+                return ApiResp.success("Marked as deleted.");
+            } catch (ResponseStatusException e) {
+                return ResponseEntity.status(e.getStatusCode())
+                        .body(ApiResp.<String>builder()
+                                .success(false)
+                                .error(ApiResp.ErrorResp.builder()
+                                        .message(e.getReason())
+                                        .build())
+                                .build());
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ApiResp.<String>builder()
+                                .success(false)
+                                .error(ApiResp.ErrorResp.builder()
+                                        .message("Internal server error")
+                                        .build())
+                                .build());
+            }
         }
 
         @Operation(summary = "Mark all notifications as delete for a user")
