@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Notification.response.NotificationResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.NotificationDeleteEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.NotificationStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Notification;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
@@ -120,11 +121,43 @@ public class NotificationServiceImpl implements NotificationService {
         return notifications.map(NotificationResponseDto::ToDto);
     }
 
+    @Override
+    public Page<NotificationResponseDto> getActiveNotifications(Long userId, Pageable pageable) {
+        User user = getUserOrThrow(userId);
+        // Chỉ lấy những notification chưa bị delete (delete = NO) cho nút chuông
+        Page<Notification> notifications = notificationRepository.findByUserAndDeleteOrderBySentAtDesc(user, NotificationDeleteEnum.NO, pageable);
+        return notifications.map(NotificationResponseDto::ToDto);
+    }
+
 
     @Override
     public long countUnreadNotifications(Long userId) {
         User user = getUserOrThrow(userId);
         return notificationRepository.countByUserAndStatus(user, NotificationStatusEnum.UNREAD);
+    }
+
+    @Override
+    @Transactional
+    public void markAsDelete(Long notificationId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Notification not found with id: " + notificationId));
+        
+        // Chỉ cho phép xóa notification đã được đọc
+        if (notification.getStatus() != NotificationStatusEnum.READ) {
+            throw new ResponseStatusException(HttpStatusCode.valueOf(400), "Cannot delete unread notification. Please mark as read first.");
+        }
+        
+        notification.setDelete(NotificationDeleteEnum.YES);
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional
+    public void markAllAsDelete(Long userId) {
+        User user = getUserOrThrow(userId);
+        List<Notification> notifications = notificationRepository.findByUserAndStatusAndDelete(user, NotificationStatusEnum.READ, NotificationDeleteEnum.NO);
+        notifications.forEach(n -> n.setDelete(NotificationDeleteEnum.YES));
+        notificationRepository.saveAll(notifications);
     }
 
     private User getUserOrThrow(Long userId) {

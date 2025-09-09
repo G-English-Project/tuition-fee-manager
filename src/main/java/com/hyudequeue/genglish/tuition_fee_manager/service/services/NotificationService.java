@@ -18,7 +18,13 @@ public interface NotificationService {
 
     void markAllAsRead(Long userId);
 
+    void markAsDelete(Long notificationId);
+
+    void markAllAsDelete(Long userId);
+
     Page<NotificationResponseDto> getNotifications(Long userId, Pageable pageable);
+
+    Page<NotificationResponseDto> getActiveNotifications(Long userId, Pageable pageable);
 
     long countUnreadNotifications(Long userId);
     void createNotifications(List<Long> userIds, String subject, String body);
