@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.NotificationDeleteEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.NotificationStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,4 +35,9 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationStatusEnum status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private NotificationDeleteEnum delete = NotificationDeleteEnum.NO;
 }

@@ -37,6 +37,18 @@
             return ApiResp.success(notificationService.getNotifications(userId, PageRequest.of(pageNumber, pageSize)));
         }
 
+        @Operation(summary = "Get active notifications by user for bell icon", description = "Returns paginated list of active (non-deleted) notifications by user ID.")
+        @ApiResponses(value = {
+                @ApiResponse(responseCode = "200", description = "Active notifications retrieved successfully")
+        })
+        @GetMapping(GET_ACTIVE_BY_USER)
+        public ResponseEntity<ApiResp<Page<NotificationResponseDto>>> getActiveNotificationsByUser(
+                @Parameter(description = "User ID") @PathVariable Long userId,
+                @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
+                @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize) {
+            return ApiResp.success(notificationService.getActiveNotifications(userId, PageRequest.of(pageNumber, pageSize)));
+        }
+
         @Operation(summary = "Mark one notification as read")
         @ApiResponses(value = {
                 @ApiResponse(responseCode = "200", description = "Notification marked as read")
@@ -69,6 +81,29 @@
             notificationService.markAllAsRead(userId);
             return ApiResp.success("Marked all as read.");
         }
+
+        @Operation(summary = "Mark one notification as delete")
+        @ApiResponses(value = {
+                @ApiResponse(responseCode = "200", description = "Notification marked as delete")
+        })
+        @DeleteMapping(MARK_AS_DELETE)
+        public ResponseEntity<ApiResp<String>> markAsDelete(
+                @Parameter(description = "Notification ID") @PathVariable Long notificationId) {
+            notificationService.markAsDelete(notificationId);
+            return ApiResp.success("Marked as deleted.");
+        }
+
+        @Operation(summary = "Mark all notifications as delete for a user")
+        @ApiResponses(value = {
+                @ApiResponse(responseCode = "200", description = "All notifications marked as delete")
+        })
+        @DeleteMapping(MARK_ALL_AS_DELETE)
+        public ResponseEntity<ApiResp<String>> markAllAsDelete(
+                @Parameter(description = "User ID") @PathVariable Long userId) {
+            notificationService.markAllAsDelete(userId);
+            return ApiResp.success("Marked all as deleted.");
+        }
+
 
         @Operation(summary = "Count unread notifications for a user")
         @ApiResponses(value = {
