@@ -224,6 +224,25 @@ public class InvoiceController {
         };
     }
 
+    @Operation(summary = "Bulk soft-delete invoices (mark as CANCELLED)")
+    @PutMapping("/bulk-soft-delete")
+    public ResponseEntity<ApiResp<String>> bulkSoftDeleteInvoices(
+            @Parameter(description = "List of invoice IDs to soft-delete")
+            @RequestBody List<Long> invoiceIds
+    ) {
+        invoiceService.bulkSoftDeleteInvoices(invoiceIds);
+        return ApiResp.success("Invoices soft-deleted successfully");
+    }
+
+    @Operation(summary = "Bulk hard-delete invoices (permanently delete invoices)")
+    @DeleteMapping("/bulk-hard-delete")
+    public ResponseEntity<ApiResp<String>> bulkHardDeleteInvoices(
+            @Parameter(description = "List of invoice IDs to hard-delete")
+            @RequestBody List<Long> invoiceIds
+    ) {
+        invoiceService.bulkHardDeleteInvoices(invoiceIds);
+        return ApiResp.success("Invoices hard-deleted successfully");
+    }
 
 
 

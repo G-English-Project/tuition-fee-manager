@@ -433,6 +433,33 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceNotificationService.notifyManualConfirm(invoice);
     }
 
+    @Override
+    @Transactional
+    public void bulkSoftDeleteInvoices(List<Long> invoiceIds) {
+        List<Invoice> invoices = invoiceRepository.findAllById(invoiceIds);
+        if (invoices.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No invoices found to delete");
+        }
+
+        invoices.forEach(invoice -> {
+            invoice.setStatus(InvoiceStatusEnum.CANCELLED);
+            invoice.setUpdatedAt(LocalDateTime.now());
+        });
+
+        invoiceRepository.saveAll(invoices);
+    }
+
+    @Override
+    @Transactional
+    public void bulkHardDeleteInvoices(List<Long> invoiceIds) {
+        List<Invoice> invoices = invoiceRepository.findAllById(invoiceIds);
+        if (invoices.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No invoices found to delete");
+        }
+
+        invoiceRepository.deleteAll(invoices);
+    }
+
 
 
 }

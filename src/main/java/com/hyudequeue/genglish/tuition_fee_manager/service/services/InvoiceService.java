@@ -69,4 +69,6 @@ public interface InvoiceService {
     void manualConfirmInvoice(Long invoiceId);
 
     Page<RevenueSummaryDto> getRevenueSummaryByYear(PageRequest pageable);
+    void bulkSoftDeleteInvoices(List<Long> invoiceIds);
+    void bulkHardDeleteInvoices(List<Long> invoiceIds);
 }
