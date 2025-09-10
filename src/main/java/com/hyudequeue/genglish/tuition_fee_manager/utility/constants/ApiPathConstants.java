@@ -13,5 +13,6 @@ public final class ApiPathConstants {
     public static final String INVOICE_CATEGORY_API = API + V1 + "/invoice-category";
     public static final String REVIEW_API = API + V1 + "/review";
     public static final String FEEDBACK_API = "/api/v1/feedbacks";
+    public static final String TEACHER_API = API + V1 + "/teacher";
 
 }

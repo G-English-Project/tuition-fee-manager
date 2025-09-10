@@ -3,6 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.utility.constants;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.FeedbackEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ReviewEndpoints;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints;
 
 public final class AllowedEndpoint {
@@ -52,7 +53,16 @@ public final class AllowedEndpoint {
             ApiPathConstants.REVIEW_API + ReviewEndpoints.GET_REVIEWS_BY_STUDENT,
 
             // Feedback
-            ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT
+            ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT,
+
+            // Teacher (read-only for students)
+            ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_ALL,
+            ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_ID,
+            ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.SEARCH_BY_NAME,
+            ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_SPECIALTY,
+            ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_LANGUAGE,
+            ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_MIN_RATING,
+            ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_TOP_RATED
 
     };
 
