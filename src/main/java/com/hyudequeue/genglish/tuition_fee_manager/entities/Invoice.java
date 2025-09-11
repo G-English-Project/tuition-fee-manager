@@ -46,10 +46,10 @@ public class Invoice {
     @Column(nullable = false)
     private Integer totalAmount;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<InvoiceItem> items;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JoinTable(
             name = "invoice_category_map",
             joinColumns = @JoinColumn(name = "invoice_id"),
@@ -65,6 +65,9 @@ public class Invoice {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Payment> payments;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_type", nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'BANKING'")
