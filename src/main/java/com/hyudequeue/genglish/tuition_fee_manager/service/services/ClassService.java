@@ -4,11 +4,14 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDtoWithCount;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.MultipleStudentAssignmentResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Enrollment.response.EnrollmentResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserInClassWithNoteDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 public interface ClassService {
     Page<UserInClassWithNoteDto> GetCurrentStudentInClass(Long classId, int pageNumber, int pageSize);
@@ -21,6 +24,7 @@ public interface ClassService {
     ClassResponseDto ModifyClassFee(ClassFeeModifyRequestDto classFeeModify);
     Page<EnrollmentResponseDto> GetStudentEnrollmentClasses(Long studentId, int pageNumber, int pageSize);
     EnrollmentResponseDto AssignStudentToClass(Long classId, Long studentId);
+    MultipleStudentAssignmentResponseDto AssignMultipleStudentsToClass(Long classId, List<Long> studentIds);
     void RemoveStudentFromClass(Long classId, Long studentId);
     UserInClassWithNoteDto NoteAStudentInClass(Long classId, Long studentId, String note);
 
