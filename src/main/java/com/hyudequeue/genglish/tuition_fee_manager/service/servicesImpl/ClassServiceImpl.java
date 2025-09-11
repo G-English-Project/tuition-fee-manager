@@ -5,6 +5,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassCountProjection;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDtoWithCount;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.MultipleStudentAssignmentResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Enrollment.response.EnrollmentResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserInClassWithNoteDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -241,5 +243,96 @@ public class ClassServiceImpl implements ClassService {
         enrollment.setNote(note);
         enrollment = classEnrollmentRepository.save(enrollment);
         return UserInClassWithNoteDto.fromEnrollment(enrollment);
+    }
+
+    @Override
+    public MultipleStudentAssignmentResponseDto AssignMultipleStudentsToClass(Long classId, List<Long> studentIds) {
+        // Validate class exists
+        Classes classes = classesRepository.findById(classId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+
+        List<EnrollmentResponseDto> successfulEnrollments = new ArrayList<>();
+        List<MultipleStudentAssignmentResponseDto.FailedAssignmentDto> failedAssignments = new ArrayList<>();
+
+        for (Long studentId : studentIds) {
+            try {
+                // Check if user exists and is a student
+                User user = userRepository.findById(studentId).orElse(null);
+                if (user == null) {
+                    failedAssignments.add(
+                        MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
+                            .studentId(studentId)
+                            .reason("Student not found")
+                            .studentName("Unknown")
+                            .build()
+                    );
+                    continue;
+                }
+
+                if (user.getRole() != RoleEnum.STUDENT) {
+                    failedAssignments.add(
+                        MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
+                            .studentId(studentId)
+                            .reason("User is not a student")
+                            .studentName(user.getFullName())
+                            .build()
+                    );
+                    continue;
+                }
+
+                // Check if already enrolled
+                boolean alreadyEnrolled = classEnrollmentRepository
+                        .findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(classId, studentId)
+                        .isPresent();
+
+                if (alreadyEnrolled) {
+                    failedAssignments.add(
+                        MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
+                            .studentId(studentId)
+                            .reason("Student already enrolled in this class")
+                            .studentName(user.getFullName())
+                            .build()
+                    );
+                    continue;
+                }
+
+                // Create enrollment
+                ClassEnrollment newEnrollment = ClassEnrollment.builder()
+                        .user(user)
+                        .classes(classes)
+                        .enrolledAt(LocalDateTime.now())
+                        .build();
+
+                newEnrollment = classEnrollmentRepository.save(newEnrollment);
+                
+                // Send notification
+                try {
+                    invoiceNotificationService.notifyStudentAssignedToClass(user, classes);
+                } catch (Exception e) {
+                    // Log notification error but don't fail the enrollment
+                    System.err.println("Failed to send notification for student " + studentId + ": " + e.getMessage());
+                }
+
+                successfulEnrollments.add(EnrollmentResponseDto.fromEntity(newEnrollment));
+
+            } catch (Exception e) {
+                // Handle any unexpected errors
+                failedAssignments.add(
+                    MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
+                        .studentId(studentId)
+                        .reason("Unexpected error: " + e.getMessage())
+                        .studentName("Unknown")
+                        .build()
+                );
+            }
+        }
+
+        return MultipleStudentAssignmentResponseDto.builder()
+                .successfulEnrollments(successfulEnrollments)
+                .failedAssignments(failedAssignments)
+                .totalProcessed(studentIds.size())
+                .successCount(successfulEnrollments.size())
+                .failedCount(failedAssignments.size())
+                .build();
     }
 }
