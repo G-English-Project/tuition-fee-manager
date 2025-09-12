@@ -457,6 +457,17 @@ public class InvoiceServiceImpl implements InvoiceService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No invoices found to delete");
         }
 
+        // Clear relationships first to avoid foreign key constraint violations
+        for (Invoice invoice : invoices) {
+            // Clear invoice-category relationships
+            if (invoice.getCategories() != null) {
+                invoice.getCategories().clear();
+            }
+            // Save to remove the relationships
+            invoiceRepository.save(invoice);
+        }
+
+        // Now delete the invoices
         invoiceRepository.deleteAll(invoices);
     }
 

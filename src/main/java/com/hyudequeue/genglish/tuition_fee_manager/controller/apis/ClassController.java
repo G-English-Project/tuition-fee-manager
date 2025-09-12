@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassFeeModifyRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.MultipleStudentAssignmentDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -143,6 +144,20 @@ public class ClassController {
             @Parameter(description = "Class ID") @PathVariable Long classId,
             @Parameter(description = "Student ID") @PathVariable Long studentId) {
         return ApiResp.success(classService.AssignStudentToClass(classId, studentId));
+    }
+
+    @Operation(summary = "Assign multiple students to class", description = "Assigns multiple students to a class in a single request.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Students assignment process completed"),
+            @ApiResponse(responseCode = "404", description = "Class not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    @PostMapping(ASSIGN_MULTIPLE_STUDENTS)
+    public ResponseEntity<?> assignMultipleStudentsToClass(
+            @Parameter(description = "Class ID") @PathVariable Long classId,
+            @Parameter(description = "Request containing list of student IDs") 
+            @RequestBody MultipleStudentAssignmentDto request) {
+        return ApiResp.success(classService.AssignMultipleStudentsToClass(classId, request.getStudentIds()));
     }
 
     @Operation(summary = "Remove student from class", description = "Removes a student from a class.")
