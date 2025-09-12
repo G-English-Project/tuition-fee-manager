@@ -46,7 +46,7 @@ public class Invoice {
     @Column(nullable = false)
     private Integer totalAmount;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "invoice", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<InvoiceItem> items;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -66,7 +66,7 @@ public class Invoice {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "invoice", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<Payment> payments;
 
     @Enumerated(EnumType.STRING)
