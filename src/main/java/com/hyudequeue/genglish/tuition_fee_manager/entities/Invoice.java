@@ -49,7 +49,7 @@ public class Invoice {
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<InvoiceItem> items;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "invoice_category_map",
             joinColumns = @JoinColumn(name = "invoice_id"),
