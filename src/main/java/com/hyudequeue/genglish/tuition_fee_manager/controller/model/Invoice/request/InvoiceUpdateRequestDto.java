@@ -16,6 +16,9 @@ public class InvoiceUpdateRequestDto {
     private Long invoiceId;
     private List<InvoiceItemRequestDTO> updatedItems;
     private List<Long> categoryIds;
+    private String month;
+    private LocalDateTime dueDate;
+    private String classes;
 
     public Integer calculateTotalAmount() {
         if (updatedItems == null) return 0;
