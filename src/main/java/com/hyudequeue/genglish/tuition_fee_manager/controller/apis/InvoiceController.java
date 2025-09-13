@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
@@ -94,13 +95,14 @@ public class InvoiceController {
         return ApiResp.success(invoiceService.getInvoicesByStudent(userId, PageRequest.of(page, size)));
     }
 
-    @Operation(summary = "Update invoice items")
-    @PutMapping(UPDATE)
+    @Operation(summary = "Update invoice")
+    @PutMapping("/{invoiceId}")
     public ResponseEntity<ApiResp<InvoiceResponseDto>> updateInvoice(
-            @RequestParam Long invoiceId,
-            @RequestBody List<InvoiceItemRequestDTO> updatedItems) {
-        return ApiResp.success(invoiceService.updateInvoice(invoiceId, updatedItems));
+            @PathVariable Long invoiceId,
+            @RequestBody InvoiceUpdateRequestDto requestDto) {
+        return ApiResp.success(invoiceService.updateInvoice(invoiceId, requestDto));
     }
+
 
     @Operation(summary = "Get all invoices with optional filters")
     @GetMapping(GET_ALL)

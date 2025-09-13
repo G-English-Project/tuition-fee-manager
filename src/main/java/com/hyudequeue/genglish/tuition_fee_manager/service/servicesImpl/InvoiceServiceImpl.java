@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
@@ -45,6 +46,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final ClassEnrollmentRepository classEnrollmentRepository;
     private final InvoiceCategoryRepository categoryRepository;
     private final InvoiceNotificationServiceImpl invoiceNotificationService;
+    private final InvoiceCategoryRepository invoiceCategoryRepository;
+
     public InvoiceServiceImpl(InvoiceRepository invoiceRepository,
                               UserRepository userRepository,
                               ClassRepository classRepository,
@@ -52,7 +55,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                               ClassEnrollmentRepository classEnrollmentRepository,
                               EmailServiceImpl emailService,
                               InvoiceCategoryRepository categoryRepository,
-                              InvoiceNotificationServiceImpl invoiceNotificationService) {
+                              InvoiceNotificationServiceImpl invoiceNotificationService, InvoiceCategoryRepository invoiceCategoryRepository) {
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
@@ -61,6 +64,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         this.emailService = emailService;
         this.categoryRepository = categoryRepository;
         this.invoiceNotificationService = invoiceNotificationService;
+        this.invoiceCategoryRepository = invoiceCategoryRepository;
     }
 
     // =========================
@@ -316,32 +320,45 @@ public class InvoiceServiceImpl implements InvoiceService {
         return InvoiceResponseDto.toDto(invoice);
     }
 
-    // =========================
-    // UPDATE
-    // =========================
     @Override
     @Transactional
-    public InvoiceResponseDto updateInvoice(Long invoiceId, List<InvoiceItemRequestDTO> updatedItems) {
+    public InvoiceResponseDto updateInvoice(Long invoiceId, InvoiceUpdateRequestDto requestDto) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
-        // Replace items (orphanRemoval)
+        // ✅ Fetch Classes entity if classId is provided
+        Classes classes = null;
+        if (requestDto.getClassId() != null) {
+            classes = classRepository.findById(requestDto.getClassId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+        }
+
+        // ✅ Apply changes
+        requestDto.applyTo(invoice, classes);
+
+        // ✅ Update categories
+        if (requestDto.getCategoryIds() != null) {
+            List<InvoiceCategory> categories = invoiceCategoryRepository.findAllById(requestDto.getCategoryIds());
+            invoice.setCategories(categories);
+        }
+
+        // ✅ Replace items
         invoice.getItems().clear();
         invoiceRepository.saveAndFlush(invoice);
 
-        if (updatedItems != null) {
-            for (InvoiceItemRequestDTO itemDto : updatedItems) {
+        if (requestDto.getUpdatedItems() != null) {
+            for (InvoiceItemRequestDTO itemDto : requestDto.getUpdatedItems()) {
                 InvoiceItem newItem = itemDto.toEntity(invoice);
                 invoice.getItems().add(newItem);
             }
         }
 
-        invoice.setTotalAmount(calculateTotalAmount(updatedItems));
-        invoice.setUpdatedAt(LocalDateTime.now());
-
         Invoice saved = invoiceRepository.save(invoice);
         return InvoiceResponseDto.toDto(saved);
     }
+
+
+
 
     // =========================
     // DELETE (soft cancel)
