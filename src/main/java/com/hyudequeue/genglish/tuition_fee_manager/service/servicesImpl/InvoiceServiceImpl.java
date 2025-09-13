@@ -295,6 +295,12 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    public Page<InvoiceResponseDto> getInvoicesByStatusAndClass(Pageable pageable, InvoiceStatusEnum invoiceStatus, Long classId) {
+        return invoiceRepository.findByStatusAndClasses_ClassId(invoiceStatus, classId, pageable)
+                .map(InvoiceResponseDto::toDto);
+    }
+
+    @Override
     public InvoiceResponseDto getInvoiceById(Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
