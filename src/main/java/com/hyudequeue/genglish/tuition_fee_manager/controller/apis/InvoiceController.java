@@ -110,11 +110,12 @@ public class InvoiceController {
             @RequestParam(required = false) InvoiceStatusEnum status,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Long classId,
             @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) String username
     ) {
         return ApiResp.success(
-                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, categoryIds, username)
+                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, classId, categoryIds, username)
         );
     }
 
