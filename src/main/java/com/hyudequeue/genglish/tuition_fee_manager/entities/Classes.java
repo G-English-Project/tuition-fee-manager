@@ -43,4 +43,13 @@ public class Classes {
     @Column(nullable = true)
     private LocalDateTime updatedAt;
 
+    @PrePersist
+    void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
