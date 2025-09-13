@@ -53,6 +53,8 @@ public interface InvoiceService {
 
     Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus);
 
+    Page<InvoiceResponseDto> getInvoicesByStatusAndClass(Pageable pageable, InvoiceStatusEnum invoiceStatus, Long classId);
+
     void deleteInvoice(Long invoiceId);
 
     void processInvoiceStatus(Long invoiceId, InvoiceStatusEnum invoiceStatus);
