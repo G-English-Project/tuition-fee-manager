@@ -26,7 +26,7 @@ public class EmailServiceImpl {
     ) {
         try {
             // Build subject & HTML body
-            String subject = MailTemplateBuilder.buildHtml(template, values);
+            String subject = "Mail from G's English";
             String body = MailTemplateBuilder.buildHtml(template, values);
 
             // Create HTML email

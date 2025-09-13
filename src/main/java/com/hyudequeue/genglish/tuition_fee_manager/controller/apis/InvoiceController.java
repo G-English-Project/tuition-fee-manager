@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
@@ -94,13 +95,14 @@ public class InvoiceController {
         return ApiResp.success(invoiceService.getInvoicesByStudent(userId, PageRequest.of(page, size)));
     }
 
-    @Operation(summary = "Update invoice items")
-    @PutMapping(UPDATE)
+    @Operation(summary = "Update invoice")
+    @PutMapping("/{invoiceId}")
     public ResponseEntity<ApiResp<InvoiceResponseDto>> updateInvoice(
-            @RequestParam Long invoiceId,
-            @RequestBody List<InvoiceItemRequestDTO> updatedItems) {
-        return ApiResp.success(invoiceService.updateInvoice(invoiceId, updatedItems));
+            @PathVariable Long invoiceId,
+            @RequestBody InvoiceUpdateRequestDto requestDto) {
+        return ApiResp.success(invoiceService.updateInvoice(invoiceId, requestDto));
     }
+
 
     @Operation(summary = "Get all invoices with optional filters")
     @GetMapping(GET_ALL)
@@ -110,23 +112,29 @@ public class InvoiceController {
             @RequestParam(required = false) InvoiceStatusEnum status,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Long classId,
             @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) String username
     ) {
         return ApiResp.success(
-                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, categoryIds, username)
+                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, classId, categoryIds, username)
         );
     }
 
 
 
-    @Operation(summary = "Get invoices by status")
+    @Operation(summary = "Get invoices by status and optionally by class")
     @GetMapping(GET_BY_STATUS)
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> getInvoicesByStatus(
             @RequestParam InvoiceStatusEnum status,
+            @RequestParam(required = false) Long classId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResp.success(invoiceService.getInvoicesByStatus(PageRequest.of(page, size), status));
+        if (classId != null) {
+            return ApiResp.success(invoiceService.getInvoicesByStatusAndClass(PageRequest.of(page, size), status, classId));
+        } else {
+            return ApiResp.success(invoiceService.getInvoicesByStatus(PageRequest.of(page, size), status));
+        }
     }
 
     @Operation(summary = "Get invoice by ID")

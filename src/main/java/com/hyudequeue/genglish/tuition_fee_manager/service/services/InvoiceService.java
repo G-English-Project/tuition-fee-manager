@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.services;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
@@ -41,17 +42,22 @@ public interface InvoiceService {
 
     Page<InvoiceResponseDto> getInvoicesByStudent(Long userId, Pageable pageable);
 
-    InvoiceResponseDto updateInvoice(Long invoiceId, List<InvoiceItemRequestDTO> updatedItems);
+    InvoiceResponseDto updateInvoice(Long invoiceId, InvoiceUpdateRequestDto requestDto);
+
+
 
     Page<InvoiceResponseDto> getAllInvoices(Pageable pageable,
                                             InvoiceStatusEnum status,
                                             Integer month,
                                             Integer year,
+                                            Long classId,
                                             List<Long> categoryIds,
                                             String username);
 
 
     Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus);
+
+    Page<InvoiceResponseDto> getInvoicesByStatusAndClass(Pageable pageable, InvoiceStatusEnum invoiceStatus, Long classId);
 
     void deleteInvoice(Long invoiceId);
 
