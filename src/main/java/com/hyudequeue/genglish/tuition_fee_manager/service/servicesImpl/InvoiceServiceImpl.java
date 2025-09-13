@@ -243,6 +243,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             InvoiceStatusEnum status,
             Integer month,
             Integer year,
+            Long classId,
             List<Long> categoryIds,
             String username
     ) {
@@ -263,6 +264,14 @@ public class InvoiceServiceImpl implements InvoiceService {
             spec = spec.and((root, query, cb) ->
                     cb.equal(cb.function("YEAR", Integer.class, root.get("createdAt")), year)
             );
+        }
+
+        // ✅ Filter by classId
+        if (classId != null) {
+            spec = spec.and((root, query, cb) -> {
+                Join<Invoice, Classes> classJoin = root.join("classes", JoinType.INNER);
+                return cb.equal(classJoin.get("classId"), classId);
+            });
         }
 
         // ✅ Filter by categories
