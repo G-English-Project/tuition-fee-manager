@@ -19,7 +19,7 @@ public class InvoiceUpdateRequestDto {
     private List<Long> categoryIds;
     private Integer month;
     private LocalDate dueDate;
-    private Classes classes;
+    private Long classId;   // 👈 only the ID, not the whole entity
 
     public Integer calculateTotalAmount() {
         if (updatedItems == null) return 0;
@@ -35,7 +35,7 @@ public class InvoiceUpdateRequestDto {
                 .collect(Collectors.toList());
     }
 
-    public void applyTo(Invoice invoice) {
+    public void applyTo(Invoice invoice, Classes classes) {
         if (month != null) invoice.setMonth(month);
         if (dueDate != null) invoice.setDueDate(dueDate);
         if (classes != null) invoice.setClasses(classes);

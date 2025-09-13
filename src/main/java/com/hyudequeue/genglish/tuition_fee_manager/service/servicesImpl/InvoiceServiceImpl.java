@@ -326,8 +326,15 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
-        // ✅ Update các field cơ bản
-        requestDto.applyTo(invoice);
+        // ✅ Fetch Classes entity if classId is provided
+        Classes classes = null;
+        if (requestDto.getClassId() != null) {
+            classes = classRepository.findById(requestDto.getClassId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+        }
+
+        // ✅ Apply changes
+        requestDto.applyTo(invoice, classes);
 
         // ✅ Update categories
         if (requestDto.getCategoryIds() != null) {
@@ -349,6 +356,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice saved = invoiceRepository.save(invoice);
         return InvoiceResponseDto.toDto(saved);
     }
+
 
 
 
