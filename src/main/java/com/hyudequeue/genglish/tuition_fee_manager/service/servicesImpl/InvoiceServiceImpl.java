@@ -247,6 +247,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             InvoiceStatusEnum status,
             Integer month,
             Integer year,
+            Long classId,
             List<Long> categoryIds,
             String username
     ) {
@@ -267,6 +268,14 @@ public class InvoiceServiceImpl implements InvoiceService {
             spec = spec.and((root, query, cb) ->
                     cb.equal(cb.function("YEAR", Integer.class, root.get("createdAt")), year)
             );
+        }
+
+        // ✅ Filter by classId
+        if (classId != null) {
+            spec = spec.and((root, query, cb) -> {
+                Join<Invoice, Classes> classJoin = root.join("classes", JoinType.INNER);
+                return cb.equal(classJoin.get("classId"), classId);
+            });
         }
 
         // ✅ Filter by categories
@@ -295,6 +304,12 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus) {
         return invoiceRepository.findByStatus(invoiceStatus, pageable)
+                .map(InvoiceResponseDto::toDto);
+    }
+
+    @Override
+    public Page<InvoiceResponseDto> getInvoicesByStatusAndClass(Pageable pageable, InvoiceStatusEnum invoiceStatus, Long classId) {
+        return invoiceRepository.findByStatusAndClasses_ClassId(invoiceStatus, classId, pageable)
                 .map(InvoiceResponseDto::toDto);
     }
 

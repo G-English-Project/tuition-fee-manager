@@ -111,23 +111,29 @@ public class InvoiceController {
             @RequestParam(required = false) InvoiceStatusEnum status,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Long classId,
             @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) String username
     ) {
         return ApiResp.success(
-                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, categoryIds, username)
+                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, classId, categoryIds, username)
         );
     }
 
 
 
-    @Operation(summary = "Get invoices by status")
+    @Operation(summary = "Get invoices by status and optionally by class")
     @GetMapping(GET_BY_STATUS)
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> getInvoicesByStatus(
             @RequestParam InvoiceStatusEnum status,
+            @RequestParam(required = false) Long classId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResp.success(invoiceService.getInvoicesByStatus(PageRequest.of(page, size), status));
+        if (classId != null) {
+            return ApiResp.success(invoiceService.getInvoicesByStatusAndClass(PageRequest.of(page, size), status, classId));
+        } else {
+            return ApiResp.success(invoiceService.getInvoicesByStatus(PageRequest.of(page, size), status));
+        }
     }
 
     @Operation(summary = "Get invoice by ID")

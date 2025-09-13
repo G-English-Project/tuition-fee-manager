@@ -49,11 +49,14 @@ public interface InvoiceService {
                                             InvoiceStatusEnum status,
                                             Integer month,
                                             Integer year,
+                                            Long classId,
                                             List<Long> categoryIds,
                                             String username);
 
 
     Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus);
+
+    Page<InvoiceResponseDto> getInvoicesByStatusAndClass(Pageable pageable, InvoiceStatusEnum invoiceStatus, Long classId);
 
     void deleteInvoice(Long invoiceId);
 
