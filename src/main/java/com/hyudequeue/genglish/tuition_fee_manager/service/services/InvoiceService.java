@@ -42,7 +42,8 @@ public interface InvoiceService {
 
     Page<InvoiceResponseDto> getInvoicesByStudent(Long userId, Pageable pageable);
 
-    InvoiceResponseDto updateInvoice(InvoiceUpdateRequestDto requestDto);
+    InvoiceResponseDto updateInvoice(Long invoiceId, InvoiceUpdateRequestDto requestDto);
+
 
 
     Page<InvoiceResponseDto> getAllInvoices(Pageable pageable,

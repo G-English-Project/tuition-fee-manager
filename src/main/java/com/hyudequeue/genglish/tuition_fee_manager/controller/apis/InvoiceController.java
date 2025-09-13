@@ -96,10 +96,11 @@ public class InvoiceController {
     }
 
     @Operation(summary = "Update invoice")
-    @PutMapping(UPDATE)
+    @PutMapping("/{invoiceId}")
     public ResponseEntity<ApiResp<InvoiceResponseDto>> updateInvoice(
+            @PathVariable Long invoiceId,
             @RequestBody InvoiceUpdateRequestDto requestDto) {
-        return ApiResp.success(invoiceService.updateInvoice(requestDto));
+        return ApiResp.success(invoiceService.updateInvoice(invoiceId, requestDto));
     }
 
 

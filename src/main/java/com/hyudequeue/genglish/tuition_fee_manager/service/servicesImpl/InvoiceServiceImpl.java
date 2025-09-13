@@ -322,20 +322,20 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional
-    public InvoiceResponseDto updateInvoice(InvoiceUpdateRequestDto requestDto) {
-        Invoice invoice = invoiceRepository.findById(requestDto.getInvoiceId())
+    public InvoiceResponseDto updateInvoice(Long invoiceId, InvoiceUpdateRequestDto requestDto) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
         // ✅ Update các field cơ bản
         requestDto.applyTo(invoice);
 
-        // ✅ Update categories nếu có
+        // ✅ Update categories
         if (requestDto.getCategoryIds() != null) {
             List<InvoiceCategory> categories = invoiceCategoryRepository.findAllById(requestDto.getCategoryIds());
             invoice.setCategories(categories);
         }
 
-        // ✅ Replace items (orphanRemoval)
+        // ✅ Replace items
         invoice.getItems().clear();
         invoiceRepository.saveAndFlush(invoice);
 
@@ -349,6 +349,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice saved = invoiceRepository.save(invoice);
         return InvoiceResponseDto.toDto(saved);
     }
+
 
 
     // =========================
