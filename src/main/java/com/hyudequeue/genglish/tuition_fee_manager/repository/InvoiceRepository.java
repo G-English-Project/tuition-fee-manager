@@ -78,18 +78,16 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     }
     @Query("""
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  cast(
-    function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%Y-%m')
-    as string
-  ),
+  cast(i.month as string),
   sum(cast(i.totalAmount as big_decimal))
 )
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-group by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%Y-%m') as string)
-order by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%Y-%m') as string) desc
+group by cast(i.month as string)
+order by cast(i.month as string) desc
 """)
     Page<RevenueSummaryDto> sumRevenueGroupByMonth(Pageable pageable);
+
 
     @Query("""
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
