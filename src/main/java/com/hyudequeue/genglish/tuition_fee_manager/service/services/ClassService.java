@@ -28,4 +28,6 @@ public interface ClassService {
     void RemoveStudentFromClass(Long classId, Long studentId);
     UserInClassWithNoteDto NoteAStudentInClass(Long classId, Long studentId, String note);
 
+    void RestoreClass(Long classId);
+
 }
