@@ -335,4 +335,17 @@ public class ClassServiceImpl implements ClassService {
                 .failedCount(failedAssignments.size())
                 .build();
     }
+
+    @Override
+    public void RestoreClass(Long classId) {
+        Classes classes = classesRepository.findById(classId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+
+        if (classes.getStatus() != ClassStatusEnum.ACTIVE) {
+            classes.setStatus(ClassStatusEnum.ACTIVE);
+            classes.setUpdatedAt(LocalDateTime.now());
+            classesRepository.save(classes);
+        }
+    }
+
 }

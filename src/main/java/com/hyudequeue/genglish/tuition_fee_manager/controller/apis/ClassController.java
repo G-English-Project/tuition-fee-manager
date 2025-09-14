@@ -190,5 +190,17 @@ public class ClassController {
     ) {
         return ApiResp.success(classService.NoteAStudentInClass(classId, studentId, note));
     }
+    @Operation(summary = "Restore class", description = "Set class status back to ACTIVE.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Class restored successfully"),
+            @ApiResponse(responseCode = "404", description = "Class not found")
+    })
+    @PatchMapping(RESTORE_CLASS)
+    public ResponseEntity<?> restoreClass(
+            @Parameter(description = "ID of the class to restore", required = true)
+            @PathVariable Long classId) {
+        classService.RestoreClass(classId);
+        return ApiResp.success("Class restored successfully.");
+    }
 
 }
