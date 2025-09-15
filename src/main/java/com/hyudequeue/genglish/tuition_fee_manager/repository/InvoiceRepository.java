@@ -23,6 +23,7 @@ import java.util.Map;
 public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpecificationExecutor<Invoice> {
 
     Page<Invoice> findByClasses_ClassIdAndStatusNot(Long classId, InvoiceStatusEnum status, Pageable pageable);
+    List<Invoice> findByStatus(InvoiceStatusEnum status);
 
     Page<Invoice> findByUser_UserIdAndStatusNot(Long userId, InvoiceStatusEnum status, Pageable pageable);
     Page<Invoice> findAllByStatusNot(InvoiceStatusEnum status, Pageable pageable);

@@ -73,9 +73,16 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public Page<ClassResponseDtoWithCount> GetAllClasses(int pageNumber, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
-        Page<Classes> page = classesRepository.findAll(pageable);
+    public Page<ClassResponseDtoWithCount> GetAllClasses(ClassStatusEnum status, int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("effectiveFrom").ascending());
+
+        Page<Classes> page;
+
+        if (status != null) {
+            page = classesRepository.findByStatus(status, pageable);
+        } else {
+            page = classesRepository.findAll(pageable);
+        }
 
         List<Long> classIds = page.getContent().stream()
                 .map(Classes::getClassId)
@@ -88,6 +95,7 @@ public class ClassServiceImpl implements ClassService {
 
         return page.map(c -> ClassResponseDtoWithCount.fromEntity(c, countMap.getOrDefault(c.getClassId(), 0L)));
     }
+
 
 
     @Override

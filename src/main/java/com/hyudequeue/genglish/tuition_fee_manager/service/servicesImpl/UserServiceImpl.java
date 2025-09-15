@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -70,11 +71,23 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Page<UserWithClassesDto> GetAllStudent(int page, int size) {
+    public Page<UserWithClassesDto> GetAllStudent(int page, int size, Long classId) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        Page<User> usersPage = userRepository
-                .findByRoleAndStatusOrderByCreatedAtDesc(RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable);
+        Page<User> usersPage;
+
+        if (classId != null && classId == 0) {
+            // học sinh chưa có class
+            usersPage = userRepository.findStudentsWithoutClass(pageable);
+        } else if (classId != null && classId > 0) {
+            // học sinh trong class cụ thể
+            usersPage = userRepository.findStudentsByClassId(classId, pageable);
+        } else {
+            // mặc định lấy tất cả student ACTIVE
+            usersPage = userRepository.findByRoleAndStatusOrderByCreatedAtDesc(
+                    RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable
+            );
+        }
 
         if (usersPage.isEmpty()) {
             return usersPage.map(u -> null);
@@ -85,7 +98,7 @@ public class UserServiceImpl implements UserService {
                 .findByUser_UserIdInAndUnEnrolledAtIsNull(userIds);
 
         Map<Long, List<ClassEnrollment>> byUserId = activeEnrollments.stream()
-                .collect(java.util.stream.Collectors.groupingBy(e -> e.getUser().getUserId()));
+                .collect(Collectors.groupingBy(e -> e.getUser().getUserId()));
 
         return usersPage.map(u -> {
             List<EnrolledClassLiteDto> currentClasses = byUserId.getOrDefault(u.getUserId(), List.of())
@@ -109,6 +122,7 @@ public class UserServiceImpl implements UserService {
                     .build();
         });
     }
+
 
     @Override
     public UserResponseDto EditProfile(UserEditRequestDto userDto, Long userId) {

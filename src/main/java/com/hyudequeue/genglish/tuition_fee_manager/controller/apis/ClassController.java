@@ -4,6 +4,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.MultipleStudentAssignmentDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,10 +30,18 @@ public class ClassController {
     })
     @GetMapping(GET_ALL_CLASSES)
     public ResponseEntity<?> getAllClasses(
-            @Parameter(description = "Page number", example = "0") @RequestParam int pageNumber,
-            @Parameter(description = "Page size", example = "10") @RequestParam int pageSize) {
-        return ApiResp.success(classService.GetAllClasses(pageNumber, pageSize));
+            @Parameter(description = "Class status filter", example = "ACTIVE")
+            @RequestParam(required = false) ClassStatusEnum status,
+
+            @Parameter(description = "Page number", example = "0")
+            @RequestParam(defaultValue = "0") int pageNumber,
+
+            @Parameter(description = "Page size", example = "10")
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        return ApiResp.success(classService.GetAllClasses(status, pageNumber, pageSize));
     }
+
 
     @Operation(summary = "Get class by ID", description = "Returns details of a specific class by ID.")
     @ApiResponses(value = {

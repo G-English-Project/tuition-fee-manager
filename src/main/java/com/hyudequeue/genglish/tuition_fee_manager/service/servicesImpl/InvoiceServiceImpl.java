@@ -4,6 +4,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.requ
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceStatResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
@@ -503,6 +504,29 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceRepository.deleteAll(invoices);
     }
 
+    @Override
+    public InvoiceStatResponseDto getInvoiceStats() {
+        LocalDate today = LocalDate.now();
 
+        // Lấy danh sách hóa đơn chưa thanh toán
+        List<Invoice> unpaid = invoiceRepository.findByStatus(InvoiceStatusEnum.UNPAID);
+
+        long unpaidCount = unpaid.size();
+        int unpaidTotal = unpaid.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+        // Lọc ra hóa đơn quá hạn (dueDate < hôm nay và vẫn chưa thanh toán)
+        List<Invoice> overdue = unpaid.stream()
+                .filter(inv -> inv.getDueDate() != null && inv.getDueDate().isBefore(today))
+                .toList();
+
+        long overdueCount = overdue.size();
+        int overdueTotal = overdue.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+        return new InvoiceStatResponseDto(unpaidCount, unpaidTotal, overdueCount, overdueTotal);
+    }
 
 }
