@@ -37,10 +37,18 @@ public class UserController {
     })
     @GetMapping(GET_ALL_STUDENT_ENDPOINT)
     public ResponseEntity<?> getAllStudents(
-            @Parameter(description = "Page number", example = "0") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") int size) {
-        return ApiResp.success(userService.GetAllStudent(page, size));
+            @Parameter(description = "Page number", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "Page size", example = "10")
+            @RequestParam(defaultValue = "10") int size,
+
+            @Parameter(description = "Filter by classId (0 = no class, null = all)", example = "1")
+            @RequestParam(required = false) Long classId
+    ) {
+        return ApiResp.success(userService.GetAllStudent(page, size, classId));
     }
+
 
     @Operation(summary = "Create user by role", description = "Create a new user with given role (ADMIN or STUDENT).")
     @PostMapping(CREATE_ENDPOINT)

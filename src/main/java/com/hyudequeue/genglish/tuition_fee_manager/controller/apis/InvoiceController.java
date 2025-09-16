@@ -4,6 +4,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.requ
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceStatResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
@@ -261,4 +262,9 @@ public class InvoiceController {
         return ApiResp.success("Invoice confirmed as PAID (CASH)");
     }
 
+    @GetMapping("/stats")
+    @Operation(summary = "Thống kê hóa đơn chưa thanh toán và quá hạn")
+    public ResponseEntity<InvoiceStatResponseDto> getInvoiceStats() {
+        return ResponseEntity.ok(invoiceService.getInvoiceStats());
+    }
 }

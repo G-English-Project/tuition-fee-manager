@@ -4,6 +4,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.requ
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceStatResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
@@ -77,4 +78,6 @@ public interface InvoiceService {
     Page<RevenueSummaryDto> getRevenueSummaryByYear(PageRequest pageable);
     void bulkSoftDeleteInvoices(List<Long> invoiceIds);
     void bulkHardDeleteInvoices(List<Long> invoiceIds);
+    InvoiceStatResponseDto getInvoiceStats();
+
 }

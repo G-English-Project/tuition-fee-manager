@@ -2,6 +2,8 @@ package com.hyudequeue.genglish.tuition_fee_manager.repository;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +15,8 @@ import java.util.List;
 
 @Repository
 public interface ClassRepository extends JpaRepository<Classes, Long> {
+    Page<Classes> findByStatus(ClassStatusEnum status, Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE Classes c
