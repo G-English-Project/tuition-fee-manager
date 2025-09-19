@@ -30,6 +30,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -506,27 +507,32 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public InvoiceStatResponseDto getInvoiceStats() {
-        LocalDate today = LocalDate.now();
-
-        // Lấy danh sách hóa đơn chưa thanh toán
+        // Lấy hóa đơn chưa thanh toán
         List<Invoice> unpaid = invoiceRepository.findByStatus(InvoiceStatusEnum.UNPAID);
-
         long unpaidCount = unpaid.size();
         int unpaidTotal = unpaid.stream()
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-        // Lọc ra hóa đơn quá hạn (dueDate < hôm nay và vẫn chưa thanh toán)
-        List<Invoice> overdue = unpaid.stream()
-                .filter(inv -> inv.getDueDate() != null && inv.getDueDate().isBefore(today))
-                .toList();
-
+        // Lấy hóa đơn quá hạn
+        List<Invoice> overdue = invoiceRepository.findByStatus(InvoiceStatusEnum.OVERDUE);
         long overdueCount = overdue.size();
         int overdueTotal = overdue.stream()
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-        return new InvoiceStatResponseDto(unpaidCount, unpaidTotal, overdueCount, overdueTotal);
+        // Lấy số học sinh inactive
+        long inactiveStudentCount = userRepository.countByStatus(UserStatusEnum.DISABLED);
+
+        return new InvoiceStatResponseDto(
+                unpaidCount,
+                unpaidTotal,
+                overdueCount,
+                overdueTotal,
+                inactiveStudentCount
+        );
     }
+
+
 
 }

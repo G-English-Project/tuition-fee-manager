@@ -1,7 +1,9 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.services;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassCategoryRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassFeeModifyRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassCategoryResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDtoWithCount;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.MultipleStudentAssignmentResponseDto;
@@ -30,5 +32,6 @@ public interface ClassService {
     UserInClassWithNoteDto NoteAStudentInClass(Long classId, Long studentId, String note);
 
     void RestoreClass(Long classId);
-
+    List<ClassResponseDto> GetClassesByTeacher(Long teacherId);
+    List<ClassResponseDto> GetClassesByCategory(Long categoryId);
 }

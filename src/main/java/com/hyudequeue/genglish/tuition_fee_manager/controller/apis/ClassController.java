@@ -3,6 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassFeeModifyRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.MultipleStudentAssignmentDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
@@ -13,6 +14,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.*;
 import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.CLASS_API;
@@ -212,4 +215,13 @@ public class ClassController {
         return ApiResp.success("Class restored successfully.");
     }
 
+    @GetMapping("/by-teacher/{teacherId}")
+    public ResponseEntity<List<ClassResponseDto>> getByTeacher(@PathVariable Long teacherId) {
+        return ResponseEntity.ok(classService.GetClassesByTeacher(teacherId));
+    }
+
+    @GetMapping("/by-category/{categoryId}")
+    public ResponseEntity<List<ClassResponseDto>> getByCategory(@PathVariable Long categoryId) {
+        return ResponseEntity.ok(classService.GetClassesByCategory(categoryId));
+    }
 }

@@ -16,7 +16,8 @@ import java.util.List;
 @Repository
 public interface ClassRepository extends JpaRepository<Classes, Long> {
     Page<Classes> findByStatus(ClassStatusEnum status, Pageable pageable);
-
+    List<Classes> findByTeacherId(Long teacherId);
+    List<Classes> findByClassCategory_CategoryId(Long categoryId);
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE Classes c

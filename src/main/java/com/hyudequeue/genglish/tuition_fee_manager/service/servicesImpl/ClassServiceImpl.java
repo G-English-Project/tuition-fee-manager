@@ -1,19 +1,19 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassCategoryRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassFeeModifyRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassCountProjection;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDtoWithCount;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.MultipleStudentAssignmentResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.*;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Enrollment.response.EnrollmentResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserInClassWithNoteDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassCategory;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
+import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassCategoryRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
@@ -44,7 +44,8 @@ public class ClassServiceImpl implements ClassService {
     private final ClassRepository classRepository;
     private final EmailServiceImpl emailService;
     private final InvoiceNotificationServiceImpl invoiceNotificationService;
-    public ClassServiceImpl(ClassEnrollmentRepository classEnrollmentRepository, ClassRepository classesRepository, UserRepository userRepository, NotificationService notificationService, ClassRepository classRepository, EmailServiceImpl emailService, InvoiceNotificationServiceImpl invoiceNotificationService) {
+    private final ClassCategoryRepository classCategoryRepository;
+    public ClassServiceImpl(ClassEnrollmentRepository classEnrollmentRepository, ClassRepository classesRepository, UserRepository userRepository, NotificationService notificationService, ClassRepository classRepository, EmailServiceImpl emailService, InvoiceNotificationServiceImpl invoiceNotificationService, ClassCategoryRepository classCategoryRepository) {
         this.classEnrollmentRepository = classEnrollmentRepository;
         this.classesRepository = classesRepository;
         this.userRepository = userRepository;
@@ -52,6 +53,7 @@ public class ClassServiceImpl implements ClassService {
         this.classRepository = classRepository;
         this.emailService = emailService;
         this.invoiceNotificationService = invoiceNotificationService;
+        this.classCategoryRepository = classCategoryRepository;
     }
 
     @Override
@@ -356,4 +358,19 @@ public class ClassServiceImpl implements ClassService {
         }
     }
 
+    @Override
+    public List<ClassResponseDto> GetClassesByTeacher(Long teacherId) {
+        return classRepository.findByTeacherId(teacherId)
+                .stream()
+                .map(ClassResponseDto::fromEntity)
+                .toList();
+    }
+
+    @Override
+    public List<ClassResponseDto> GetClassesByCategory(Long categoryId) {
+        return classRepository.findByClassCategory_CategoryId(categoryId)
+                .stream()
+                .map(ClassResponseDto::fromEntity)
+                .toList();
+    }
 }

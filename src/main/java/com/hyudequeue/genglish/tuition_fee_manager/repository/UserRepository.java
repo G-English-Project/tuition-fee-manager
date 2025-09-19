@@ -117,4 +117,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
              )
            """)
     Page<User> findStudentsWithoutClass(Pageable pageable);
+    long countByStatus(UserStatusEnum status);
 }
