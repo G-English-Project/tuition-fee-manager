@@ -506,21 +506,15 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public InvoiceStatResponseDto getInvoiceStats() {
-        LocalDate today = LocalDate.now();
-
-        // Lấy danh sách hóa đơn chưa thanh toán
+        // 1. Hóa đơn chưa thanh toán
         List<Invoice> unpaid = invoiceRepository.findByStatus(InvoiceStatusEnum.UNPAID);
-
         long unpaidCount = unpaid.size();
         int unpaidTotal = unpaid.stream()
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-        // Lọc ra hóa đơn quá hạn (dueDate < hôm nay và vẫn chưa thanh toán)
-        List<Invoice> overdue = unpaid.stream()
-                .filter(inv -> inv.getDueDate() != null && inv.getDueDate().isBefore(today))
-                .toList();
-
+        // 2. Hóa đơn quá hạn (status = OVERDUE)
+        List<Invoice> overdue = invoiceRepository.findByStatus(InvoiceStatusEnum.OVERDUE);
         long overdueCount = overdue.size();
         int overdueTotal = overdue.stream()
                 .mapToInt(Invoice::getTotalAmount)
