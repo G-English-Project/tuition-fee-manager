@@ -37,6 +37,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
            SET i.status = 'OVERDUE'
          WHERE i.dueDate < :today
            AND i.status <> 'OVERDUE'
+           AND i.status <> 'CANCELLED'
     """)
     int markOverdue(@Param("today") LocalDate today);
 
@@ -55,6 +56,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
        set i.status = 'OVERDUE'
      where i.invoiceId in :ids
        and i.status = 'UNPAID'
+       and i.status <> 'CANCELLED'
 """)
     int markOverdueByIds(@Param("ids") List<Long> ids);
 
