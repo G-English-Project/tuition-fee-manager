@@ -24,6 +24,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
 
     Page<Invoice> findByClasses_ClassIdAndStatusNot(Long classId, InvoiceStatusEnum status, Pageable pageable);
     List<Invoice> findByStatus(InvoiceStatusEnum status);
+    List<Invoice> findByMonthAndStatusIn(Integer month, List<InvoiceStatusEnum> statuses);
 
     Page<Invoice> findByUser_UserIdAndStatusNot(Long userId, InvoiceStatusEnum status, Pageable pageable);
     Page<Invoice> findAllByStatusNot(InvoiceStatusEnum status, Pageable pageable);

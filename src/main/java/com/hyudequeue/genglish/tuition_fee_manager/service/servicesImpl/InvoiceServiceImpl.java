@@ -526,13 +526,32 @@ public class InvoiceServiceImpl implements InvoiceService {
                 RoleEnum.STUDENT, UserStatusEnum.DISABLED
         );
 
-        // ✅ Trả về thêm thống kê học sinh Inactive
+        // 4. Tổng tiền của tháng hiện tại (PAID, UNPAID, OVERDUE)
+        int currentMonth = LocalDate.now().getMonthValue();
+        List<Invoice> currentMonthInvoices = invoiceRepository.findByMonthAndStatusIn(
+                currentMonth,
+                List.of(
+                        InvoiceStatusEnum.PAID,
+                        InvoiceStatusEnum.UNPAID,
+                        InvoiceStatusEnum.OVERDUE
+                )
+        );
+
+        int currentMonthTotal = currentMonthInvoices.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+        // ✅ Trả về thêm thống kê học sinh Inactive & tổng tiền tháng hiện tại
         return new InvoiceStatResponseDto(
-                unpaidCount, unpaidTotal,
-                overdueCount, overdueTotal,
-                inactiveStudentCount
+                unpaidCount,
+                unpaidTotal,
+                overdueCount,
+                overdueTotal,
+                inactiveStudentCount,
+                currentMonthTotal
         );
     }
+
 
 
 }
