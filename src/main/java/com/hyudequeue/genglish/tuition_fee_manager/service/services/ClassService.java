@@ -5,6 +5,8 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDtoWithCount;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.MultipleStudentAssignmentResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.BulkStudentCreateAndAssignDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.*;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Enrollment.response.EnrollmentResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserInClassWithNoteDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
@@ -30,5 +32,8 @@ public interface ClassService {
     UserInClassWithNoteDto NoteAStudentInClass(Long classId, Long studentId, String note);
 
     void RestoreClass(Long classId);
+    List<ClassResponseDto> GetClassesByTeacher(Long teacherId);
+    List<ClassResponseDto> GetClassesByCategory(Long categoryId);
+    BulkStudentCreateAndAssignResponseDto bulkCreateStudentsAndAssignToClass(BulkStudentCreateAndAssignDto request);
 
 }

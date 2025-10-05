@@ -1,26 +1,24 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.BulkStudentCreateAndAssignDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassFeeModifyRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassCountProjection;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDtoWithCount;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.MultipleStudentAssignmentResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.*;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Enrollment.response.EnrollmentResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserInClassWithNoteDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
-import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -28,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -355,5 +354,155 @@ public class ClassServiceImpl implements ClassService {
             classesRepository.save(classes);
         }
     }
+    @Override
+    public List<ClassResponseDto> GetClassesByTeacher(Long teacherId) {
+        return classRepository.findByTeacherId(teacherId)
+                .stream()
+                .map(ClassResponseDto::fromEntity)
+                .toList();
+    }
 
+    @Override
+    public List<ClassResponseDto> GetClassesByCategory(Long categoryId) {
+        return classRepository.findByClassCategory_CategoryId(categoryId)
+                .stream()
+                .map(ClassResponseDto::fromEntity)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public BulkStudentCreateAndAssignResponseDto bulkCreateStudentsAndAssignToClass(BulkStudentCreateAndAssignDto request) {
+        // Validate class exists
+        Classes classes = classesRepository.findById(request.getClassId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+
+        List<BulkStudentCreateAndAssignResponseDto.SuccessfulStudent> successfulStudents = new ArrayList<>();
+        List<BulkStudentCreateAndAssignResponseDto.FailedStudent> failedStudents = new ArrayList<>();
+
+        for (BulkStudentCreateAndAssignDto.StudentData studentData : request.getStudents()) {
+            try {
+                // Validate email
+                if (studentData.getEmail() == null || studentData.getEmail().trim().isEmpty()) {
+                    failedStudents.add(
+                            BulkStudentCreateAndAssignResponseDto.FailedStudent.builder()
+                                    .email(studentData.getEmail())
+                                    .fullName(studentData.getFullName())
+                                    .reason("Email is required")
+                                    .build()
+                    );
+                    continue;
+                }
+
+                // Validate dateOfBirth is required (vì password là ngày sinh)
+                if (studentData.getDateOfBirth() == null) {
+                    failedStudents.add(
+                            BulkStudentCreateAndAssignResponseDto.FailedStudent.builder()
+                                    .email(studentData.getEmail())
+                                    .fullName(studentData.getFullName())
+                                    .reason("Date of birth is required for password generation")
+                                    .build()
+                    );
+                    continue;
+                }
+
+                // Check if email already exists
+                Optional<User> existingUser = userRepository.findByEmail(studentData.getEmail());
+                if (existingUser.isPresent()) {
+                    failedStudents.add(
+                            BulkStudentCreateAndAssignResponseDto.FailedStudent.builder()
+                                    .email(studentData.getEmail())
+                                    .fullName(studentData.getFullName())
+                                    .reason("Email already exists")
+                                    .build()
+                    );
+                    continue;
+                }
+
+                // Password luôn luôn là ngày tháng năm sinh (ddMMyyyy)
+                String defaultPassword = studentData.getDateOfBirth().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+
+                // Hash password
+                String hashedPassword = BCrypt.withDefaults().hashToString(12, defaultPassword.toCharArray());
+
+                // Create user entity
+                User newUser = User.builder()
+                        .email(studentData.getEmail())
+                        .fullName(studentData.getFullName())
+                        .phone(studentData.getPhone())
+                        .dateOfBirth(studentData.getDateOfBirth())
+                        .passwordHash(hashedPassword)
+                        .role(RoleEnum.STUDENT)
+                        .status(UserStatusEnum.ACTIVE)
+                        .changedDefaultPassword(false)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build();
+
+                // Save user
+                User savedUser = userRepository.save(newUser);
+
+                // Check if already enrolled (shouldn't happen, but just in case)
+                boolean alreadyEnrolled = classEnrollmentRepository
+                        .findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(request.getClassId(), savedUser.getUserId())
+                        .isPresent();
+
+                if (alreadyEnrolled) {
+                    failedStudents.add(
+                            BulkStudentCreateAndAssignResponseDto.FailedStudent.builder()
+                                    .email(studentData.getEmail())
+                                    .fullName(studentData.getFullName())
+                                    .reason("User created but already enrolled in class")
+                                    .build()
+                    );
+                    continue;
+                }
+
+                // Create enrollment
+                ClassEnrollment enrollment = ClassEnrollment.builder()
+                        .user(savedUser)
+                        .classes(classes)
+                        .enrolledAt(LocalDateTime.now())
+                        .build();
+
+                ClassEnrollment savedEnrollment = classEnrollmentRepository.save(enrollment);
+
+                // Send notification (don't fail if notification fails)
+                try {
+                    invoiceNotificationService.notifyStudentAssignedToClass(savedUser, classes);
+                } catch (Exception e) {
+                    System.err.println("Failed to send notification for student " + savedUser.getEmail() + ": " + e.getMessage());
+                }
+
+                // Add to successful list
+                successfulStudents.add(
+                        BulkStudentCreateAndAssignResponseDto.SuccessfulStudent.builder()
+                                .userId(savedUser.getUserId())
+                                .email(savedUser.getEmail())
+                                .fullName(savedUser.getFullName())
+                                .enrollmentId(savedEnrollment.getEnrollmentId())
+                                .message("Student created and enrolled successfully")
+                                .build()
+                );
+
+            } catch (Exception e) {
+                // Handle unexpected errors
+                failedStudents.add(
+                        BulkStudentCreateAndAssignResponseDto.FailedStudent.builder()
+                                .email(studentData.getEmail())
+                                .fullName(studentData.getFullName())
+                                .reason("Unexpected error: " + e.getMessage())
+                                .build()
+                );
+            }
+        }
+
+        return BulkStudentCreateAndAssignResponseDto.builder()
+                .successfulStudents(successfulStudents)
+                .failedStudents(failedStudents)
+                .totalProcessed(request.getStudents().size())
+                .successCount(successfulStudents.size())
+                .failedCount(failedStudents.size())
+                .build();
+    }
 }
