@@ -31,8 +31,7 @@ public class InvoiceOverdueMarker {
     @Transactional
     public void markAndNotify() {
         LocalDate today = LocalDate.now();
-        List<Long> targetInvoiceIds =
-                invoiceRepository.findIdsDueBeforeAndStatusNot(today, InvoiceStatusEnum.OVERDUE);
+        List<Long> targetInvoiceIds = invoiceRepository.findIdsDueBeforeAndStatusUnpaid(today);
         if (targetInvoiceIds.isEmpty()) return;
 
         int affected = invoiceRepository.markOverdueByIds(targetInvoiceIds);
