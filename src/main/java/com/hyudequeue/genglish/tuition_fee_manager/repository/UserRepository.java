@@ -19,6 +19,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByRole(RoleEnum roleEnum);
+    int countByRoleAndStatus(RoleEnum role, UserStatusEnum status);
     Optional<User> findByEmail(String email);
     Optional<User> findFirstByRole(RoleEnum role);
     Page<User> findAllByRoleAndStatus(RoleEnum role, UserStatusEnum status, Pageable pageable);
