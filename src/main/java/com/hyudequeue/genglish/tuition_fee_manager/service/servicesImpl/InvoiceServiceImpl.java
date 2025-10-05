@@ -10,6 +10,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceCategoryRepository;
@@ -520,7 +521,18 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-        return new InvoiceStatResponseDto(unpaidCount, unpaidTotal, overdueCount, overdueTotal);
+        // 3. Học sinh Inactive
+        int inactiveStudentCount = userRepository.countByRoleAndStatus(
+                RoleEnum.STUDENT, UserStatusEnum.DISABLED
+        );
+
+        // ✅ Trả về thêm thống kê học sinh Inactive
+        return new InvoiceStatResponseDto(
+                unpaidCount, unpaidTotal,
+                overdueCount, overdueTotal,
+                inactiveStudentCount
+        );
     }
+
 
 }
