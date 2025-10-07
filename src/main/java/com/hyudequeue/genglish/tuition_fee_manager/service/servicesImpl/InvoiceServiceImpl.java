@@ -10,6 +10,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceCategoryRepository;
@@ -30,7 +31,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -507,31 +507,66 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public InvoiceStatResponseDto getInvoiceStats() {
-        // Lấy hóa đơn chưa thanh toán
+        // 1. Hóa đơn chưa thanh toán
         List<Invoice> unpaid = invoiceRepository.findByStatus(InvoiceStatusEnum.UNPAID);
         long unpaidCount = unpaid.size();
         int unpaidTotal = unpaid.stream()
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-        // Lấy hóa đơn quá hạn
+        // 2. Hóa đơn quá hạn
         List<Invoice> overdue = invoiceRepository.findByStatus(InvoiceStatusEnum.OVERDUE);
         long overdueCount = overdue.size();
         int overdueTotal = overdue.stream()
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-        // Lấy số học sinh inactive
-        long inactiveStudentCount = userRepository.countByStatus(UserStatusEnum.DISABLED);
+        // 3. Học sinh Inactive
+        int inactiveStudentCount = userRepository.countByRoleAndStatus(
+                RoleEnum.STUDENT, UserStatusEnum.DISABLED
+        );
 
+        // 4. Tổng tiền của tháng hiện tại (PAID, UNPAID, OVERDUE)
+        int currentMonth = LocalDate.now().getMonthValue();
+        List<Invoice> currentMonthInvoices = invoiceRepository.findByMonthAndStatusIn(
+                currentMonth,
+                List.of(
+                        InvoiceStatusEnum.PAID,
+                        InvoiceStatusEnum.UNPAID,
+                        InvoiceStatusEnum.OVERDUE
+                )
+        );
+
+        int currentMonthTotal = currentMonthInvoices.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+        LocalDate now = LocalDate.now();
+        int month = now.getMonthValue();
+        int year = now.getYear();
+
+        List<Invoice> currentMonthPaid = invoiceRepository.findPaidInvoicesInCurrentMonth(
+                InvoiceStatusEnum.PAID, month, year
+        );
+
+        int currentMonthRevenue = currentMonthPaid.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+
+        // ✅ Trả về tất cả thống kê
         return new InvoiceStatResponseDto(
                 unpaidCount,
                 unpaidTotal,
                 overdueCount,
                 overdueTotal,
-                inactiveStudentCount
+                inactiveStudentCount,
+                currentMonthTotal,
+                currentMonthRevenue
         );
     }
+
+
 
 
 

@@ -10,5 +10,7 @@ public class InvoiceStatResponseDto {
     private int unpaidTotal;
     private long overdueCount;
     private int overdueTotal;
-    private long inactiveStudentCount;
+    private int inactivestudentcount;
+    private int currentMonthTotal;
+    private int currentMonthRevenue;
 }
