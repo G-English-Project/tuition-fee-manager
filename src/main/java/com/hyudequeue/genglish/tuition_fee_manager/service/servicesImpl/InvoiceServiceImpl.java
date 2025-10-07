@@ -541,15 +541,12 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-        // ✅ Doanh thu tháng hiện tại (chỉ tính hóa đơn PAID có paidAt trong tháng)
-        LocalDate firstDayOfMonth = LocalDate.now().withDayOfMonth(1);
-        LocalDate today = LocalDate.now();
+        LocalDate now = LocalDate.now();
+        int month = now.getMonthValue();
+        int year = now.getYear();
 
-// Lấy tất cả invoice PAID có paidAt trong tháng hiện tại
-        List<Invoice> currentMonthPaid = invoiceRepository.findPaidInvoicesInMonth(
-                InvoiceStatusEnum.PAID,
-                firstDayOfMonth.atStartOfDay(),
-                today.plusDays(1).atStartOfDay() // để include cả ngày hôm nay
+        List<Invoice> currentMonthPaid = invoiceRepository.findPaidInvoicesInCurrentMonth(
+                InvoiceStatusEnum.PAID, month, year
         );
 
         int currentMonthRevenue = currentMonthPaid.stream()

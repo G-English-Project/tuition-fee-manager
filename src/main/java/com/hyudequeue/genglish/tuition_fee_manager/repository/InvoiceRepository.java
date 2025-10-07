@@ -27,12 +27,14 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     List<Invoice> findByMonthAndStatusIn(Integer month, List<InvoiceStatusEnum> statuses);
     @Query("SELECT i FROM Invoice i " +
             "WHERE i.status = :status " +
-            "AND i.paidAt BETWEEN :startDate AND :endDate")
-    List<Invoice> findPaidInvoicesInMonth(
+            "AND FUNCTION('MONTH', i.paidAt) = :month " +
+            "AND FUNCTION('YEAR', i.paidAt) = :year")
+    List<Invoice> findPaidInvoicesInCurrentMonth(
             @Param("status") InvoiceStatusEnum status,
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
+            @Param("month") int month,
+            @Param("year") int year
     );
+
 
 
     Page<Invoice> findByUser_UserIdAndStatusNot(Long userId, InvoiceStatusEnum status, Pageable pageable);
