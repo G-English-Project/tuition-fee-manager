@@ -209,7 +209,6 @@ public class InvoiceController {
             @jakarta.validation.constraints.Max(200)
             int size
     ) {
-        // 🔎 Validate fromDate <= toDate
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,

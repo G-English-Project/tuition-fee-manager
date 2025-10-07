@@ -28,6 +28,7 @@ import vn.payos.type.PaymentLinkData;
 import vn.payos.type.Webhook;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,6 +114,8 @@ public class PaymentServiceImpl implements PaymentService {
         Invoice invoice = payment.getInvoice();
         if(webhook.getSuccess()){
             payment.setStatus(PaymentStatusEnum.PAID);
+            invoice.setPaidAt(LocalDateTime.now());
+            invoice.setUpdatedAt(LocalDateTime.now());
             invoice.setStatus(InvoiceStatusEnum.PAID);
             invoiceNotificationService.notifyPaymentSuccess(invoice, payment);
         }

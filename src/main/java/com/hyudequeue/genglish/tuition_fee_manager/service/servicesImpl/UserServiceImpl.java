@@ -46,14 +46,13 @@ public class UserServiceImpl implements UserService {
         });
 
         String defaultPassword;
-        if (role == RoleEnum.STUDENT && req.getDateOfBirth() != null) {
+        if (role == RoleEnum.STUDENT) {
+            if (req.getDateOfBirth() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Date of birth is required for student");
+            }
             defaultPassword = req.getDateOfBirth().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
         } else {
-            defaultPassword = switch (role) {
-                case ADMIN -> CommonConstants.ADMIN_DEFAULT_PASSWORD;
-                case STUDENT -> CommonConstants.STUDENT_DEFAULT_PASSWORD;
-                default -> CommonConstants.STUDENT_DEFAULT_PASSWORD;
-            };
+            defaultPassword = CommonConstants.ADMIN_DEFAULT_PASSWORD;
         }
 
         String hashedPassword = BCrypt.withDefaults().hashToString(12, defaultPassword.toCharArray());

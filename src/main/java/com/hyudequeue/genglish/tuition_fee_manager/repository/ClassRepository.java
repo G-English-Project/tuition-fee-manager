@@ -29,4 +29,8 @@ public interface ClassRepository extends JpaRepository<Classes, Long> {
     """)
     int deactivateExpired(@Param("today") LocalDate today,
                           @Param("inactive") ClassStatusEnum inactive);
+
+    List<Classes> findByTeacherId(Long teacherId);
+
+    List<Classes> findByClassCategory_CategoryId(Long categoryId);
 }

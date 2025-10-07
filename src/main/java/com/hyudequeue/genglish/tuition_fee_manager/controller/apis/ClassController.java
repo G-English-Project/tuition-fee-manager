@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.BulkStudentCreateAndAssignDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassFeeModifyRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.MultipleStudentAssignmentDto;
@@ -223,5 +224,25 @@ public class ClassController {
     @GetMapping("/by-category/{categoryId}")
     public ResponseEntity<List<ClassResponseDto>> getByCategory(@PathVariable Long categoryId) {
         return ResponseEntity.ok(classService.GetClassesByCategory(categoryId));
+    }
+    @Operation(
+            summary = "Bulk create students and assign to class",
+            description = "Creates multiple student accounts and assigns them to a class in a single operation."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Bulk operation completed"),
+            @ApiResponse(responseCode = "404", description = "Class not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    @PostMapping("/{classId}/bulk-create-and-assign")
+    public ResponseEntity<?> bulkCreateStudentsAndAssignToClass(
+            @Parameter(description = "Class ID") @PathVariable Long classId,
+            @Parameter(description = "Request containing list of student data and class ID")
+            @RequestBody BulkStudentCreateAndAssignDto request) {
+
+        // Set classId from path variable
+        request.setClassId(classId);
+
+        return ApiResp.success(classService.bulkCreateStudentsAndAssignToClass(request));
     }
 }
