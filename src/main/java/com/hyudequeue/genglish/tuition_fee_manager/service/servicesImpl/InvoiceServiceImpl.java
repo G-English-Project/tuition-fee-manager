@@ -514,7 +514,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-        // 2. Hóa đơn quá hạn (status = OVERDUE)
+        // 2. Hóa đơn quá hạn
         List<Invoice> overdue = invoiceRepository.findByStatus(InvoiceStatusEnum.OVERDUE);
         long overdueCount = overdue.size();
         int overdueTotal = overdue.stream()
@@ -541,16 +541,35 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-        // ✅ Trả về thêm thống kê học sinh Inactive & tổng tiền tháng hiện tại
+        // ✅ Doanh thu tháng hiện tại (chỉ tính hóa đơn PAID có paidAt trong tháng)
+        LocalDate firstDayOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate today = LocalDate.now();
+
+// Lấy tất cả invoice PAID có paidAt trong tháng hiện tại
+        List<Invoice> currentMonthPaid = invoiceRepository.findPaidInvoicesInMonth(
+                InvoiceStatusEnum.PAID,
+                firstDayOfMonth.atStartOfDay(),
+                today.plusDays(1).atStartOfDay() // để include cả ngày hôm nay
+        );
+
+        int currentMonthRevenue = currentMonthPaid.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+
+        // ✅ Trả về tất cả thống kê
         return new InvoiceStatResponseDto(
                 unpaidCount,
                 unpaidTotal,
                 overdueCount,
                 overdueTotal,
                 inactiveStudentCount,
-                currentMonthTotal
+                currentMonthTotal,
+                currentMonthRevenue
         );
     }
+
+
 
 
 
