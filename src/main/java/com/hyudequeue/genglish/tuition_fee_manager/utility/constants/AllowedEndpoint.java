@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.utility.constants;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.FeedbackEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ReportEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ReviewEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints;
@@ -54,6 +55,10 @@ public final class AllowedEndpoint {
 
             // Feedback
             ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT,
+
+            // Report (allow students to view their own reports)
+            ReportEndpoints.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT,
+            ReportEndpoints.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT_IN_RANGE,
 
             // Teacher (read-only for students)
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_ALL,
