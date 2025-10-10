@@ -79,5 +79,6 @@ public interface InvoiceService {
     void bulkSoftDeleteInvoices(List<Long> invoiceIds);
     void bulkHardDeleteInvoices(List<Long> invoiceIds);
     InvoiceStatResponseDto getInvoiceStats();
+    void sendManualReminders(List<Long> invoiceId);
 
 }

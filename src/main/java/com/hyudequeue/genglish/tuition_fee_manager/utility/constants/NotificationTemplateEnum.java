@@ -79,5 +79,8 @@ public enum NotificationTemplateEnum {
      */
     STUDENT_TUITION_EDITED,
 
-    NEW_FEEDBACK_RECEIVED
+    NEW_FEEDBACK_RECEIVED,
+    STUDENT_OVERDUE_REMINDER,   // Nhắc tự động sau mỗi 10 ngày
+    STUDENT_MANUAL_REMINDER   // Nhắc thủ công do admin gửi
+
 }

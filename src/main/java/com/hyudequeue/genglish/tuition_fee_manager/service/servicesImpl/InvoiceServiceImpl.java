@@ -29,11 +29,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -567,6 +570,71 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
 
+    @Async
+    @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Bangkok") // chạy lúc 8h sáng hàng ngày
+    public void sendOverdueRemindersAutomatically() {
+        LocalDate today = LocalDate.now();
+        List<Invoice> overdueInvoices = invoiceRepository.findByStatus(InvoiceStatusEnum.OVERDUE);
+
+        for (Invoice invoice : overdueInvoices) {
+            if (invoice.getDueDate() == null || invoice.getPaidAt() != null) continue;
+
+            long daysOverdue = ChronoUnit.DAYS.between(invoice.getDueDate(), today);
+            // Gửi lại mail sau mỗi 10 ngày: 10, 20, 30,...
+            if (daysOverdue >= 10 && daysOverdue % 10 == 0) {
+                User student = invoice.getUser();
+
+                Map<String, String> values = Map.of(
+                        "studentName", student.getFullName(),
+                        "invoiceContent", invoice.getInvoiceContent(),
+                        "daysOverdue", String.valueOf(daysOverdue)
+                );
+
+                String subject = NotificationTemplateBuilder.buildSubject(
+                        NotificationTemplateEnum.STUDENT_OVERDUE_REMINDER, values
+                );
+                String body = NotificationTemplateBuilder.buildBody(
+                        NotificationTemplateEnum.STUDENT_OVERDUE_REMINDER, values
+                );
+
+                notificationService.createNotification(student.getUserId(), subject, body);
+                emailService.sendNotificationEmail(
+                        student.getEmail(),
+                        NotificationTemplateEnum.STUDENT_OVERDUE_REMINDER,
+                        values
+                );
+            }
+        }
+    }
+
+    @Async
+    public void sendManualReminders(List<Long> invoiceIds) {
+        List<Invoice> invoices = invoiceRepository.findAllWithItems(invoiceIds);
+
+        for (Invoice invoice : invoices) {
+            if (invoice.getStatus() == InvoiceStatusEnum.PAID) continue;
+
+            User student = invoice.getUser();
+            Map<String, String> values = Map.of(
+                    "studentName", student.getFullName(),
+                    "invoiceContent", invoice.getInvoiceContent()
+            );
+
+            String subject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.STUDENT_MANUAL_REMINDER, values
+            );
+            String body = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.STUDENT_MANUAL_REMINDER, values
+            );
+
+            notificationService.createNotification(student.getUserId(), subject, body);
+            emailService.sendNotificationEmail(
+                    student.getEmail(),
+                    NotificationTemplateEnum.STUDENT_MANUAL_REMINDER,
+                    values
+            );
+        }
+    }
 
 
 
