@@ -411,22 +411,22 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable) {
+    public Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable, Long categoryId) {
         return invoiceRepository.sumRevenueGroupByMonth(pageable);
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable) {
+    public Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable, Long categoryId) {
         return invoiceRepository.sumRevenueGroupByClass(pageable);
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable) {
+    public Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable, Long categoryId) {
         return invoiceRepository.sumRevenueGroupByWeek(pageable);
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable) {
+    public Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable, Long categoryId) {
         if (fromDate == null) {
             fromDate = LocalDate.of(1970, 1, 1);
         }
@@ -452,7 +452,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByYear(PageRequest pageable) {
+    public Page<RevenueSummaryDto> getRevenueSummaryByYear(Pageable pageable, Long categoryId) {
         return invoiceRepository.sumRevenueGroupByYear(pageable);
     }
 
