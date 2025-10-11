@@ -207,7 +207,15 @@ public class InvoiceController {
             @RequestParam(defaultValue = "10")
             @jakarta.validation.constraints.Min(1)
             @jakarta.validation.constraints.Max(200)
-            int size
+            int size,
+
+            @Parameter(
+                    name = "categoryId",
+                    description = "Filter by invoice category ID",
+                    example = "1"
+            )
+            @RequestParam(required = false)
+            Long categoryId
     ) {
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             throw new ResponseStatusException(
@@ -220,11 +228,11 @@ public class InvoiceController {
         final PageRequest pageable = PageRequest.of(page, size);
 
         return switch (key) {
-            case "month"     -> ApiResp.success(invoiceService.getRevenueSummaryByMonth(pageable));
-            case "class"     -> ApiResp.success(invoiceService.getRevenueSummaryByClass(pageable));
-            case "week"      -> ApiResp.success(invoiceService.getRevenueSummaryByWeek(pageable));
-            case "year"      -> ApiResp.success(invoiceService.getRevenueSummaryByYear(pageable));
-            case "daterange" -> ApiResp.success(invoiceService.getRevenueSummaryByDateRange(fromDate, toDate, pageable));
+            case "month"     -> ApiResp.success(invoiceService.getRevenueSummaryByMonth(pageable, categoryId));
+            case "class"     -> ApiResp.success(invoiceService.getRevenueSummaryByClass(pageable, categoryId));
+            case "week"      -> ApiResp.success(invoiceService.getRevenueSummaryByWeek(pageable, categoryId));
+            case "year"      -> ApiResp.success(invoiceService.getRevenueSummaryByYear(pageable, categoryId));
+            case "daterange" -> ApiResp.success(invoiceService.getRevenueSummaryByDateRange(fromDate, toDate, pageable, categoryId));
             default -> throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Invalid groupBy. Use one of: month | class | week | year | daterange"
