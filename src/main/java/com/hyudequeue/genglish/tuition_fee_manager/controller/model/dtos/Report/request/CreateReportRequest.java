@@ -13,6 +13,7 @@ import lombok.Data;
 public class CreateReportRequest {
     @NotNull private Long studentId;
     @NotNull private Long classId;
+    @NotNull private Long teacherId;
 
     @NotNull private AttendanceEnum attendance;
     @NotNull private HomeworkEnum homework;

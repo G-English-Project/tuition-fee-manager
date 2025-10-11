@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
         indexes = {
                 @Index(name = "idx_reports_student", columnList = "student_id"),
                 @Index(name = "idx_reports_class", columnList = "class_id"),
+                @Index(name = "idx_reports_teacher", columnList = "teacher_id"),
                 @Index(name = "idx_reports_created_at", columnList = "createdAt")
         })
 @Getter
@@ -33,6 +34,10 @@ public class Report {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "class_id", nullable = false)
     private Classes classRoom;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "teacher_id", nullable = false)
+    private User teacher;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

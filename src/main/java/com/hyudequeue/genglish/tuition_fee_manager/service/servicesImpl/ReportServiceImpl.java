@@ -42,10 +42,13 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Student not found"));
         Classes clazz = classesRepository.findById(req.getClassId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Class not found"));
+        User teacher = userRepository.findById(req.getTeacherId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "User not found"));
 
         Report report = Report.builder()
                 .student(student)
                 .classRoom(clazz)
+                .teacher(teacher)
                 .attendance(req.getAttendance())
                 .homework(req.getHomework())
                 .participation(req.getParticipation())
@@ -171,6 +174,8 @@ public class ReportServiceImpl implements ReportService {
                 .studentName(r.getStudent().getFullName())
                 .classId(r.getClassRoom().getClassId())
                 .className(r.getClassRoom().getClassName())
+                .teacherId(r.getTeacher().getUserId())
+                .teacherName(r.getTeacher().getFullName())
                 .createdAt(r.getCreatedAt())
                 .build();
     }

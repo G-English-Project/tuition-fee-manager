@@ -21,6 +21,9 @@ public class ReportResponseDTO {
     private Long classId;
     private String className;
 
+    private Long teacherId;
+    private String teacherName;
+
     private AttendanceEnum attendance;
     private HomeworkEnum homework;
     private ParticipationEnum participation;
