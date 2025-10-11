@@ -48,7 +48,7 @@ public interface InvoiceService {
 
 
     Page<InvoiceResponseDto> getAllInvoices(Pageable pageable,
-                                            InvoiceStatusEnum status,
+                                            List<InvoiceStatusEnum> status,
                                             Integer month,
                                             Integer year,
                                             Long classId,

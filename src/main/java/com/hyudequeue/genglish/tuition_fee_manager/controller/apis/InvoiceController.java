@@ -110,7 +110,7 @@ public class InvoiceController {
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> getAllInvoices(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) InvoiceStatusEnum status,
+            @RequestParam(required = false) List<InvoiceStatusEnum> status,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Long classId,

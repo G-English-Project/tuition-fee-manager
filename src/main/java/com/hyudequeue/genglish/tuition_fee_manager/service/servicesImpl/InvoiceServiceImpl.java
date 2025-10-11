@@ -249,7 +249,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public Page<InvoiceResponseDto> getAllInvoices(
             Pageable pageable,
-            InvoiceStatusEnum status,
+            List<InvoiceStatusEnum> status,
             Integer month,
             Integer year,
             Long classId,
@@ -258,9 +258,9 @@ public class InvoiceServiceImpl implements InvoiceService {
     ) {
         Specification<Invoice> spec = Specification.where(null);
 
-        // ✅ Filter by status
-        if (status != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+
+        if (status != null && !status.isEmpty()) {
+            spec = spec.and((root, query, cb) -> root.get("status").in(status));
         }
 
         // ✅ Use the "month" field directly (instead of MONTH(createdAt))
