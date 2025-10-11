@@ -1,5 +1,8 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Report.response;
 
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.AttendanceEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.HomeworkEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ParticipationEnum;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,9 +13,6 @@ import java.time.LocalDateTime;
 public class ReportResponseDTO {
     private Long reportId;
 
-    private String title;
-    private String content;
-
     private Boolean hasImage;
 
     private Long studentId;
@@ -21,7 +21,12 @@ public class ReportResponseDTO {
     private Long classId;
     private String className;
 
-    private Double point;
+    private AttendanceEnum attendance;
+    private HomeworkEnum homework;
+    private ParticipationEnum participation;
+    private Integer skillProgress;
+    private String areasForImprovement;
+    private String recommendedAction;
 
     private LocalDateTime createdAt;
 }

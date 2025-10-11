@@ -1,5 +1,8 @@
 package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.AttendanceEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.HomeworkEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ParticipationEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,18 +26,6 @@ public class Report {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reportId;
 
-    @Column(nullable = false, length = 200)
-    private String title;
-
-    @Lob
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
-    private String content;
-
-    @OneToOne(mappedBy = "report", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private ReportImage image;
-
-    @Column private Boolean hasImage;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
@@ -43,8 +34,33 @@ public class Report {
     @JoinColumn(name = "class_id", nullable = false)
     private Classes classRoom;
 
-    @Column(nullable = true)
-    private Double point;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private AttendanceEnum attendance;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private HomeworkEnum homework;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ParticipationEnum participation;
+
+    @Column(nullable = false)
+    private Integer skillProgress;
+
+    @Lob
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    private String areasForImprovement;
+
+    @Lob
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    private String recommendedAction;
+
+    @OneToOne(mappedBy = "report", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private ReportImage image;
+
+    @Column private Boolean hasImage;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
