@@ -44,7 +44,9 @@ public class NotificationTemplateBuilder {
             case STUDENT_ADDED_TO_CLASS -> "Bạn được thêm vào lớp {className}";
             case STUDENT_REMOVED_FROM_CLASS_STUDENT -> "Bạn bị xóa khỏi lớp {className}";
             case STUDENT_TUITION_EDITED -> "Đơn học phí đã được chỉnh sửa";
-
+            // --- NHẮC NHỞ ---
+            case STUDENT_OVERDUE_REMINDER -> "Nhắc nhở học phí còn nợ sau 10 ngày";
+            case STUDENT_MANUAL_REMINDER -> "Nhắc học phí chưa thanh toán";
             default -> "Thông báo hệ thống";
         };
     }
@@ -83,7 +85,12 @@ public class NotificationTemplateBuilder {
                     "Bạn đã bị xóa khỏi lớp {className}.";
             case STUDENT_TUITION_EDITED ->
                     "Đơn học phí của bạn đã được chỉnh sửa – vui lòng kiểm tra lại chi tiết.";
-
+            // --- NHẮC NHỞ ---
+            case STUDENT_OVERDUE_REMINDER ->
+                    "Chào {studentName}, hóa đơn '{invoiceContent}' của bạn đã quá hạn {daysOverdue} ngày. "
+                            + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.";
+            case STUDENT_MANUAL_REMINDER ->
+                    "Chào {studentName}, bạn vui lòng kiểm tra và hoàn tất thanh toán cho hóa đơn '{invoiceContent}' trong thời gian sớm nhất.";
             default -> "[Không tìm thấy nội dung thông báo]";
         };
     }

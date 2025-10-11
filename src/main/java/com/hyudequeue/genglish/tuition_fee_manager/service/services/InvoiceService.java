@@ -48,7 +48,7 @@ public interface InvoiceService {
 
 
     Page<InvoiceResponseDto> getAllInvoices(Pageable pageable,
-                                            InvoiceStatusEnum status,
+                                            List<InvoiceStatusEnum> status,
                                             Integer month,
                                             Integer year,
                                             Long classId,
@@ -79,5 +79,6 @@ public interface InvoiceService {
     void bulkSoftDeleteInvoices(List<Long> invoiceIds);
     void bulkHardDeleteInvoices(List<Long> invoiceIds);
     InvoiceStatResponseDto getInvoiceStats();
+    void sendManualReminders(List<Long> invoiceId);
 
 }

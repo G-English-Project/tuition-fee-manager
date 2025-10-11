@@ -110,7 +110,7 @@ public class InvoiceController {
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> getAllInvoices(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) InvoiceStatusEnum status,
+            @RequestParam(required = false) List<InvoiceStatusEnum> status,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Long classId,
@@ -266,4 +266,17 @@ public class InvoiceController {
     public ResponseEntity<InvoiceStatResponseDto> getInvoiceStats() {
         return ResponseEntity.ok(invoiceService.getInvoiceStats());
     }
+
+    @Operation(summary = "Gửi nhắc nhở học phí chưa thanh toán cho nhiều hóa đơn (manual reminder)")
+    @PutMapping("/manual-reminder/bulk")
+    public ResponseEntity<ApiResp<String>> sendManualReminders(
+            @RequestBody List<Long> invoiceIds
+    ) {
+        // Gọi service để gửi email/SMS nhắc nợ cho nhiều hóa đơn
+        invoiceService.sendManualReminders(invoiceIds);
+
+        return ApiResp.success("Manual reminders sent successfully");
+    }
+
+
 }

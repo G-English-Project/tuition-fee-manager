@@ -21,6 +21,8 @@ import java.util.Map;
 
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpecificationExecutor<Invoice> {
+    @Query("SELECT i FROM Invoice i LEFT JOIN FETCH i.items WHERE i.id IN :ids")
+    List<Invoice> findAllWithItems(@Param("ids") List<Long> ids);
 
     Page<Invoice> findByClasses_ClassIdAndStatusNot(Long classId, InvoiceStatusEnum status, Pageable pageable);
     List<Invoice> findByStatus(InvoiceStatusEnum status);

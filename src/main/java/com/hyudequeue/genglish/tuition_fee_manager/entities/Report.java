@@ -51,6 +51,8 @@ public class Report {
 
     @PrePersist
     private void onCreate() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        }
     }
 }

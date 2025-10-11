@@ -50,7 +50,7 @@ public class ReportServiceImpl implements ReportService {
                 .classRoom(clazz)
                 .point(req.getPoint())
                 .hasImage(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")))
                 .build();
         report = reportRepository.save(report);
 
