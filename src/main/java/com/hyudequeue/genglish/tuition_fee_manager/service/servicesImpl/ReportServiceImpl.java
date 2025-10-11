@@ -7,12 +7,10 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Report.
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Report;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ReportImage;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Teacher;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ReportImageRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ReportRepository;
-import com.hyudequeue.genglish.tuition_fee_manager.repository.TeacherRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ReportService;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +35,6 @@ public class ReportServiceImpl implements ReportService {
     private final ReportImageRepository reportImageRepository;
     private final UserRepository userRepository;
     private final ClassRepository classesRepository;
-    private final TeacherRepository teacherRepository;
 
     @Override
     public ReportResponseDTO create(CreateReportRequest req) {
@@ -45,8 +42,8 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Student not found"));
         Classes clazz = classesRepository.findById(req.getClassId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Class not found"));
-        Teacher teacher = teacherRepository.findById(req.getTeacherId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Teacher not found"));
+        User teacher = userRepository.findById(req.getTeacherId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "User not found"));
 
         Report report = Report.builder()
                 .student(student)
@@ -177,8 +174,8 @@ public class ReportServiceImpl implements ReportService {
                 .studentName(r.getStudent().getFullName())
                 .classId(r.getClassRoom().getClassId())
                 .className(r.getClassRoom().getClassName())
-                .teacherId(r.getTeacher().getId())
-                .teacherName(r.getTeacher().getName())
+                .teacherId(r.getTeacher().getUserId())
+                .teacherName(r.getTeacher().getFullName())
                 .createdAt(r.getCreatedAt())
                 .build();
     }
