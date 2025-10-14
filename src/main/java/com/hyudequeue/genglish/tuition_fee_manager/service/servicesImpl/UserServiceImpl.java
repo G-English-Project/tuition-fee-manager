@@ -2,6 +2,8 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.EnrolledClassDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.BulkStudentDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.BulkUserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.*;
@@ -24,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -275,6 +278,72 @@ public class UserServiceImpl implements UserService {
         return userRepository
                 .findByRoleAndStatusOrderByCreatedAtDesc(role, UserStatusEnum.ACTIVE, pageable)
                 .map(UserResponseDto::toDto);
+    }
+
+    @Override
+    @Transactional
+    public BulkUserCreateResponseDto createBulkStudents(BulkUserCreateRequestDto request) {
+        List<BulkUserCreateResponseDto.UserCreateResult> results = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        int successCount = 0;
+
+        for (BulkStudentDto student : request.getStudents()) {
+            try {
+                if (userRepository.findByEmail(student.getEmail()).isPresent()) {
+                    results.add(BulkUserCreateResponseDto.UserCreateResult.builder()
+                            .email(student.getEmail())
+                            .fullName(student.getFullName())
+                            .success(false)
+                            .error("Email already exists")
+                            .build());
+                    continue;
+                }
+
+                String defaultPassword = student.getDateOfBirth().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+                String hashedPassword = BCrypt.withDefaults().hashToString(12, defaultPassword.toCharArray());
+                
+                User user = User.builder()
+                        .email(student.getEmail())
+                        .phone(student.getPhone())
+                        .fullName(student.getFullName())
+                        .role(RoleEnum.STUDENT)
+                        .status(UserStatusEnum.ACTIVE)
+                        .passwordHash(hashedPassword)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .dateOfBirth(student.getDateOfBirth())
+                        .changedDefaultPassword(false)
+                        .build();
+                
+                User savedUser = userRepository.save(user);
+
+                results.add(BulkUserCreateResponseDto.UserCreateResult.builder()
+                        .email(savedUser.getEmail())
+                        .fullName(savedUser.getFullName())
+                        .userId(savedUser.getUserId())
+                        .success(true)
+                        .defaultPassword(defaultPassword)
+                        .build());
+                
+                successCount++;
+            } catch (Exception e) {
+                results.add(BulkUserCreateResponseDto.UserCreateResult.builder()
+                        .email(student.getEmail())
+                        .fullName(student.getFullName())
+                        .success(false)
+                        .error(e.getMessage())
+                        .build());
+                errors.add("Failed to create user " + student.getEmail() + ": " + e.getMessage());
+            }
+        }
+
+        return BulkUserCreateResponseDto.builder()
+                .totalRequested(request.getStudents().size())
+                .successfullyCreated(successCount)
+                .failed(request.getStudents().size() - successCount)
+                .results(results)
+                .errors(errors)
+                .build();
     }
 
 }

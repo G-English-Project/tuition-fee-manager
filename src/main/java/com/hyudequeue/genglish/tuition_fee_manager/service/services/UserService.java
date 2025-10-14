@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.services;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.BulkUserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.*;
@@ -17,4 +18,5 @@ public interface UserService {
     void changePassword(Long userId, String oldPassword, String newPassword);
     Page<UserWithClassesDto> searchStudents(String keyword, int page, int size);
     Page<UserResponseDto> getAllByRole(RoleEnum role, int page, int size);
+    BulkUserCreateResponseDto createBulkStudents(BulkUserCreateRequestDto request);
 }
