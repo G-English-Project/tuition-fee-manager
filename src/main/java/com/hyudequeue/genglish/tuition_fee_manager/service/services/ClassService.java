@@ -34,7 +34,6 @@ public interface ClassService {
     UserInClassWithNoteDto NoteAStudentInClass(Long classId, Long studentId, String note);
 
     void RestoreClass(Long classId);
-    List<ClassResponseDto> GetClassesByTeacher(Long teacherId);
     List<ClassResponseDto> GetClassesByCategory(Long categoryId);
     BulkStudentCreateAndAssignResponseDto bulkCreateStudentsAndAssignToClass(BulkStudentCreateAndAssignDto request);
 

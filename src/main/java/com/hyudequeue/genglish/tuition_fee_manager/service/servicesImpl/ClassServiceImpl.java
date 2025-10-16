@@ -9,6 +9,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Enrollment.response.EnrollmentResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserInClassWithNoteDto;
 
+import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassCategory;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
@@ -120,7 +121,16 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     public ClassResponseDto CreateClass(ClassRequestDto classCreate) {
-        return ClassResponseDto.fromEntity(classesRepository.save(classCreate.toEntity()));
+        // Find category with ID = 1
+        ClassCategory category = classCategoryRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Category with ID 1 not found"));
+
+        // Convert DTO to entity and set category
+        Classes newClass = classCreate.toEntity();
+        newClass.setClassCategory(category);
+
+        // Save and return DTO
+        return ClassResponseDto.fromEntity(classesRepository.save(newClass));
     }
 
     @Override
@@ -359,13 +369,7 @@ public class ClassServiceImpl implements ClassService {
             classesRepository.save(classes);
         }
     }
-    @Override
-    public List<ClassResponseDto> GetClassesByTeacher(Long teacherId) {
-        return classRepository.findByTeacherId(teacherId)
-                .stream()
-                .map(ClassResponseDto::fromEntity)
-                .toList();
-    }
+
 
     @Override
     public List<ClassResponseDto> GetClassesByCategory(Long categoryId) {

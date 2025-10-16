@@ -216,10 +216,7 @@ public class ClassController {
         return ApiResp.success("Class restored successfully.");
     }
 
-    @GetMapping("/by-teacher/{teacherId}")
-    public ResponseEntity<List<ClassResponseDto>> getByTeacher(@PathVariable Long teacherId) {
-        return ResponseEntity.ok(classService.GetClassesByTeacher(teacherId));
-    }
+ 
 
     @GetMapping("/by-category/{categoryId}")
     public ResponseEntity<List<ClassResponseDto>> getByCategory(@PathVariable Long categoryId) {
