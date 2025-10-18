@@ -43,13 +43,6 @@ public class Classes {
     @Column(nullable = true)
     private LocalDateTime updatedAt;
 
-    // Thêm teacherId, teacherName
-    @Column(nullable = false)
-    private Long teacherId;
-
-    @Column(nullable = false, length = 100)
-    private String teacherName;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "class_category_id",       // cột trong bảng classes

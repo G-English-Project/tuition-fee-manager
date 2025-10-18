@@ -412,17 +412,29 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable, Long categoryId) {
-        return invoiceRepository.sumRevenueGroupByMonth(pageable);
+        if (categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByMonthWithCategory(pageable, categoryId);
+        } else {
+            return invoiceRepository.sumRevenueGroupByMonth(pageable);
+        }
     }
 
     @Override
     public Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable, Long categoryId) {
-        return invoiceRepository.sumRevenueGroupByClass(pageable);
+        if (categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByClassWithCategory(pageable, categoryId);
+        } else {
+            return invoiceRepository.sumRevenueGroupByClass(pageable);
+        }
     }
 
     @Override
     public Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable, Long categoryId) {
-        return invoiceRepository.sumRevenueGroupByWeek(pageable);
+        if (categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByWeekWithCategory(pageable, categoryId);
+        } else {
+            return invoiceRepository.sumRevenueGroupByWeek(pageable);
+        }
     }
 
     @Override
@@ -435,10 +447,19 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         // Repository actually returns Integer
-        Integer totalRevenue = invoiceRepository.sumRevenueByDateRange(
-                fromDate.atStartOfDay(),
-                toDate.plusDays(1).atStartOfDay()
-        );
+        Integer totalRevenue;
+        if (categoryId != null) {
+            totalRevenue = invoiceRepository.sumRevenueByDateRangeWithCategory(
+                    fromDate.atStartOfDay(),
+                    toDate.plusDays(1).atStartOfDay(),
+                    categoryId
+            );
+        } else {
+            totalRevenue = invoiceRepository.sumRevenueByDateRange(
+                    fromDate.atStartOfDay(),
+                    toDate.plusDays(1).atStartOfDay()
+            );
+        }
 
         RevenueSummaryDto dto = new RevenueSummaryDto(
                 fromDate + " ~ " + toDate,
@@ -453,7 +474,11 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public Page<RevenueSummaryDto> getRevenueSummaryByYear(Pageable pageable, Long categoryId) {
-        return invoiceRepository.sumRevenueGroupByYear(pageable);
+        if (categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByYearWithCategory(pageable, categoryId);
+        } else {
+            return invoiceRepository.sumRevenueGroupByYear(pageable);
+        }
     }
 
     @Override
