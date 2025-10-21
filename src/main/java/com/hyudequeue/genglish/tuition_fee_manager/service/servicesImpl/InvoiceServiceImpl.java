@@ -469,6 +469,28 @@ public class InvoiceServiceImpl implements InvoiceService {
         return new PageImpl<>(List.of(dto), pageable, 1);
     }
 
+    @Override
+    public Page<RevenueSummaryDto> getRevenueSummaryAuto(
+            String summaryType,
+            Pageable pageable,
+            Long classId,
+            Long categoryId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        return switch (summaryType.toLowerCase()) {
+            case "month" -> getRevenueSummaryByMonth(pageable, categoryId);
+            case "week" -> getRevenueSummaryByWeek(pageable, categoryId);
+            case "year" -> getRevenueSummaryByYear(pageable, categoryId);
+            case "class" -> getRevenueSummaryByClass(pageable, categoryId);
+            case "daterange" -> {
+                if (fromDate == null || toDate == null)
+                    throw new IllegalArgumentException("Date range requires both fromDate and toDate");
+                yield getRevenueSummaryByDateRange(fromDate, toDate, pageable, categoryId);
+            }
+            default -> throw new IllegalArgumentException("Invalid summary type: " + summaryType);
+        };
+    }
 
 
 
