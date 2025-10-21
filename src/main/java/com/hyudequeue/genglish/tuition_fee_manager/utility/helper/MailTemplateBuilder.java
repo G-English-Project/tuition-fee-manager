@@ -44,7 +44,7 @@ public class MailTemplateBuilder {
             case CLASS_TUITION_UPDATED -> "Đã cập nhật học phí lớp {className}";
             case INVOICE_CANCELLED_ALERT -> "Hóa đơn bị hủy: {invoiceContent}";
             case NEW_INVOICE_NOTIFICATION -> "Bạn có hóa đơn mới: {invoiceContent}";
-            case STUDENT_SUCCESSFUL_PAYMENT -> "Đã thanh toán: {invoiceContent}";
+            case STUDENT_SUCCESSFUL_PAYMENT -> "Học sinh {studentName} đã thanh toán hóa đơn với nội dung: {invoiceContent}";
             case STUDENT_INVOICE_OVERDUE -> "Hóa đơn quá hạn: {invoiceContent}";
             case STUDENT_ADDED_TO_CLASS -> "Bạn được thêm vào lớp {className}";
             case STUDENT_REMOVED_FROM_CLASS_STUDENT -> "Bạn bị xóa khỏi lớp {className}";
@@ -75,7 +75,7 @@ public class MailTemplateBuilder {
             case NEW_INVOICE_NOTIFICATION ->
                     "Bạn có hóa đơn thanh toán mới với nội dung {invoiceContent}, vui lòng kiểm tra.";
             case STUDENT_SUCCESSFUL_PAYMENT ->
-                    "Đã thanh toán thành công cho hóa đơn với nội dung {invoiceContent}.";
+                    "Học sinh {studentName} đã thanh toán hóa đơn với nội dung: {invoiceContent}";
             case STUDENT_INVOICE_OVERDUE ->
                     "Hóa đơn với nội dung {invoiceContent} đã quá hạn, vui lòng thanh toán sớm.";
             case STUDENT_ADDED_TO_CLASS ->
