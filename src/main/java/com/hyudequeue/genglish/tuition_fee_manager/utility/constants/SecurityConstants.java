@@ -8,6 +8,8 @@ public class SecurityConstants {
             "http://localhost:1600",
             "https://portal-internal.gsenglish.org",
             "https://portal.gsenglish.org",
+            "https://gsenglish.hyudequeue.xyz",
+            "https://gsenglish-internal.hyudequeue.xyz",
             "http://localhost:3000",
             "http://localhost:4000"
     };
