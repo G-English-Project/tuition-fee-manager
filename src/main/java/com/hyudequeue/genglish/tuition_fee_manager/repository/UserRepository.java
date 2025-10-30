@@ -94,78 +94,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
                               @org.springframework.data.repository.query.Param("kw") String keyword,
                               Pageable pageable);
 
-    // lấy student trong 1 class cụ thể
     @Query("""
-           SELECT u 
-           FROM User u 
-           JOIN ClassEnrollment ce ON u.userId = ce.user.userId 
-           WHERE ce.classes.classId = :classId 
-             AND u.role = 'STUDENT' 
-             AND u.status = 'ACTIVE'
-             AND ce.unEnrolledAt IS NULL
-           """)
-    Page<User> findStudentsByClassId(@Param("classId") Long classId, Pageable pageable);
-
-    // lấy student chưa có class nào
-    @Query("""
-           SELECT u 
-           FROM User u 
-           WHERE u.role = 'STUDENT' 
-             AND u.status = 'ACTIVE'
-             AND u.userId NOT IN (
-                SELECT ce.user.userId 
-                FROM ClassEnrollment ce 
-                WHERE ce.unEnrolledAt IS NULL
-             )
-           """)
-    Page<User> findStudentsWithoutClass(Pageable pageable);
-    
-    long countByStatus(UserStatusEnum status);
-    
-    Page<User> findByRoleAndStudentStatusOrderByCreatedAtDesc(RoleEnum role, StudentStatusEnum studentStatus, Pageable pageable);
-    
-    Page<User> findByRoleAndStatusAndStudentStatusOrderByCreatedAtDesc(RoleEnum role, UserStatusEnum status, StudentStatusEnum studentStatus, Pageable pageable);
-    
-    @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(
-        u.userId,
-        u.email,
-        u.fullName,
-        c.classId,
-        c.className,
-        u.createdAt
-    )
-    FROM User u
-    LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
-    LEFT JOIN Classes c ON ce.classes = c
-    WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
-      AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
-      AND (:studentStatus IS NULL OR u.studentStatus = :studentStatus)
-    ORDER BY u.createdAt DESC
+    SELECT DISTINCT u FROM User u
+    JOIN ClassEnrollment ce ON ce.user.userId = u.userId
+    JOIN Classes c ON c.classId = ce.classes.classId
+    WHERE u.role = :role
+      AND u.status = :status
+      AND ce.unEnrolledAt IS NULL
+      AND (:classId IS NULL OR c.classId = :classId)
+      AND (:className IS NULL OR LOWER(c.className) LIKE LOWER(CONCAT('%', :className, '%')))
 """)
-    Page<UserWithClassDto> findAllActiveStudentsWithCurrentClassFilterByStudentStatus(@Param("studentStatus") StudentStatusEnum studentStatus, Pageable pageable);
-    
-    @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(
-        u.userId,
-        u.email,
-        u.fullName,
-        c.classId,
-        c.className,
-        u.createdAt
-    )
-    FROM User u
-    LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
-    LEFT JOIN Classes c ON ce.classes = c
-    WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
-      AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
-      AND (:studentStatus IS NULL OR u.studentStatus = :studentStatus)
-      AND (
-            LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-         OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
-         OR LOWER(c.className) LIKE LOWER(CONCAT('%', :keyword, '%'))
-      )
-        ORDER BY u.createdAt DESC
-    """)
-    Page<UserWithClassDto> searchStudentsWithClassByKeywordAndStudentStatus(@Param("keyword") String keyword, @Param("studentStatus") StudentStatusEnum studentStatus, Pageable pageable);
+    Page<User> findStudentsByClassFilter(
+            @Param("role") RoleEnum role,
+            @Param("status") UserStatusEnum status,
+            @Param("classId") Long classId,
+            @Param("className") String className,
+            Pageable pageable
+    );
+
 }

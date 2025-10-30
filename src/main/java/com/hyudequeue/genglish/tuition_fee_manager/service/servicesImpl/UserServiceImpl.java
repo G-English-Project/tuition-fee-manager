@@ -83,25 +83,26 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Page<UserWithClassesDto> GetAllStudent(int page, int size, Long classId, StudentStatusEnum studentStatus) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    public Page<UserWithClassesDto> GetAllStudent(int page, int size, Long classId, String className, String sortBy, String sortDir) {
+        Sort sort = Sort.by(sortBy);
+        if (sortDir.equalsIgnoreCase("desc")) sort = sort.descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<User> usersPage;
 
-        if (classId != null && classId == 0) {
-            usersPage = userRepository.findStudentsWithoutClass(pageable);
-        } else if (classId != null && classId > 0) {
-            usersPage = userRepository.findStudentsByClassId(classId, pageable);
+        // --- Case 1: Lọc theo classId hoặc className ---
+        if (classId != null || (className != null && !className.isBlank())) {
+            usersPage = userRepository.findStudentsByClassFilter(
+                    RoleEnum.STUDENT,
+                    UserStatusEnum.ACTIVE,
+                    classId,
+                    className,
+                    pageable
+            );
         } else {
-            if (studentStatus != null) {
-                usersPage = userRepository.findByRoleAndStatusAndStudentStatusOrderByCreatedAtDesc(
-                        RoleEnum.STUDENT, UserStatusEnum.ACTIVE, studentStatus, pageable
-                );
-            } else {
-                usersPage = userRepository.findByRoleAndStatusOrderByCreatedAtDesc(
-                        RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable
-                );
-            }
+            // --- Case 2: Lấy tất cả student ---
+            usersPage = userRepository.findByRoleAndStatusOrderByCreatedAtDesc(
+                    RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable);
         }
 
         if (usersPage.isEmpty()) {

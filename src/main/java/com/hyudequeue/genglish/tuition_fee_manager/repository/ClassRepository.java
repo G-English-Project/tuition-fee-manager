@@ -5,6 +5,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnu
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface ClassRepository extends JpaRepository<Classes, Long> {
+public interface ClassRepository extends JpaRepository<Classes, Long>, JpaSpecificationExecutor<Classes> {
     Page<Classes> findByStatus(ClassStatusEnum status, Pageable pageable);
     List<Classes> findByClassCategory_CategoryId(Long categoryId);
     @Modifying(clearAutomatically = true, flushAutomatically = true)

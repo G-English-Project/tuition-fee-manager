@@ -24,11 +24,13 @@ import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -78,16 +80,20 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public Page<ClassResponseDtoWithCount> GetAllClasses(ClassStatusEnum status, int pageNumber, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("effectiveFrom").ascending());
+    public Page<ClassResponseDtoWithCount> GetAllClasses(int pageNumber, int pageSize, LocalDate effectiveFrom, ClassStatusEnum status) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
 
-        Page<Classes> page;
+        Specification<Classes> spec = Specification.where(null);
+
+        if (effectiveFrom != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("effectiveFrom"), effectiveFrom));
+        }
 
         if (status != null) {
-            page = classesRepository.findByStatus(status, pageable);
-        } else {
-            page = classesRepository.findAll(pageable);
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
+
+        Page<Classes> page = classesRepository.findAll(spec, pageable);
 
         List<Long> classIds = page.getContent().stream()
                 .map(Classes::getClassId)
