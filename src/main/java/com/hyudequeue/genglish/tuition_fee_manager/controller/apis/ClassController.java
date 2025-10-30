@@ -30,28 +30,28 @@ public class ClassController {
 
     private final ClassService classService;
 
+    @Operation(
+            summary = "Get all classes",
+            description = "Retrieve paginated list of all classes. " +
+                    "Optionally filter by effective date, status, and prioritize a specific category."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Classes retrieved successfully")
+    })
     @GetMapping(GET_ALL_CLASSES)
-    @Operation(summary = "Get all classes with optional filters")
     public ResponseEntity<?> getAllClasses(
-            @Parameter(description = "Page number", example = "0") @RequestParam int pageNumber,
-            @Parameter(description = "Page size", example = "10") @RequestParam int pageSize,
-            @Parameter(description = "Effective from date (yyyy-MM-dd)", example = "2025-10-01")
+            @Parameter(description = "Page number (0-based)") @RequestParam int pageNumber,
+            @Parameter(description = "Page size") @RequestParam int pageSize,
+            @Parameter(description = "Filter by effective start date (ISO format: yyyy-MM-dd)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveFrom,
-            @Parameter(description = "Class status", example = "ACTIVE")
-            @RequestParam(required = false) ClassStatusEnum status,
-            @Parameter(description = "Filter by category names (multiple allowed)", example = "[English,Math]")
-            @RequestParam(required = false) List<String> categoryNames,
-            @Parameter(description = "Sort by field (default=createdAt)", example = "classCategory.name")
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @Parameter(description = "Sort direction (asc/desc)", example = "desc")
-            @RequestParam(defaultValue = "desc") String direction
+            @Parameter(description = "Filter by class status") @RequestParam(required = false) ClassStatusEnum status,
+            @Parameter(description = "Category name to prioritize to top, then alphabetically")
+            @RequestParam(required = false) String prioritizedCategoryName
     ) {
         return ApiResp.success(
-                classService.GetAllClasses(pageNumber, pageSize, effectiveFrom, status, categoryNames, sortBy, direction)
+                classService.GetAllClasses(pageNumber, pageSize, effectiveFrom, status, prioritizedCategoryName)
         );
     }
-
-
 
     @Operation(summary = "Get class by ID", description = "Returns details of a specific class by ID.")
     @ApiResponses(value = {

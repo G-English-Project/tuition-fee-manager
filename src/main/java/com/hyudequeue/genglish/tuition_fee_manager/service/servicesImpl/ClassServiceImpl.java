@@ -23,6 +23,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
@@ -88,15 +89,9 @@ public class ClassServiceImpl implements ClassService {
             int pageSize,
             LocalDate effectiveFrom,
             ClassStatusEnum status,
-            List<String> categoryNames,
-            String sortBy,
-            String direction
+            String prioritizedCategoryName
     ) {
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize); // Custom sort
 
         Specification<Classes> spec = Specification.where(null);
 
@@ -109,14 +104,33 @@ public class ClassServiceImpl implements ClassService {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
 
-        if (categoryNames != null && !categoryNames.isEmpty()) {
-            spec = spec.and((root, query, cb) -> {
-                Join<Object, Object> categoryJoin = root.join("classCategory", JoinType.LEFT);
-                CriteriaBuilder.In<String> inClause = cb.in(cb.lower(categoryJoin.get("name")));
-                categoryNames.forEach(name -> inClause.value(name.toLowerCase()));
-                return inClause;
-            });
-        }
+        // 🔥 Custom sort logic
+        spec = spec.and((root, query, cb) -> {
+            Join<Object, Object> categoryJoin = root.join("classCategory", JoinType.LEFT);
+
+            if (prioritizedCategoryName != null && !prioritizedCategoryName.isEmpty()) {
+                // 👇 ép kiểu <Integer> để tránh lỗi Expression<Object>
+                Expression<Integer> caseExpr = cb.<Integer>selectCase()
+                        .when(
+                                cb.equal(cb.lower(categoryJoin.get("name")), prioritizedCategoryName.toLowerCase()),
+                                0
+                        )
+                        .otherwise(1);
+
+                query.orderBy(
+                        cb.asc(caseExpr), // Ưu tiên category được chỉ định
+                        cb.asc(categoryJoin.get("name")), // Sort theo alphabet
+                        cb.asc(root.get("className")) // Sort phụ theo tên lớp
+                );
+            } else {
+                // Không có category ưu tiên thì sort bình thường
+                query.orderBy(
+                        cb.asc(categoryJoin.get("name")),
+                        cb.asc(root.get("className"))
+                );
+            }
+            return null;
+        });
 
         Page<Classes> page = classesRepository.findAll(spec, pageable);
 
@@ -129,9 +143,11 @@ public class ClassServiceImpl implements ClassService {
                 : classEnrollmentRepository.countActiveByClassIds(classIds).stream()
                 .collect(Collectors.toMap(ClassCountProjection::getClassId, ClassCountProjection::getCnt));
 
-        return page.map(c -> ClassResponseDtoWithCount.fromEntity(c, countMap.getOrDefault(c.getClassId(), 0L)));
+        return page.map(c -> ClassResponseDtoWithCount.fromEntity(
+                c,
+                countMap.getOrDefault(c.getClassId(), 0L)
+        ));
     }
-
 
 
 

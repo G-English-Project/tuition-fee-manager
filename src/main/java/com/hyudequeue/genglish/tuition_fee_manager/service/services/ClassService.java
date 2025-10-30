@@ -27,9 +27,7 @@ public interface ClassService {
             int pageSize,
             LocalDate effectiveFrom,
             ClassStatusEnum status,
-            List<String> categoryNames,
-            String sortBy,
-            String direction
+            String prioritizedCategoryName
     );
 
     ClassResponseDto GetClassById(Long classId);
