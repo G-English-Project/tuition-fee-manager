@@ -38,9 +38,9 @@ public class InvoiceResponseDto {
     public static InvoiceResponseDto toDto(Invoice invoice) {
         return InvoiceResponseDto.builder()
                 .invoiceId(invoice.getInvoiceId())
-                .shownId(GenerateId.formatId(invoice.getInvoiceId())) // gán shownId
+                .shownId(GenerateId.formatId(invoice.getInvoiceId())) 
                 .userId(invoice.getUser().getUserId())
-                .userName(invoice.getUserName() != null ? invoice.getUserName() : invoice.getUser().getFullName())
+                .userName(invoice.getUser() != null ? invoice.getUser().getFullName() : invoice.getUserName())
                 .classesId(invoice.getClasses().getClassId())
                 .month(invoice.getMonth())
                 .dueDate(invoice.getDueDate())
