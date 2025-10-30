@@ -91,7 +91,7 @@ public class ClassServiceImpl implements ClassService {
             ClassStatusEnum status,
             String prioritizedCategoryName
     ) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize); // Custom sort
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
 
         Specification<Classes> spec = Specification.where(null);
 
