@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.repository;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
@@ -93,30 +94,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
                               @org.springframework.data.repository.query.Param("kw") String keyword,
                               Pageable pageable);
 
-    // lấy student trong 1 class cụ thể
     @Query("""
-           SELECT u 
-           FROM User u 
-           JOIN ClassEnrollment ce ON u.userId = ce.user.userId 
-           WHERE ce.classes.classId = :classId 
-             AND u.role = 'STUDENT' 
-             AND u.status = 'ACTIVE'
-             AND ce.unEnrolledAt IS NULL
-           """)
-    Page<User> findStudentsByClassId(@Param("classId") Long classId, Pageable pageable);
+    SELECT DISTINCT u FROM User u
+    JOIN ClassEnrollment ce ON ce.user.userId = u.userId
+    JOIN Classes c ON c.classId = ce.classes.classId
+    WHERE u.role = :role
+      AND u.status = :status
+      AND ce.unEnrolledAt IS NULL
+      AND (:classId IS NULL OR c.classId = :classId)
+      AND (:className IS NULL OR LOWER(c.className) LIKE LOWER(CONCAT('%', :className, '%')))
+""")
+    Page<User> findStudentsByClassFilter(
+            @Param("role") RoleEnum role,
+            @Param("status") UserStatusEnum status,
+            @Param("classId") Long classId,
+            @Param("className") String className,
+            Pageable pageable
+    );
 
-    // lấy student chưa có class nào
-    @Query("""
-           SELECT u 
-           FROM User u 
-           WHERE u.role = 'STUDENT' 
-             AND u.status = 'ACTIVE'
-             AND u.userId NOT IN (
-                SELECT ce.user.userId 
-                FROM ClassEnrollment ce 
-                WHERE ce.unEnrolledAt IS NULL
-             )
-           """)
-    Page<User> findStudentsWithoutClass(Pageable pageable);
-    long countByStatus(UserStatusEnum status);
 }

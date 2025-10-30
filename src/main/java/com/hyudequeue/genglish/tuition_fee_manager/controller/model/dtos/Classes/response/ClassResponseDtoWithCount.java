@@ -25,6 +25,8 @@ public class ClassResponseDtoWithCount {
 
     private long currentStudentCount;
 
+    private ClassCategoryDTO category;
+
     public static ClassResponseDtoWithCount fromEntity(Classes c, long count) {
         if (c == null) return null;
         ClassResponseDtoWithCount dto = new ClassResponseDtoWithCount();
@@ -38,6 +40,9 @@ public class ClassResponseDtoWithCount {
         dto.setCreatedAt(c.getCreatedAt());
         dto.setUpdatedAt(c.getUpdatedAt());
         dto.setCurrentStudentCount(count);
+
+        dto.setCategory(ClassCategoryDTO.fromEntity(c.getClassCategory()));
+
         return dto;
     }
 }

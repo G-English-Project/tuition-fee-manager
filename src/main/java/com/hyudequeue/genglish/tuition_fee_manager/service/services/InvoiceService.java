@@ -80,5 +80,13 @@ public interface InvoiceService {
     void bulkHardDeleteInvoices(List<Long> invoiceIds);
     InvoiceStatResponseDto getInvoiceStats();
     void sendManualReminders(List<Long> invoiceId);
+    Page<RevenueSummaryDto> getRevenueSummaryAuto(
+            String summaryType,
+            Pageable pageable,
+            Long classId,
+            Long categoryId,
+            LocalDate fromDate,
+            LocalDate toDate
+    );
 
 }

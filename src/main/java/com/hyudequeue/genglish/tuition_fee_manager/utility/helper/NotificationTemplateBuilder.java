@@ -38,7 +38,7 @@ public class NotificationTemplateBuilder {
             case NEW_FEEDBACK_RECEIVED -> "Feedback mới từ {studentName}";
             // --- HỌC SINH ---
             case NEW_INVOICE_NOTIFICATION -> "Bạn có hóa đơn mới: {invoiceContent}";
-            case STUDENT_SUCCESSFUL_PAYMENT -> "Đã thanh toán: {invoiceContent}";
+            case STUDENT_SUCCESSFUL_PAYMENT -> "Học sinh {studentName} đã thanh toán hóa đơn với nội dung: {invoiceContent}";
             case STUDENT_INVOICE_OVERDUE -> "Hóa đơn quá hạn: {invoiceContent}";
 
             case STUDENT_ADDED_TO_CLASS -> "Bạn được thêm vào lớp {className}";
@@ -75,7 +75,7 @@ public class NotificationTemplateBuilder {
             case NEW_INVOICE_NOTIFICATION ->
                     "Bạn có hóa đơn thanh toán mới với nội dung {invoiceContent}, vui lòng kiểm tra.";
             case STUDENT_SUCCESSFUL_PAYMENT ->
-                    "Đã thanh toán thành công cho hóa đơn với nội dung {invoiceContent}.";
+                    "Học sinh {studentName} đã thanh toán hóa đơn với nội dung: {invoiceContent}";
             case STUDENT_INVOICE_OVERDUE ->
                     "Hóa đơn với nội dung {invoiceContent} đã quá hạn, vui lòng thanh toán sớm.";
 

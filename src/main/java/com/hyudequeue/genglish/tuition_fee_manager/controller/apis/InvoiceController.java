@@ -215,7 +215,15 @@ public class InvoiceController {
                     example = "1"
             )
             @RequestParam(required = false)
-            Long categoryId
+            Long categoryId,
+
+            @Parameter(
+                    name = "classId",
+                    description = "Lọc doanh thu theo lớp học (classId)",
+                    example = "2"
+            )
+            @RequestParam(required = false)
+            Long classId
     ) {
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             throw new ResponseStatusException(
@@ -227,18 +235,18 @@ public class InvoiceController {
         final String key = (groupBy == null ? "month" : groupBy).trim().toLowerCase();
         final PageRequest pageable = PageRequest.of(page, size);
 
-        return switch (key) {
-            case "month"     -> ApiResp.success(invoiceService.getRevenueSummaryByMonth(pageable, categoryId));
-            case "class"     -> ApiResp.success(invoiceService.getRevenueSummaryByClass(pageable, categoryId));
-            case "week"      -> ApiResp.success(invoiceService.getRevenueSummaryByWeek(pageable, categoryId));
-            case "year"      -> ApiResp.success(invoiceService.getRevenueSummaryByYear(pageable, categoryId));
-            case "daterange" -> ApiResp.success(invoiceService.getRevenueSummaryByDateRange(fromDate, toDate, pageable, categoryId));
-            default -> throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid groupBy. Use one of: month | class | week | year | daterange"
-            );
-        };
+        Page<RevenueSummaryDto> result = invoiceService.getRevenueSummaryAuto(
+                key,
+                pageable,
+                classId,
+                categoryId,
+                fromDate,
+                toDate
+        );
+
+        return ApiResp.success(result);
     }
+
 
     @Operation(summary = "Bulk soft-delete invoices (mark as CANCELLED)")
     @PutMapping("/bulk-soft-delete")

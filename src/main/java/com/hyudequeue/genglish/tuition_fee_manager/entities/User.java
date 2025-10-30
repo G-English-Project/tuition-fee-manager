@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.entities;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
@@ -39,6 +40,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserStatusEnum status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private StudentStatusEnum studentStatus;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

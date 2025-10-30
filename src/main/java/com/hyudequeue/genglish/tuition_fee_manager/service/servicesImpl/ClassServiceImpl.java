@@ -22,13 +22,19 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -78,16 +84,55 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public Page<ClassResponseDtoWithCount> GetAllClasses(ClassStatusEnum status, int pageNumber, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("effectiveFrom").ascending());
+    public Page<ClassResponseDtoWithCount> GetAllClasses(
+            int pageNumber,
+            int pageSize,
+            LocalDate effectiveFrom,
+            ClassStatusEnum status,
+            String prioritizedCategoryName
+    ) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
 
-        Page<Classes> page;
+        Specification<Classes> spec = Specification.where(null);
+
+        if (effectiveFrom != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("effectiveFrom"), effectiveFrom));
+        }
 
         if (status != null) {
-            page = classesRepository.findByStatus(status, pageable);
-        } else {
-            page = classesRepository.findAll(pageable);
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
+
+        // 🔥 Custom sort logic
+        spec = spec.and((root, query, cb) -> {
+            Join<Object, Object> categoryJoin = root.join("classCategory", JoinType.LEFT);
+
+            if (prioritizedCategoryName != null && !prioritizedCategoryName.isEmpty()) {
+                // 👇 ép kiểu <Integer> để tránh lỗi Expression<Object>
+                Expression<Integer> caseExpr = cb.<Integer>selectCase()
+                        .when(
+                                cb.equal(cb.lower(categoryJoin.get("name")), prioritizedCategoryName.toLowerCase()),
+                                0
+                        )
+                        .otherwise(1);
+
+                query.orderBy(
+                        cb.asc(caseExpr), // Ưu tiên category được chỉ định
+                        cb.asc(categoryJoin.get("name")), // Sort theo alphabet
+                        cb.asc(root.get("className")) // Sort phụ theo tên lớp
+                );
+            } else {
+                // Không có category ưu tiên thì sort bình thường
+                query.orderBy(
+                        cb.asc(categoryJoin.get("name")),
+                        cb.asc(root.get("className"))
+                );
+            }
+            return null;
+        });
+
+        Page<Classes> page = classesRepository.findAll(spec, pageable);
 
         List<Long> classIds = page.getContent().stream()
                 .map(Classes::getClassId)
@@ -98,7 +143,10 @@ public class ClassServiceImpl implements ClassService {
                 : classEnrollmentRepository.countActiveByClassIds(classIds).stream()
                 .collect(Collectors.toMap(ClassCountProjection::getClassId, ClassCountProjection::getCnt));
 
-        return page.map(c -> ClassResponseDtoWithCount.fromEntity(c, countMap.getOrDefault(c.getClassId(), 0L)));
+        return page.map(c -> ClassResponseDtoWithCount.fromEntity(
+                c,
+                countMap.getOrDefault(c.getClassId(), 0L)
+        ));
     }
 
 

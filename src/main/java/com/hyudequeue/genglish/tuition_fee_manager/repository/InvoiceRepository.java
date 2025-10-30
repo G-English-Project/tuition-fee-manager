@@ -240,6 +240,95 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 """)
     Integer sumRevenueByDateRangeWithCategory(LocalDateTime fromDate, LocalDateTime toDate, @Param("categoryId") Long categoryId);
 
+    // ======= REVENUE SUMMARY GROUP BY MONTH =======
+
+    @Query("""
+    select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+      cast(i.month as string),
+      sum(cast(i.totalAmount as big_decimal))
+    )
+    from Invoice i
+    where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
+      and (:classId is null or i.classes.classId = :classId)
+    group by cast(i.month as string)
+    order by cast(i.month as string) desc
+    """)
+    Page<RevenueSummaryDto> sumRevenueGroupByMonthWithFilter(Pageable pageable,
+                                                             @Param("categoryId") Long categoryId,
+                                                             @Param("classId") Long classId);
 
 
+    // ======= REVENUE SUMMARY GROUP BY CLASS =======
+
+    @Query("""
+    select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+      i.classes.className,
+      sum(cast(i.totalAmount as big_decimal))
+    )
+    from Invoice i
+    where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
+      and (:classId is null or i.classes.classId = :classId)
+    group by i.classes.className
+    order by sum(cast(i.totalAmount as big_decimal)) desc
+    """)
+    Page<RevenueSummaryDto> sumRevenueGroupByClassWithFilter(Pageable pageable,
+                                                             @Param("categoryId") Long categoryId,
+                                                             @Param("classId") Long classId);
+
+
+    // ======= REVENUE SUMMARY GROUP BY WEEK =======
+
+    @Query("""
+    select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+      cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%x-W%v') as string),
+      sum(cast(i.totalAmount as big_decimal))
+    )
+    from Invoice i
+    where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
+      and (:classId is null or i.classes.classId = :classId)
+    group by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%x-W%v') as string)
+    order by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%x-W%v') as string) desc
+    """)
+    Page<RevenueSummaryDto> sumRevenueGroupByWeekWithFilter(Pageable pageable,
+                                                            @Param("categoryId") Long categoryId,
+                                                            @Param("classId") Long classId);
+
+
+    // ======= REVENUE SUMMARY GROUP BY YEAR =======
+
+    @Query("""
+    select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+      cast(function('year', coalesce(i.paidAt, i.dueDate)) as string),
+      sum(cast(i.totalAmount as big_decimal))
+    )
+    from Invoice i
+    where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
+      and (:classId is null or i.classes.classId = :classId)
+    group by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
+    order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
+    """)
+    Page<RevenueSummaryDto> sumRevenueGroupByYearWithFilter(Pageable pageable,
+                                                            @Param("categoryId") Long categoryId,
+                                                            @Param("classId") Long classId);
+
+
+    // ======= REVENUE SUMMARY BY DATE RANGE =======
+
+    @Query("""
+    SELECT COALESCE(SUM(i.totalAmount), 0)
+    FROM Invoice i
+    WHERE i.status = 'PAID'
+      AND (COALESCE(i.paidAt, i.dueDate) BETWEEN :fromDate AND :toDate)
+      AND (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
+      AND (:classId is null or i.classes.classId = :classId)
+    """)
+    Integer sumRevenueByDateRangeWithFilter(@Param("fromDate") LocalDateTime fromDate,
+                                            @Param("toDate") LocalDateTime toDate,
+                                            @Param("categoryId") Long categoryId,
+                                            @Param("classId") Long classId);
 }
+

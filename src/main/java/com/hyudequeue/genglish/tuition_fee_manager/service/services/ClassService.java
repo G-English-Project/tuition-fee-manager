@@ -16,12 +16,20 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnu
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface ClassService {
     Page<UserInClassWithNoteDto> GetCurrentStudentInClass(Long classId, int pageNumber, int pageSize);
     Page<UserInClassWithNoteDto> GetAllStudentInClass(Long classId, int pageNumber, int pageSize);
-    Page<ClassResponseDtoWithCount> GetAllClasses(ClassStatusEnum status, int pageNumber, int pageSize);
+    Page<ClassResponseDtoWithCount> GetAllClasses(
+            int pageNumber,
+            int pageSize,
+            LocalDate effectiveFrom,
+            ClassStatusEnum status,
+            String prioritizedCategoryName
+    );
+
     ClassResponseDto GetClassById(Long classId);
     ClassResponseDto CreateClass(ClassRequestDto classCreate);
     ClassResponseDto EditClass(Long classId, ClassRequestDto classEdit);
@@ -32,7 +40,6 @@ public interface ClassService {
     MultipleStudentAssignmentResponseDto AssignMultipleStudentsToClass(Long classId, List<Long> studentIds);
     void RemoveStudentFromClass(Long classId, Long studentId);
     UserInClassWithNoteDto NoteAStudentInClass(Long classId, Long studentId, String note);
-
     void RestoreClass(Long classId);
     List<ClassResponseDto> GetClassesByCategory(Long categoryId);
     BulkStudentCreateAndAssignResponseDto bulkCreateStudentsAndAssignToClass(BulkStudentCreateAndAssignDto request);

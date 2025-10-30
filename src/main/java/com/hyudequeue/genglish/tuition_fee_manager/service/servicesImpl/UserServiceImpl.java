@@ -13,6 +13,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRep
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.CommonConstants;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
@@ -63,6 +64,15 @@ public class UserServiceImpl implements UserService {
         User entity = req.toEntityWithPassword(hashedPassword);
         entity.setRole(role);
         entity.setStatus(UserStatusEnum.ACTIVE);
+        if (role == RoleEnum.STUDENT) {
+            if (req.getStudentStatus() != null) {
+                entity.setStudentStatus(req.getStudentStatus());
+            } else {
+                entity.setStudentStatus(StudentStatusEnum.WAITING);
+            }
+        } else {
+            entity.setStudentStatus(null);
+        }
         entity.setChangedDefaultPassword(false);
         if (entity.getCreatedAt() == null) entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
@@ -73,22 +83,26 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Page<UserWithClassesDto> GetAllStudent(int page, int size, Long classId) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    public Page<UserWithClassesDto> GetAllStudent(int page, int size, Long classId, String className, String sortBy, String sortDir) {
+        Sort sort = Sort.by(sortBy);
+        if (sortDir.equalsIgnoreCase("desc")) sort = sort.descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<User> usersPage;
 
-        if (classId != null && classId == 0) {
-            // học sinh chưa có class
-            usersPage = userRepository.findStudentsWithoutClass(pageable);
-        } else if (classId != null && classId > 0) {
-            // học sinh trong class cụ thể
-            usersPage = userRepository.findStudentsByClassId(classId, pageable);
-        } else {
-            // mặc định lấy tất cả student ACTIVE
-            usersPage = userRepository.findByRoleAndStatusOrderByCreatedAtDesc(
-                    RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable
+        // --- Case 1: Lọc theo classId hoặc className ---
+        if (classId != null || (className != null && !className.isBlank())) {
+            usersPage = userRepository.findStudentsByClassFilter(
+                    RoleEnum.STUDENT,
+                    UserStatusEnum.ACTIVE,
+                    classId,
+                    className,
+                    pageable
             );
+        } else {
+            // --- Case 2: Lấy tất cả student ---
+            usersPage = userRepository.findByRoleAndStatusOrderByCreatedAtDesc(
+                    RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable);
         }
 
         if (usersPage.isEmpty()) {
@@ -118,6 +132,7 @@ public class UserServiceImpl implements UserService {
                     .fullName(u.getFullName())
                     .phone(u.getPhone())
                     .status(u.getStatus().name())
+                    .studentStatus(u.getStudentStatus() != null ? u.getStudentStatus().name() : null)
                     .createdAt(u.getCreatedAt())
                     .currentClasses(currentClasses)
                     .dateOfBirth(u.getDateOfBirth())
@@ -130,6 +145,10 @@ public class UserServiceImpl implements UserService {
     public UserResponseDto EditProfile(UserEditRequestDto userDto, Long userId) {
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (userDto.getStudentStatus() != null && existingUser.getRole() != RoleEnum.STUDENT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "studentStatus can only be set for STUDENT role");
+        }
 
         if (userDto.getEmail() != null) {
             existingUser.setEmail(userDto.getEmail());
@@ -147,8 +166,13 @@ public class UserServiceImpl implements UserService {
         if (userDto.getPhone() != null) {
             existingUser.setPhone(userDto.getPhone());
         }
+
         if (userDto.getDateOfBirth() != null){
             existingUser.setDateOfBirth(userDto.getDateOfBirth());
+        }
+
+        if (userDto.getStudentStatus() != null && existingUser.getRole() == RoleEnum.STUDENT) {
+            existingUser.setStudentStatus(userDto.getStudentStatus());
         }
 
         existingUser.setUpdatedAt(userDto.getUpdatedAt() != null ? userDto.getUpdatedAt() : LocalDateTime.now());
@@ -202,6 +226,7 @@ public class UserServiceImpl implements UserService {
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
                 .status(user.getStatus().name())
+                .studentStatus(user.getStudentStatus() != null ? user.getStudentStatus().name() : null)
                 .createdAt(user.getCreatedAt())
                 .enrolledClasses(enrolledClassDtos)
                 .dateOfBirth(user.getDateOfBirth())
@@ -241,6 +266,7 @@ public class UserServiceImpl implements UserService {
                     .fullName(u.getFullName())
                     .phone(u.getPhone())
                     .status(u.getStatus().name())
+                    .studentStatus(u.getStudentStatus() != null ? u.getStudentStatus().name() : null)
                     .createdAt(u.getCreatedAt())
                     .currentClasses(currentClasses)
                     .dateOfBirth(u.getDateOfBirth())
@@ -308,6 +334,7 @@ public class UserServiceImpl implements UserService {
                         .fullName(student.getFullName())
                         .role(RoleEnum.STUDENT)
                         .status(UserStatusEnum.ACTIVE)
+                        .studentStatus(StudentStatusEnum.WAITING)
                         .passwordHash(hashedPassword)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
@@ -344,6 +371,21 @@ public class UserServiceImpl implements UserService {
                 .results(results)
                 .errors(errors)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void updateStudentStatus(Long userId, StudentStatusEnum studentStatus) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        
+        if (user.getRole() != RoleEnum.STUDENT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not a student");
+        }
+        
+        user.setStudentStatus(studentStatus);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
     }
 
 }

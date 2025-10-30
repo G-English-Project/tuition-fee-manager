@@ -13,10 +13,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.time.LocalDate;
 import java.util.List;
+
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.*;
 import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.CLASS_API;
@@ -28,24 +30,28 @@ public class ClassController {
 
     private final ClassService classService;
 
-    @Operation(summary = "Get all classes", description = "Returns a paginated list of all classes.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "List of classes retrieved successfully"),
+    @Operation(
+            summary = "Get all classes",
+            description = "Retrieve paginated list of all classes. " +
+                    "Optionally filter by effective date, status, and prioritize a specific category."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Classes retrieved successfully")
     })
     @GetMapping(GET_ALL_CLASSES)
     public ResponseEntity<?> getAllClasses(
-            @Parameter(description = "Class status filter", example = "ACTIVE")
-            @RequestParam(required = false) ClassStatusEnum status,
-
-            @Parameter(description = "Page number", example = "0")
-            @RequestParam(defaultValue = "0") int pageNumber,
-
-            @Parameter(description = "Page size", example = "10")
-            @RequestParam(defaultValue = "10") int pageSize
+            @Parameter(description = "Page number (0-based)") @RequestParam int pageNumber,
+            @Parameter(description = "Page size") @RequestParam int pageSize,
+            @Parameter(description = "Filter by effective start date (ISO format: yyyy-MM-dd)")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveFrom,
+            @Parameter(description = "Filter by class status") @RequestParam(required = false) ClassStatusEnum status,
+            @Parameter(description = "Category name to prioritize to top, then alphabetically")
+            @RequestParam(required = false) String prioritizedCategoryName
     ) {
-        return ApiResp.success(classService.GetAllClasses(status, pageNumber, pageSize));
+        return ApiResp.success(
+                classService.GetAllClasses(pageNumber, pageSize, effectiveFrom, status, prioritizedCategoryName)
+        );
     }
-
 
     @Operation(summary = "Get class by ID", description = "Returns details of a specific class by ID.")
     @ApiResponses(value = {

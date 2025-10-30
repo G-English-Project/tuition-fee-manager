@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.r
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class UserEditRequestDto {
     private String phone;
     private String passwordHash;
     private String fullName;
+    private StudentStatusEnum studentStatus;
     private LocalDateTime updatedAt;
     private LocalDate dateOfBirth;
 
