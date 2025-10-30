@@ -23,6 +23,7 @@ public class StudentProfileDto {
     private String fullName;
     private String role;
     private String status;
+    private String studentStatus;
     private LocalDateTime createdAt;
     private LocalDate dateOfBirth;
 
