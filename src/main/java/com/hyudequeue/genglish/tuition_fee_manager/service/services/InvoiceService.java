@@ -1,8 +1,10 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.services;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceStatResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
@@ -41,32 +43,50 @@ public interface InvoiceService {
 
     Page<InvoiceResponseDto> getInvoicesByStudent(Long userId, Pageable pageable);
 
-    InvoiceResponseDto updateInvoice(Long invoiceId, List<InvoiceItemRequestDTO> updatedItems);
+    InvoiceResponseDto updateInvoice(Long invoiceId, InvoiceUpdateRequestDto requestDto);
+
+
 
     Page<InvoiceResponseDto> getAllInvoices(Pageable pageable,
-                                            InvoiceStatusEnum status,
+                                            List<InvoiceStatusEnum> status,
                                             Integer month,
                                             Integer year,
+                                            Long classId,
                                             List<Long> categoryIds,
                                             String username);
 
 
     Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus);
 
+    Page<InvoiceResponseDto> getInvoicesByStatusAndClass(Pageable pageable, InvoiceStatusEnum invoiceStatus, Long classId);
+
     void deleteInvoice(Long invoiceId);
 
     void processInvoiceStatus(Long invoiceId, InvoiceStatusEnum invoiceStatus);
     InvoiceResponseDto getInvoiceById(Long invoiceId);
 
-    Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable);
+    Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable, Long categoryId);
 
-    Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable);
+    Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable, Long categoryId);
 
-    Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable);
+    Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable, Long categoryId);
 
-    Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable);
+    Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable, Long categoryId);
 
     void manualConfirmInvoice(Long invoiceId);
 
-    Page<RevenueSummaryDto> getRevenueSummaryByYear(PageRequest pageable);
+    Page<RevenueSummaryDto> getRevenueSummaryByYear(Pageable pageable, Long categoryId);
+    void bulkSoftDeleteInvoices(List<Long> invoiceIds);
+    void bulkHardDeleteInvoices(List<Long> invoiceIds);
+    InvoiceStatResponseDto getInvoiceStats();
+    void sendManualReminders(List<Long> invoiceId);
+    Page<RevenueSummaryDto> getRevenueSummaryAuto(
+            String summaryType,
+            Pageable pageable,
+            Long classId,
+            Long categoryId,
+            LocalDate fromDate,
+            LocalDate toDate
+    );
+
 }

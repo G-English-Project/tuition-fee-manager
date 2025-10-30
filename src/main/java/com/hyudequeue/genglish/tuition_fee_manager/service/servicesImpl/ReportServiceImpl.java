@@ -42,15 +42,21 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Student not found"));
         Classes clazz = classesRepository.findById(req.getClassId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Class not found"));
+        User teacher = userRepository.findById(req.getTeacherId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "User not found"));
 
         Report report = Report.builder()
-                .title(req.getTitle())
-                .content(req.getContent())
                 .student(student)
                 .classRoom(clazz)
-                .point(req.getPoint())
+                .teacher(teacher)
+                .attendance(req.getAttendance())
+                .homework(req.getHomework())
+                .participation(req.getParticipation())
+                .skillProgress(req.getSkillProgress())
+                .areasForImprovement(req.getAreasForImprovement())
+                .recommendedAction(req.getRecommendedAction())
                 .hasImage(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")))
                 .build();
         report = reportRepository.save(report);
 
@@ -67,9 +73,12 @@ public class ReportServiceImpl implements ReportService {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Report not found"));
 
-        if (req.getTitle() != null) report.setTitle(req.getTitle());
-        if (req.getContent() != null) report.setContent(req.getContent());
-        if (req.getPoint() != null) report.setPoint(req.getPoint());
+        if (req.getAttendance() != null) report.setAttendance(req.getAttendance());
+        if (req.getHomework() != null) report.setHomework(req.getHomework());
+        if (req.getParticipation() != null) report.setParticipation(req.getParticipation());
+        if (req.getSkillProgress() != null) report.setSkillProgress(req.getSkillProgress());
+        if (req.getAreasForImprovement() != null) report.setAreasForImprovement(req.getAreasForImprovement());
+        if (req.getRecommendedAction() != null) report.setRecommendedAction(req.getRecommendedAction());
 
         boolean hasImageData = hasAnyImage(req.getImageThumbBase64(), req.getImageBase64());
         boolean isExplicitDelete = isDeleteImage(req);
@@ -154,14 +163,19 @@ public class ReportServiceImpl implements ReportService {
     private ReportResponseDTO toDto(Report r) {
         return ReportResponseDTO.builder()
                 .reportId(r.getReportId())
-                .title(r.getTitle())
-                .content(r.getContent())
+                .attendance(r.getAttendance())
+                .homework(r.getHomework())
+                .participation(r.getParticipation())
+                .skillProgress(r.getSkillProgress())
+                .areasForImprovement(r.getAreasForImprovement())
+                .recommendedAction(r.getRecommendedAction())
                 .hasImage(Boolean.TRUE.equals(r.getHasImage()))
                 .studentId(r.getStudent().getUserId())
                 .studentName(r.getStudent().getFullName())
                 .classId(r.getClassRoom().getClassId())
                 .className(r.getClassRoom().getClassName())
-                .point(r.getPoint())
+                .teacherId(r.getTeacher().getUserId())
+                .teacherName(r.getTeacher().getFullName())
                 .createdAt(r.getCreatedAt())
                 .build();
     }

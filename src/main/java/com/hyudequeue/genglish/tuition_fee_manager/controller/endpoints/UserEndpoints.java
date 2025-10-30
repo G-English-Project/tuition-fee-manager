@@ -9,6 +9,7 @@ public final class UserEndpoints {
     public static final String PROFILE_ENDPOINT = "/profile/{userId}";
     public static final String SEARCH_ENDPOINT = "search";
     public static final String CHANGE_PASSWORD_ENDPOINT = "/{userId}/password";
+    public static final String BULK_CREATE_STUDENTS_ENDPOINT = "/bulk/students";
 
 
 }

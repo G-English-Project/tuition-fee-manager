@@ -113,6 +113,7 @@ public class InvoiceNotificationServiceImpl {
 
 
     // Notify khi invoice bị hủy
+    @Async
     public void notifyInvoiceCancelled(Invoice invoice) {
         Map<String, String> values = Map.of(
                 "invoiceId", invoice.getInvoiceId().toString(),

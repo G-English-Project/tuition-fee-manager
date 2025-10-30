@@ -1,7 +1,10 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.BulkStudentCreateAndAssignDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassFeeModifyRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.MultipleStudentAssignmentDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
@@ -13,8 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
+import java.util.List;
+
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.*;
 import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.CLASS_API;
@@ -38,6 +42,7 @@ public class ClassController {
     ) {
         return ApiResp.success(classService.GetAllClasses(pageNumber, pageSize, effectiveFrom, status));
     }
+
 
     @Operation(summary = "Get class by ID", description = "Returns details of a specific class by ID.")
     @ApiResponses(value = {
@@ -151,6 +156,20 @@ public class ClassController {
         return ApiResp.success(classService.AssignStudentToClass(classId, studentId));
     }
 
+    @Operation(summary = "Assign multiple students to class", description = "Assigns multiple students to a class in a single request.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Students assignment process completed"),
+            @ApiResponse(responseCode = "404", description = "Class not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    @PostMapping(ASSIGN_MULTIPLE_STUDENTS)
+    public ResponseEntity<?> assignMultipleStudentsToClass(
+            @Parameter(description = "Class ID") @PathVariable Long classId,
+            @Parameter(description = "Request containing list of student IDs") 
+            @RequestBody MultipleStudentAssignmentDto request) {
+        return ApiResp.success(classService.AssignMultipleStudentsToClass(classId, request.getStudentIds()));
+    }
+
     @Operation(summary = "Remove student from class", description = "Removes a student from a class.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Student removed from class successfully"),
@@ -181,5 +200,43 @@ public class ClassController {
     ) {
         return ApiResp.success(classService.NoteAStudentInClass(classId, studentId, note));
     }
+    @Operation(summary = "Restore class", description = "Set class status back to ACTIVE.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Class restored successfully"),
+            @ApiResponse(responseCode = "404", description = "Class not found")
+    })
+    @PatchMapping(RESTORE_CLASS)
+    public ResponseEntity<?> restoreClass(
+            @Parameter(description = "ID of the class to restore", required = true)
+            @PathVariable Long classId) {
+        classService.RestoreClass(classId);
+        return ApiResp.success("Class restored successfully.");
+    }
 
+ 
+
+    @GetMapping("/by-category/{categoryId}")
+    public ResponseEntity<List<ClassResponseDto>> getByCategory(@PathVariable Long categoryId) {
+        return ResponseEntity.ok(classService.GetClassesByCategory(categoryId));
+    }
+    @Operation(
+            summary = "Bulk create students and assign to class",
+            description = "Creates multiple student accounts and assigns them to a class in a single operation."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Bulk operation completed"),
+            @ApiResponse(responseCode = "404", description = "Class not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    @PostMapping("/{classId}/bulk-create-and-assign")
+    public ResponseEntity<?> bulkCreateStudentsAndAssignToClass(
+            @Parameter(description = "Class ID") @PathVariable Long classId,
+            @Parameter(description = "Request containing list of student data and class ID")
+            @RequestBody BulkStudentCreateAndAssignDto request) {
+
+        // Set classId from path variable
+        request.setClassId(classId);
+
+        return ApiResp.success(classService.bulkCreateStudentsAndAssignToClass(request));
+    }
 }

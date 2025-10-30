@@ -44,11 +44,14 @@ public class MailTemplateBuilder {
             case CLASS_TUITION_UPDATED -> "Đã cập nhật học phí lớp {className}";
             case INVOICE_CANCELLED_ALERT -> "Hóa đơn bị hủy: {invoiceContent}";
             case NEW_INVOICE_NOTIFICATION -> "Bạn có hóa đơn mới: {invoiceContent}";
-            case STUDENT_SUCCESSFUL_PAYMENT -> "Đã thanh toán: {invoiceContent}";
+            case STUDENT_SUCCESSFUL_PAYMENT -> "Học sinh {studentName} đã thanh toán hóa đơn với nội dung: {invoiceContent}";
             case STUDENT_INVOICE_OVERDUE -> "Hóa đơn quá hạn: {invoiceContent}";
             case STUDENT_ADDED_TO_CLASS -> "Bạn được thêm vào lớp {className}";
             case STUDENT_REMOVED_FROM_CLASS_STUDENT -> "Bạn bị xóa khỏi lớp {className}";
             case STUDENT_TUITION_EDITED -> "Đơn học phí đã được chỉnh sửa";
+            // --- NHẮC NHỞ ---
+            case STUDENT_OVERDUE_REMINDER -> "Nhắc nhở học phí còn nợ sau 10 ngày";
+            case STUDENT_MANUAL_REMINDER -> "Nhắc học phí chưa thanh toán";
             default -> "Thông báo hệ thống";
         };
     }
@@ -72,7 +75,7 @@ public class MailTemplateBuilder {
             case NEW_INVOICE_NOTIFICATION ->
                     "Bạn có hóa đơn thanh toán mới với nội dung {invoiceContent}, vui lòng kiểm tra.";
             case STUDENT_SUCCESSFUL_PAYMENT ->
-                    "Đã thanh toán thành công cho hóa đơn với nội dung {invoiceContent}.";
+                    "Học sinh {studentName} đã thanh toán hóa đơn với nội dung: {invoiceContent}";
             case STUDENT_INVOICE_OVERDUE ->
                     "Hóa đơn với nội dung {invoiceContent} đã quá hạn, vui lòng thanh toán sớm.";
             case STUDENT_ADDED_TO_CLASS ->
@@ -81,6 +84,12 @@ public class MailTemplateBuilder {
                     "Bạn đã bị xóa khỏi lớp {className}.";
             case STUDENT_TUITION_EDITED ->
                     "Đơn học phí của bạn đã được chỉnh sửa – vui lòng kiểm tra lại chi tiết.";
+            // --- NHẮC NHỞ ---
+            case STUDENT_OVERDUE_REMINDER ->
+                    "Chào {studentName}, hóa đơn '{invoiceContent}' của bạn đã quá hạn {daysOverdue} ngày. "
+                            + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.";
+            case STUDENT_MANUAL_REMINDER ->
+                    "Chào {studentName}, bạn vui lòng kiểm tra và hoàn tất thanh toán cho hóa đơn '{invoiceContent}' trong thời gian sớm nhất.";
             default -> "[Không tìm thấy nội dung thông báo]";
         };
     }

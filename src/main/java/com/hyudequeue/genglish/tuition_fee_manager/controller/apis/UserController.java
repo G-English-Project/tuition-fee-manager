@@ -1,11 +1,13 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.BulkUserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.ChangePasswordRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserCreateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.request.UserEditRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentProfileDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.*;
@@ -36,7 +39,7 @@ public class UserController {
 
             @Parameter(description = "Page size", example = "10")
             @RequestParam(defaultValue = "10") int size,
-
+            
             @Parameter(description = "Filter by class ID")
             @RequestParam(required = false) Long classId,
 
@@ -165,6 +168,23 @@ public class UserController {
     ) {
         return ApiResp.success(userService.getAllByRole(role, page, size));
     }
-    
+
+    @Operation(summary = "Create bulk students", description = "Create multiple students at once. Only for admin use.")
+    @PostMapping(BULK_CREATE_STUDENTS_ENDPOINT)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createBulkStudents(
+            @Valid @RequestBody BulkUserCreateRequestDto request) {
+        return ApiResp.success(userService.createBulkStudents(request));
+    }
+
+    @Operation(summary = "Update student status", description = "Update student status. Only for admin use.")
+    @PutMapping("/{userId}/student-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateStudentStatus(
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId,
+            @Parameter(description = "New student status", required = true) @RequestParam StudentStatusEnum studentStatus) {
+        userService.updateStudentStatus(userId, studentStatus);
+        return ApiResp.success("Student status updated successfully");
+    }
 
 }

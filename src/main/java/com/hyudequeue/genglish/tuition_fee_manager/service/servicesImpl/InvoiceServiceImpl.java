@@ -1,13 +1,16 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceStatResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceCategoryRepository;
@@ -26,11 +29,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,6 +51,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final ClassEnrollmentRepository classEnrollmentRepository;
     private final InvoiceCategoryRepository categoryRepository;
     private final InvoiceNotificationServiceImpl invoiceNotificationService;
+    private final InvoiceCategoryRepository invoiceCategoryRepository;
+
     public InvoiceServiceImpl(InvoiceRepository invoiceRepository,
                               UserRepository userRepository,
                               ClassRepository classRepository,
@@ -52,7 +60,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                               ClassEnrollmentRepository classEnrollmentRepository,
                               EmailServiceImpl emailService,
                               InvoiceCategoryRepository categoryRepository,
-                              InvoiceNotificationServiceImpl invoiceNotificationService) {
+                              InvoiceNotificationServiceImpl invoiceNotificationService, InvoiceCategoryRepository invoiceCategoryRepository) {
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
@@ -61,6 +69,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         this.emailService = emailService;
         this.categoryRepository = categoryRepository;
         this.invoiceNotificationService = invoiceNotificationService;
+        this.invoiceCategoryRepository = invoiceCategoryRepository;
     }
 
     // =========================
@@ -240,17 +249,18 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public Page<InvoiceResponseDto> getAllInvoices(
             Pageable pageable,
-            InvoiceStatusEnum status,
+            List<InvoiceStatusEnum> status,
             Integer month,
             Integer year,
+            Long classId,
             List<Long> categoryIds,
             String username
     ) {
         Specification<Invoice> spec = Specification.where(null);
 
-        // ✅ Filter by status
-        if (status != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+
+        if (status != null && !status.isEmpty()) {
+            spec = spec.and((root, query, cb) -> root.get("status").in(status));
         }
 
         // ✅ Use the "month" field directly (instead of MONTH(createdAt))
@@ -263,6 +273,14 @@ public class InvoiceServiceImpl implements InvoiceService {
             spec = spec.and((root, query, cb) ->
                     cb.equal(cb.function("YEAR", Integer.class, root.get("createdAt")), year)
             );
+        }
+
+        // ✅ Filter by classId
+        if (classId != null) {
+            spec = spec.and((root, query, cb) -> {
+                Join<Invoice, Classes> classJoin = root.join("classes", JoinType.INNER);
+                return cb.equal(classJoin.get("classId"), classId);
+            });
         }
 
         // ✅ Filter by categories
@@ -295,38 +313,57 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    public Page<InvoiceResponseDto> getInvoicesByStatusAndClass(Pageable pageable, InvoiceStatusEnum invoiceStatus, Long classId) {
+        return invoiceRepository.findByStatusAndClasses_ClassId(invoiceStatus, classId, pageable)
+                .map(InvoiceResponseDto::toDto);
+    }
+
+    @Override
     public InvoiceResponseDto getInvoiceById(Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
         return InvoiceResponseDto.toDto(invoice);
     }
 
-    // =========================
-    // UPDATE
-    // =========================
     @Override
     @Transactional
-    public InvoiceResponseDto updateInvoice(Long invoiceId, List<InvoiceItemRequestDTO> updatedItems) {
+    public InvoiceResponseDto updateInvoice(Long invoiceId, InvoiceUpdateRequestDto requestDto) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
-        // Replace items (orphanRemoval)
+        // ✅ Fetch Classes entity if classId is provided
+        Classes classes = null;
+        if (requestDto.getClassId() != null) {
+            classes = classRepository.findById(requestDto.getClassId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+        }
+
+        // ✅ Apply changes
+        requestDto.applyTo(invoice, classes);
+
+        // ✅ Update categories
+        if (requestDto.getCategoryIds() != null) {
+            List<InvoiceCategory> categories = invoiceCategoryRepository.findAllById(requestDto.getCategoryIds());
+            invoice.setCategories(categories);
+        }
+
+        // ✅ Replace items
         invoice.getItems().clear();
         invoiceRepository.saveAndFlush(invoice);
 
-        if (updatedItems != null) {
-            for (InvoiceItemRequestDTO itemDto : updatedItems) {
+        if (requestDto.getUpdatedItems() != null) {
+            for (InvoiceItemRequestDTO itemDto : requestDto.getUpdatedItems()) {
                 InvoiceItem newItem = itemDto.toEntity(invoice);
                 invoice.getItems().add(newItem);
             }
         }
 
-        invoice.setTotalAmount(calculateTotalAmount(updatedItems));
-        invoice.setUpdatedAt(LocalDateTime.now());
-
         Invoice saved = invoiceRepository.save(invoice);
         return InvoiceResponseDto.toDto(saved);
     }
+
+
+
 
     // =========================
     // DELETE (soft cancel)
@@ -374,22 +411,34 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable) {
-        return invoiceRepository.sumRevenueGroupByMonth(pageable);
+    public Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable, Long categoryId) {
+        if (categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByMonthWithCategory(pageable, categoryId);
+        } else {
+            return invoiceRepository.sumRevenueGroupByMonth(pageable);
+        }
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable) {
-        return invoiceRepository.sumRevenueGroupByClass(pageable);
+    public Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable, Long categoryId) {
+        if (categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByClassWithCategory(pageable, categoryId);
+        } else {
+            return invoiceRepository.sumRevenueGroupByClass(pageable);
+        }
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable) {
-        return invoiceRepository.sumRevenueGroupByWeek(pageable);
+    public Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable, Long categoryId) {
+        if (categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByWeekWithCategory(pageable, categoryId);
+        } else {
+            return invoiceRepository.sumRevenueGroupByWeek(pageable);
+        }
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable) {
+    public Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable, Long categoryId) {
         if (fromDate == null) {
             fromDate = LocalDate.of(1970, 1, 1);
         }
@@ -398,10 +447,19 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         // Repository actually returns Integer
-        Integer totalRevenue = invoiceRepository.sumRevenueByDateRange(
-                fromDate.atStartOfDay(),
-                toDate.plusDays(1).atStartOfDay()
-        );
+        Integer totalRevenue;
+        if (categoryId != null) {
+            totalRevenue = invoiceRepository.sumRevenueByDateRangeWithCategory(
+                    fromDate.atStartOfDay(),
+                    toDate.plusDays(1).atStartOfDay(),
+                    categoryId
+            );
+        } else {
+            totalRevenue = invoiceRepository.sumRevenueByDateRange(
+                    fromDate.atStartOfDay(),
+                    toDate.plusDays(1).atStartOfDay()
+            );
+        }
 
         RevenueSummaryDto dto = new RevenueSummaryDto(
                 fromDate + " ~ " + toDate,
@@ -411,12 +469,38 @@ public class InvoiceServiceImpl implements InvoiceService {
         return new PageImpl<>(List.of(dto), pageable, 1);
     }
 
+    @Override
+    public Page<RevenueSummaryDto> getRevenueSummaryAuto(
+            String summaryType,
+            Pageable pageable,
+            Long classId,
+            Long categoryId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        return switch (summaryType.toLowerCase()) {
+            case "month" -> getRevenueSummaryByMonth(pageable, categoryId);
+            case "week" -> getRevenueSummaryByWeek(pageable, categoryId);
+            case "year" -> getRevenueSummaryByYear(pageable, categoryId);
+            case "class" -> getRevenueSummaryByClass(pageable, categoryId);
+            case "daterange" -> {
+                if (fromDate == null || toDate == null)
+                    throw new IllegalArgumentException("Date range requires both fromDate and toDate");
+                yield getRevenueSummaryByDateRange(fromDate, toDate, pageable, categoryId);
+            }
+            default -> throw new IllegalArgumentException("Invalid summary type: " + summaryType);
+        };
+    }
 
 
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByYear(PageRequest pageable) {
-        return invoiceRepository.sumRevenueGroupByYear(pageable);
+    public Page<RevenueSummaryDto> getRevenueSummaryByYear(Pageable pageable, Long categoryId) {
+        if (categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByYearWithCategory(pageable, categoryId);
+        } else {
+            return invoiceRepository.sumRevenueGroupByYear(pageable);
+        }
     }
 
     @Override
@@ -431,6 +515,172 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setPaidAt(LocalDateTime.now()); // nếu bạn có field paidAt
         invoiceRepository.save(invoice);
         invoiceNotificationService.notifyManualConfirm(invoice);
+    }
+
+    @Override
+    @Transactional
+    public void bulkSoftDeleteInvoices(List<Long> invoiceIds) {
+        List<Invoice> invoices = invoiceRepository.findAllById(invoiceIds);
+        if (invoices.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No invoices found to delete");
+        }
+
+        invoices.forEach(invoice -> {
+            invoice.setStatus(InvoiceStatusEnum.CANCELLED);
+            invoice.setUpdatedAt(LocalDateTime.now());
+        });
+
+        invoiceRepository.saveAll(invoices);
+    }
+
+    @Override
+    @Transactional
+    public void bulkHardDeleteInvoices(List<Long> invoiceIds) {
+        List<Invoice> invoices = invoiceRepository.findAllById(invoiceIds);
+        if (invoices.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No invoices found to delete");
+        }
+
+        // Clear relationships first to avoid foreign key constraint violations
+        for (Invoice invoice : invoices) {
+            // Clear invoice-category relationships
+            if (invoice.getCategories() != null) {
+                invoice.getCategories().clear();
+            }
+            // Save to remove the relationships
+            invoiceRepository.save(invoice);
+        }
+
+        // Now delete the invoices
+        invoiceRepository.deleteAll(invoices);
+    }
+
+    @Override
+    public InvoiceStatResponseDto getInvoiceStats() {
+        // 1. Hóa đơn chưa thanh toán
+        List<Invoice> unpaid = invoiceRepository.findByStatus(InvoiceStatusEnum.UNPAID);
+        long unpaidCount = unpaid.size();
+        int unpaidTotal = unpaid.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+        // 2. Hóa đơn quá hạn
+        List<Invoice> overdue = invoiceRepository.findByStatus(InvoiceStatusEnum.OVERDUE);
+        long overdueCount = overdue.size();
+        int overdueTotal = overdue.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+        // 3. Học sinh Inactive
+        int inactiveStudentCount = userRepository.countByRoleAndStatus(
+                RoleEnum.STUDENT, UserStatusEnum.DISABLED
+        );
+
+        // 4. Tổng tiền của tháng hiện tại (PAID, UNPAID, OVERDUE)
+        int currentMonth = LocalDate.now().getMonthValue();
+        List<Invoice> currentMonthInvoices = invoiceRepository.findByMonthAndStatusIn(
+                currentMonth,
+                List.of(
+                        InvoiceStatusEnum.PAID,
+                        InvoiceStatusEnum.UNPAID,
+                        InvoiceStatusEnum.OVERDUE
+                )
+        );
+
+        int currentMonthTotal = currentMonthInvoices.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+        LocalDate now = LocalDate.now();
+        int month = now.getMonthValue();
+        int year = now.getYear();
+
+        List<Invoice> currentMonthPaid = invoiceRepository.findPaidInvoicesInCurrentMonth(
+                InvoiceStatusEnum.PAID, month, year
+        );
+
+        int currentMonthRevenue = currentMonthPaid.stream()
+                .mapToInt(Invoice::getTotalAmount)
+                .sum();
+
+
+        // ✅ Trả về tất cả thống kê
+        return new InvoiceStatResponseDto(
+                unpaidCount,
+                unpaidTotal,
+                overdueCount,
+                overdueTotal,
+                inactiveStudentCount,
+                currentMonthTotal,
+                currentMonthRevenue
+        );
+    }
+
+
+    @Async
+    @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Bangkok") // chạy lúc 8h sáng hàng ngày
+    public void sendOverdueRemindersAutomatically() {
+        LocalDate today = LocalDate.now();
+        List<Invoice> overdueInvoices = invoiceRepository.findByStatus(InvoiceStatusEnum.OVERDUE);
+
+        for (Invoice invoice : overdueInvoices) {
+            if (invoice.getDueDate() == null || invoice.getPaidAt() != null) continue;
+
+            long daysOverdue = ChronoUnit.DAYS.between(invoice.getDueDate(), today);
+            // Gửi lại mail sau mỗi 10 ngày: 10, 20, 30,...
+            if (daysOverdue >= 10 && daysOverdue % 10 == 0) {
+                User student = invoice.getUser();
+
+                Map<String, String> values = Map.of(
+                        "studentName", student.getFullName(),
+                        "invoiceContent", invoice.getInvoiceContent(),
+                        "daysOverdue", String.valueOf(daysOverdue)
+                );
+
+                String subject = NotificationTemplateBuilder.buildSubject(
+                        NotificationTemplateEnum.STUDENT_OVERDUE_REMINDER, values
+                );
+                String body = NotificationTemplateBuilder.buildBody(
+                        NotificationTemplateEnum.STUDENT_OVERDUE_REMINDER, values
+                );
+
+                notificationService.createNotification(student.getUserId(), subject, body);
+                emailService.sendNotificationEmail(
+                        student.getEmail(),
+                        NotificationTemplateEnum.STUDENT_OVERDUE_REMINDER,
+                        values
+                );
+            }
+        }
+    }
+
+    @Async
+    public void sendManualReminders(List<Long> invoiceIds) {
+        List<Invoice> invoices = invoiceRepository.findAllWithItems(invoiceIds);
+
+        for (Invoice invoice : invoices) {
+            if (invoice.getStatus() == InvoiceStatusEnum.PAID) continue;
+
+            User student = invoice.getUser();
+            Map<String, String> values = Map.of(
+                    "studentName", student.getFullName(),
+                    "invoiceContent", invoice.getInvoiceContent()
+            );
+
+            String subject = NotificationTemplateBuilder.buildSubject(
+                    NotificationTemplateEnum.STUDENT_MANUAL_REMINDER, values
+            );
+            String body = NotificationTemplateBuilder.buildBody(
+                    NotificationTemplateEnum.STUDENT_MANUAL_REMINDER, values
+            );
+
+            notificationService.createNotification(student.getUserId(), subject, body);
+            emailService.sendNotificationEmail(
+                    student.getEmail(),
+                    NotificationTemplateEnum.STUDENT_MANUAL_REMINDER,
+                    values
+            );
+        }
     }
 
 

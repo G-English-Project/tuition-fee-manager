@@ -43,4 +43,20 @@ public class Classes {
     @Column(nullable = true)
     private LocalDateTime updatedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "class_category_id",       // cột trong bảng classes
+            referencedColumnName = "category_id", // tham chiếu đến class_categories.category_id
+            nullable = true
+    )
+    private ClassCategory classCategory;
+    @PrePersist
+    void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

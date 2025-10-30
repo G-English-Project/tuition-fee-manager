@@ -13,9 +13,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ReportEndpoints.*;
@@ -111,12 +113,14 @@ public class ReportController {
     @GetMapping(LIST_REPORTS_BY_STUDENT_IN_RANGE)
     public ResponseEntity<ApiResp<Page<ReportResponseDTO>>> listReportsByStudentInRange(
             @Parameter(description = "Student ID") @PathVariable Long studentId,
-            @Parameter(description = "Start date") @RequestParam LocalDateTime from,
-            @Parameter(description = "End date") @RequestParam LocalDateTime to,
+            @Parameter(description = "Start date") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate from,
+            @Parameter(description = "End date") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate to,
             @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize) {
 
-        Page<ReportResponseDTO> reports = reportService.listByStudentInRange(studentId, from, to, PageRequest.of(pageNumber, pageSize));
+        LocalDateTime fromDateTime = from.atStartOfDay();
+        LocalDateTime toDateTime = to.atTime(23, 59, 59);
+        Page<ReportResponseDTO> reports = reportService.listByStudentInRange(studentId, fromDateTime, toDateTime, PageRequest.of(pageNumber, pageSize));
         return ApiResp.success(reports);
     }
 
@@ -127,12 +131,14 @@ public class ReportController {
     @GetMapping(LIST_REPORTS_BY_CLASS_IN_RANGE)
     public ResponseEntity<ApiResp<Page<ReportResponseDTO>>> listReportsByClassInRange(
             @Parameter(description = "Class ID") @PathVariable Long classId,
-            @Parameter(description = "Start date") @RequestParam LocalDateTime from,
-            @Parameter(description = "End date") @RequestParam LocalDateTime to,
+            @Parameter(description = "Start date") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate from,
+            @Parameter(description = "End date") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate to,
             @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize) {
 
-        Page<ReportResponseDTO> reports = reportService.listByClassInRange(classId, from, to, PageRequest.of(pageNumber, pageSize));
+        LocalDateTime fromDateTime = from.atStartOfDay();
+        LocalDateTime toDateTime = to.atTime(23, 59, 59);
+        Page<ReportResponseDTO> reports = reportService.listByClassInRange(classId, fromDateTime, toDateTime, PageRequest.of(pageNumber, pageSize));
         return ApiResp.success(reports);
     }
 

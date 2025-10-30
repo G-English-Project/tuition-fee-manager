@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.repository;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
@@ -19,6 +20,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByRole(RoleEnum roleEnum);
+    int countByRoleAndStatus(RoleEnum role, UserStatusEnum status);
     Optional<User> findByEmail(String email);
     Optional<User> findFirstByRole(RoleEnum role);
     Page<User> findAllByRoleAndStatus(RoleEnum role, UserStatusEnum status, Pageable pageable);

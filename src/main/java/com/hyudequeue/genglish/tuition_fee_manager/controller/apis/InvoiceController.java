@@ -1,8 +1,10 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceStatResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
@@ -94,39 +96,46 @@ public class InvoiceController {
         return ApiResp.success(invoiceService.getInvoicesByStudent(userId, PageRequest.of(page, size)));
     }
 
-    @Operation(summary = "Update invoice items")
-    @PutMapping(UPDATE)
+    @Operation(summary = "Update invoice")
+    @PutMapping("/{invoiceId}")
     public ResponseEntity<ApiResp<InvoiceResponseDto>> updateInvoice(
-            @RequestParam Long invoiceId,
-            @RequestBody List<InvoiceItemRequestDTO> updatedItems) {
-        return ApiResp.success(invoiceService.updateInvoice(invoiceId, updatedItems));
+            @PathVariable Long invoiceId,
+            @RequestBody InvoiceUpdateRequestDto requestDto) {
+        return ApiResp.success(invoiceService.updateInvoice(invoiceId, requestDto));
     }
+
 
     @Operation(summary = "Get all invoices with optional filters")
     @GetMapping(GET_ALL)
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> getAllInvoices(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) InvoiceStatusEnum status,
+            @RequestParam(required = false) List<InvoiceStatusEnum> status,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Long classId,
             @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) String username
     ) {
         return ApiResp.success(
-                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, categoryIds, username)
+                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, classId, categoryIds, username)
         );
     }
 
 
 
-    @Operation(summary = "Get invoices by status")
+    @Operation(summary = "Get invoices by status and optionally by class")
     @GetMapping(GET_BY_STATUS)
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> getInvoicesByStatus(
             @RequestParam InvoiceStatusEnum status,
+            @RequestParam(required = false) Long classId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResp.success(invoiceService.getInvoicesByStatus(PageRequest.of(page, size), status));
+        if (classId != null) {
+            return ApiResp.success(invoiceService.getInvoicesByStatusAndClass(PageRequest.of(page, size), status, classId));
+        } else {
+            return ApiResp.success(invoiceService.getInvoicesByStatus(PageRequest.of(page, size), status));
+        }
     }
 
     @Operation(summary = "Get invoice by ID")
@@ -198,9 +207,24 @@ public class InvoiceController {
             @RequestParam(defaultValue = "10")
             @jakarta.validation.constraints.Min(1)
             @jakarta.validation.constraints.Max(200)
-            int size
+            int size,
+
+            @Parameter(
+                    name = "categoryId",
+                    description = "Filter by invoice category ID",
+                    example = "1"
+            )
+            @RequestParam(required = false)
+            Long categoryId,
+
+            @Parameter(
+                    name = "classId",
+                    description = "Lọc doanh thu theo lớp học (classId)",
+                    example = "2"
+            )
+            @RequestParam(required = false)
+            Long classId
     ) {
-        // 🔎 Validate fromDate <= toDate
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -211,22 +235,38 @@ public class InvoiceController {
         final String key = (groupBy == null ? "month" : groupBy).trim().toLowerCase();
         final PageRequest pageable = PageRequest.of(page, size);
 
-        return switch (key) {
-            case "month"     -> ApiResp.success(invoiceService.getRevenueSummaryByMonth(pageable));
-            case "class"     -> ApiResp.success(invoiceService.getRevenueSummaryByClass(pageable));
-            case "week"      -> ApiResp.success(invoiceService.getRevenueSummaryByWeek(pageable));
-            case "year"      -> ApiResp.success(invoiceService.getRevenueSummaryByYear(pageable));
-            case "daterange" -> ApiResp.success(invoiceService.getRevenueSummaryByDateRange(fromDate, toDate, pageable));
-            default -> throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid groupBy. Use one of: month | class | week | year | daterange"
-            );
-        };
+        Page<RevenueSummaryDto> result = invoiceService.getRevenueSummaryAuto(
+                key,
+                pageable,
+                classId,
+                categoryId,
+                fromDate,
+                toDate
+        );
+
+        return ApiResp.success(result);
     }
 
 
+    @Operation(summary = "Bulk soft-delete invoices (mark as CANCELLED)")
+    @PutMapping("/bulk-soft-delete")
+    public ResponseEntity<ApiResp<String>> bulkSoftDeleteInvoices(
+            @Parameter(description = "List of invoice IDs to soft-delete")
+            @RequestBody List<Long> invoiceIds
+    ) {
+        invoiceService.bulkSoftDeleteInvoices(invoiceIds);
+        return ApiResp.success("Invoices soft-deleted successfully");
+    }
 
-
+    @Operation(summary = "Bulk hard-delete invoices (permanently delete invoices)")
+    @DeleteMapping("/bulk-hard-delete")
+    public ResponseEntity<ApiResp<String>> bulkHardDeleteInvoices(
+            @Parameter(description = "List of invoice IDs to hard-delete")
+            @RequestBody List<Long> invoiceIds
+    ) {
+        invoiceService.bulkHardDeleteInvoices(invoiceIds);
+        return ApiResp.success("Invoices hard-deleted successfully");
+    }
 
     @Operation(summary = "Manual confirm invoice (cash payment)")
     @PutMapping("/manual-confirm")
@@ -235,6 +275,23 @@ public class InvoiceController {
     ) {
         invoiceService.manualConfirmInvoice(invoiceId);
         return ApiResp.success("Invoice confirmed as PAID (CASH)");
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Thống kê hóa đơn chưa thanh toán và quá hạn")
+    public ResponseEntity<InvoiceStatResponseDto> getInvoiceStats() {
+        return ResponseEntity.ok(invoiceService.getInvoiceStats());
+    }
+
+    @Operation(summary = "Gửi nhắc nhở học phí chưa thanh toán cho nhiều hóa đơn (manual reminder)")
+    @PutMapping("/manual-reminder/bulk")
+    public ResponseEntity<ApiResp<String>> sendManualReminders(
+            @RequestBody List<Long> invoiceIds
+    ) {
+        // Gọi service để gửi email/SMS nhắc nợ cho nhiều hóa đơn
+        invoiceService.sendManualReminders(invoiceIds);
+
+        return ApiResp.success("Manual reminders sent successfully");
     }
 
 

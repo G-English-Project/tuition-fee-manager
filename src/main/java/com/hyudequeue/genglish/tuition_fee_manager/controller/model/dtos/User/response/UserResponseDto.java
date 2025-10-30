@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.r
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class UserResponseDto {
     private String fullName;
     private RoleEnum role;
     private UserStatusEnum status;
+    private StudentStatusEnum studentStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private boolean changedDefaultPassword;
@@ -38,6 +40,7 @@ public class UserResponseDto {
                 user.getFullName(),
                 user.getRole(),
                 user.getStatus(),
+                user.getStudentStatus(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
                 user.isChangedDefaultPassword(),

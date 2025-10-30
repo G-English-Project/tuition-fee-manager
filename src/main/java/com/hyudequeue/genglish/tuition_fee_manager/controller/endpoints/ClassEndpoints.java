@@ -12,6 +12,8 @@ public final class ClassEndpoints {
     public static final String ALL_STUDENTS = "/{classId}/students/all";
     public static final String ENROLLMENT_BY_STUDENT = "/students/{studentId}/enrollments";
     public static final String ASSIGN_STUDENT = "/{classId}/students/{studentId}/assign";
+    public static final String ASSIGN_MULTIPLE_STUDENTS = "/{classId}/students/assign-multiple";
     public static final String REMOVE_STUDENT = "/{classId}/students/{studentId}/remove";
     public static final String NOTE_STUDENT = "/{classId}/students/{studentId}/note";
+    public static final String RESTORE_CLASS = "/{classId}/restore";
 }
