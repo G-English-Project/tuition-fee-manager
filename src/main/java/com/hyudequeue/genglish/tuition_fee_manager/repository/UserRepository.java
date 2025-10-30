@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.repository;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
@@ -118,5 +119,53 @@ public interface UserRepository extends JpaRepository<User, Long> {
              )
            """)
     Page<User> findStudentsWithoutClass(Pageable pageable);
+    
     long countByStatus(UserStatusEnum status);
+    
+    Page<User> findByRoleAndStudentStatusOrderByCreatedAtDesc(RoleEnum role, StudentStatusEnum studentStatus, Pageable pageable);
+    
+    Page<User> findByRoleAndStatusAndStudentStatusOrderByCreatedAtDesc(RoleEnum role, UserStatusEnum status, StudentStatusEnum studentStatus, Pageable pageable);
+    
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(
+        u.userId,
+        u.email,
+        u.fullName,
+        c.classId,
+        c.className,
+        u.createdAt
+    )
+    FROM User u
+    LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
+    LEFT JOIN Classes c ON ce.classes = c
+    WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
+      AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
+      AND (:studentStatus IS NULL OR u.studentStatus = :studentStatus)
+    ORDER BY u.createdAt DESC
+""")
+    Page<UserWithClassDto> findAllActiveStudentsWithCurrentClassFilterByStudentStatus(@Param("studentStatus") StudentStatusEnum studentStatus, Pageable pageable);
+    
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(
+        u.userId,
+        u.email,
+        u.fullName,
+        c.classId,
+        c.className,
+        u.createdAt
+    )
+    FROM User u
+    LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
+    LEFT JOIN Classes c ON ce.classes = c
+    WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
+      AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
+      AND (:studentStatus IS NULL OR u.studentStatus = :studentStatus)
+      AND (
+            LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+         OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+         OR LOWER(c.className) LIKE LOWER(CONCAT('%', :keyword, '%'))
+      )
+        ORDER BY u.createdAt DESC
+    """)
+    Page<UserWithClassDto> searchStudentsWithClassByKeywordAndStudentStatus(@Param("keyword") String keyword, @Param("studentStatus") StudentStatusEnum studentStatus, Pageable pageable);
 }

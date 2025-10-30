@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.r
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class UserCreateRequestDto {
     private String fullName;
     private RoleEnum role;
     private UserStatusEnum status;
+    private StudentStatusEnum studentStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDate dateOfBirth;
@@ -29,6 +31,7 @@ public class UserCreateRequestDto {
                 .fullName(this.fullName)
                 .role(this.role)
                 .status(this.status)
+                .studentStatus(this.studentStatus)
                 .passwordHash(rawPasswordHash)
                 .createdAt(this.createdAt != null ? this.createdAt : LocalDateTime.now())
                 .updatedAt(this.updatedAt != null ? this.updatedAt : LocalDateTime.now())

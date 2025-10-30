@@ -7,6 +7,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.re
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.StudentProfileDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -46,9 +47,12 @@ public class UserController {
             @RequestParam(defaultValue = "10") int size,
 
             @Parameter(description = "Filter by classId (0 = no class, null = all)", example = "1")
-            @RequestParam(required = false) Long classId
+            @RequestParam(required = false) Long classId,
+
+            @Parameter(description = "Filter by student status", example = "ACTIVE")
+            @RequestParam(required = false) StudentStatusEnum studentStatus
     ) {
-        return ApiResp.success(userService.GetAllStudent(page, size, classId));
+        return ApiResp.success(userService.GetAllStudent(page, size, classId, studentStatus));
     }
 
 
@@ -171,6 +175,16 @@ public class UserController {
     public ResponseEntity<?> createBulkStudents(
             @Valid @RequestBody BulkUserCreateRequestDto request) {
         return ApiResp.success(userService.createBulkStudents(request));
+    }
+
+    @Operation(summary = "Update student status", description = "Update student status. Only for admin use.")
+    @PutMapping("/{userId}/student-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateStudentStatus(
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId,
+            @Parameter(description = "New student status", required = true) @RequestParam StudentStatusEnum studentStatus) {
+        userService.updateStudentStatus(userId, studentStatus);
+        return ApiResp.success("Student status updated successfully");
     }
 
 }
