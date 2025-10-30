@@ -29,4 +29,8 @@ public interface ClassRepository extends JpaRepository<Classes, Long>, JpaSpecif
     """)
     int deactivateExpired(@Param("today") LocalDate today,
                           @Param("inactive") ClassStatusEnum inactive);
+
+    @Query("SELECT c FROM Classes c WHERE LOWER(c.classCategory.name) LIKE LOWER(CONCAT('%', :categoryName, '%'))")
+    List<Classes> findByCategoryNameContainingIgnoreCase(@Param("categoryName") String categoryName);
+
 }

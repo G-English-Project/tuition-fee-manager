@@ -22,6 +22,9 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -80,17 +83,39 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public Page<ClassResponseDtoWithCount> GetAllClasses(int pageNumber, int pageSize, LocalDate effectiveFrom, ClassStatusEnum status) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
+    public Page<ClassResponseDtoWithCount> GetAllClasses(
+            int pageNumber,
+            int pageSize,
+            LocalDate effectiveFrom,
+            ClassStatusEnum status,
+            List<String> categoryNames,
+            String sortBy,
+            String direction
+    ) {
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
         Specification<Classes> spec = Specification.where(null);
 
         if (effectiveFrom != null) {
-            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("effectiveFrom"), effectiveFrom));
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("effectiveFrom"), effectiveFrom));
         }
 
         if (status != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+
+        if (categoryNames != null && !categoryNames.isEmpty()) {
+            spec = spec.and((root, query, cb) -> {
+                Join<Object, Object> categoryJoin = root.join("classCategory", JoinType.LEFT);
+                CriteriaBuilder.In<String> inClause = cb.in(cb.lower(categoryJoin.get("name")));
+                categoryNames.forEach(name -> inClause.value(name.toLowerCase()));
+                return inClause;
+            });
         }
 
         Page<Classes> page = classesRepository.findAll(spec, pageable);
@@ -106,6 +131,7 @@ public class ClassServiceImpl implements ClassService {
 
         return page.map(c -> ClassResponseDtoWithCount.fromEntity(c, countMap.getOrDefault(c.getClassId(), 0L)));
     }
+
 
 
 

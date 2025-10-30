@@ -38,10 +38,19 @@ public class ClassController {
             @Parameter(description = "Effective from date (yyyy-MM-dd)", example = "2025-10-01")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveFrom,
             @Parameter(description = "Class status", example = "ACTIVE")
-            @RequestParam(required = false) ClassStatusEnum status
+            @RequestParam(required = false) ClassStatusEnum status,
+            @Parameter(description = "Filter by category names (multiple allowed)", example = "[English,Math]")
+            @RequestParam(required = false) List<String> categoryNames,
+            @Parameter(description = "Sort by field (default=createdAt)", example = "classCategory.name")
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction (asc/desc)", example = "desc")
+            @RequestParam(defaultValue = "desc") String direction
     ) {
-        return ApiResp.success(classService.GetAllClasses(pageNumber, pageSize, effectiveFrom, status));
+        return ApiResp.success(
+                classService.GetAllClasses(pageNumber, pageSize, effectiveFrom, status, categoryNames, sortBy, direction)
+        );
     }
+
 
 
     @Operation(summary = "Get class by ID", description = "Returns details of a specific class by ID.")

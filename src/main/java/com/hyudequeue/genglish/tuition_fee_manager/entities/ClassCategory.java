@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(
         name = "class_categories",
@@ -43,4 +45,7 @@ public class ClassCategory {
     )
     @Builder.Default
     private CategoryStatusEnum status = CategoryStatusEnum.ACTIVE;
+
+    @OneToMany(mappedBy = "classCategory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Classes> classes;
 }

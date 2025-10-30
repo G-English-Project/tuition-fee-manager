@@ -22,7 +22,15 @@ import java.util.List;
 public interface ClassService {
     Page<UserInClassWithNoteDto> GetCurrentStudentInClass(Long classId, int pageNumber, int pageSize);
     Page<UserInClassWithNoteDto> GetAllStudentInClass(Long classId, int pageNumber, int pageSize);
-    Page<ClassResponseDtoWithCount> GetAllClasses(int pageNumber, int pageSize, LocalDate effectiveFrom, ClassStatusEnum status);
+    Page<ClassResponseDtoWithCount> GetAllClasses(
+            int pageNumber,
+            int pageSize,
+            LocalDate effectiveFrom,
+            ClassStatusEnum status,
+            List<String> categoryNames,
+            String sortBy,
+            String direction
+    );
 
     ClassResponseDto GetClassById(Long classId);
     ClassResponseDto CreateClass(ClassRequestDto classCreate);
