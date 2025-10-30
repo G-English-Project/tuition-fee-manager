@@ -91,4 +91,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
                               @org.springframework.data.repository.query.Param("status") UserStatusEnum status,
                               @org.springframework.data.repository.query.Param("kw") String keyword,
                               Pageable pageable);
+
+    @Query("""
+    SELECT DISTINCT u FROM User u
+    JOIN ClassEnrollment ce ON ce.user.userId = u.userId
+    JOIN Classes c ON c.classId = ce.classes.classId
+    WHERE u.role = :role
+      AND u.status = :status
+      AND ce.unEnrolledAt IS NULL
+      AND (:classId IS NULL OR c.classId = :classId)
+      AND (:className IS NULL OR LOWER(c.className) LIKE LOWER(CONCAT('%', :className, '%')))
+""")
+    Page<User> findStudentsByClassFilter(
+            @Param("role") RoleEnum role,
+            @Param("status") UserStatusEnum status,
+            @Param("classId") Long classId,
+            @Param("className") String className,
+            Pageable pageable
+    );
+
 }

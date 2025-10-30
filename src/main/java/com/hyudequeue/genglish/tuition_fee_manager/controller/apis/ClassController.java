@@ -3,14 +3,18 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassFeeModifyRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.*;
 import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.CLASS_API;
@@ -22,15 +26,17 @@ public class ClassController {
 
     private final ClassService classService;
 
-    @Operation(summary = "Get all classes", description = "Returns a paginated list of all classes.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "List of classes retrieved successfully"),
-    })
     @GetMapping(GET_ALL_CLASSES)
+    @Operation(summary = "Get all classes with optional filters")
     public ResponseEntity<?> getAllClasses(
             @Parameter(description = "Page number", example = "0") @RequestParam int pageNumber,
-            @Parameter(description = "Page size", example = "10") @RequestParam int pageSize) {
-        return ApiResp.success(classService.GetAllClasses(pageNumber, pageSize));
+            @Parameter(description = "Page size", example = "10") @RequestParam int pageSize,
+            @Parameter(description = "Effective from date (yyyy-MM-dd)", example = "2025-10-01")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveFrom,
+            @Parameter(description = "Class status", example = "ACTIVE")
+            @RequestParam(required = false) ClassStatusEnum status
+    ) {
+        return ApiResp.success(classService.GetAllClasses(pageNumber, pageSize, effectiveFrom, status));
     }
 
     @Operation(summary = "Get class by ID", description = "Returns details of a specific class by ID.")

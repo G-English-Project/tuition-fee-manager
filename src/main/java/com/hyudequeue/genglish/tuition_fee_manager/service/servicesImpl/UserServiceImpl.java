@@ -70,11 +70,27 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Page<UserWithClassesDto> GetAllStudent(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    public Page<UserWithClassesDto> GetAllStudent(int page, int size, Long classId, String className, String sortBy, String sortDir) {
+        Sort sort = Sort.by(sortBy);
+        if (sortDir.equalsIgnoreCase("desc")) sort = sort.descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<User> usersPage = userRepository
-                .findByRoleAndStatusOrderByCreatedAtDesc(RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable);
+        Page<User> usersPage;
+
+        // --- Case 1: Lọc theo classId hoặc className ---
+        if (classId != null || (className != null && !className.isBlank())) {
+            usersPage = userRepository.findStudentsByClassFilter(
+                    RoleEnum.STUDENT,
+                    UserStatusEnum.ACTIVE,
+                    classId,
+                    className,
+                    pageable
+            );
+        } else {
+            // --- Case 2: Lấy tất cả student ---
+            usersPage = userRepository.findByRoleAndStatusOrderByCreatedAtDesc(
+                    RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable);
+        }
 
         if (usersPage.isEmpty()) {
             return usersPage.map(u -> null);
@@ -109,6 +125,7 @@ public class UserServiceImpl implements UserService {
                     .build();
         });
     }
+
 
     @Override
     public UserResponseDto EditProfile(UserEditRequestDto userDto, Long userId) {
