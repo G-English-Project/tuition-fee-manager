@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "Class")
@@ -42,14 +43,14 @@ public class Classes {
     private LocalDateTime createdAt;
     @Column(nullable = true)
     private LocalDateTime updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "class_category_id",       // cột trong bảng classes
-            referencedColumnName = "category_id", // tham chiếu đến class_categories.category_id
-            nullable = true
+    // Many-to-Many với ClassCategory (giống Invoice)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "class_category_map",
+            joinColumns = @JoinColumn(name = "class_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private ClassCategory classCategory;
+    private List<ClassCategory> categories;
     @PrePersist
     void onCreate() {
         this.createdAt = LocalDateTime.now();

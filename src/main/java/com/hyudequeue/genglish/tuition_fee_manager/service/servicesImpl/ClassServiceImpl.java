@@ -169,15 +169,16 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     public ClassResponseDto CreateClass(ClassRequestDto classCreate) {
-        // Find category with ID = 1
-        ClassCategory category = classCategoryRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Category with ID 1 not found"));
-
-        // Convert DTO to entity and set category
+        // Convert DTO to entity
         Classes newClass = classCreate.toEntity();
-        newClass.setClassCategory(category);
 
-        // Save and return DTO
+        // ✅ Gán category nếu có
+        if (classCreate.getCategoryIds() != null && !classCreate.getCategoryIds().isEmpty()) {
+            List<ClassCategory> categories = classCategoryRepository.findAllById(classCreate.getCategoryIds());
+            newClass.setCategories(categories);
+        }
+
+        // Save và return DTO
         return ClassResponseDto.fromEntity(classesRepository.save(newClass));
     }
 
@@ -210,6 +211,13 @@ public class ClassServiceImpl implements ClassService {
 
         if (classEdit.getEffectiveTo() != null && !classEdit.getEffectiveTo().equals(existingClass.getEffectiveTo())) {
             existingClass.setEffectiveTo(classEdit.getEffectiveTo());
+            isUpdated = true;
+        }
+
+        // ✅ Cập nhật class category (thêm hoặc bỏ gán)
+        if (classEdit.getCategoryIds() != null) {
+            List<ClassCategory> categories = classCategoryRepository.findAllById(classEdit.getCategoryIds());
+            existingClass.setCategories(categories); // gán mới, bỏ những category cũ không có trong list
             isUpdated = true;
         }
 
@@ -421,7 +429,7 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     public List<ClassResponseDto> GetClassesByCategory(Long categoryId) {
-        return classRepository.findByClassCategory_CategoryId(categoryId)
+        return classRepository.findByCategories_CategoryId(categoryId)
                 .stream()
                 .map(ClassResponseDto::fromEntity)
                 .toList();

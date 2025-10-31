@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -18,6 +20,9 @@ public class ClassRequestDto {
     private Integer amount;
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
+
+    // ✅ Thêm categoryIds để gán class category
+    private List<Long> categoryIds;
 
     public Classes toEntity() {
         return Classes.builder()

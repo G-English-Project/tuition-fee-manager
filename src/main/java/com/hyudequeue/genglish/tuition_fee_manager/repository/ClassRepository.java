@@ -17,7 +17,8 @@ import java.util.List;
 @Repository
 public interface ClassRepository extends JpaRepository<Classes, Long>, JpaSpecificationExecutor<Classes> {
     Page<Classes> findByStatus(ClassStatusEnum status, Pageable pageable);
-    List<Classes> findByClassCategory_CategoryId(Long categoryId);
+    List<Classes> findByCategories_CategoryId(Long categoryId);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE Classes c
@@ -30,7 +31,9 @@ public interface ClassRepository extends JpaRepository<Classes, Long>, JpaSpecif
     int deactivateExpired(@Param("today") LocalDate today,
                           @Param("inactive") ClassStatusEnum inactive);
 
-    @Query("SELECT c FROM Classes c WHERE LOWER(c.classCategory.name) LIKE LOWER(CONCAT('%', :categoryName, '%'))")
-    List<Classes> findByCategoryNameContainingIgnoreCase(@Param("categoryName") String categoryName);
+    @Query("SELECT c FROM Classes c JOIN c.categories cat WHERE LOWER(cat.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<Classes> findByCategories_NameContainingIgnoreCase(@Param("name") String name);
+
+
 
 }

@@ -1,6 +1,5 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassCategoryRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassCategoryResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassCategoryService;
 import lombok.RequiredArgsConstructor;
@@ -17,31 +16,35 @@ public class ClassCategoryController {
     private final ClassCategoryService classCategoryService;
 
     @GetMapping
-    public ResponseEntity<List<ClassCategoryResponseDto>> getAll() {
-        return ResponseEntity.ok(classCategoryService.GetAllCategories());
+    public ResponseEntity<List<ClassCategoryResponseDto>> list() {
+        return ResponseEntity.ok(classCategoryService.list());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ClassCategoryResponseDto> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(classCategoryService.GetCategoryById(id));
+        return ResponseEntity.ok(classCategoryService.getById(id));
     }
 
     @PostMapping
-    public ResponseEntity<ClassCategoryResponseDto> create(@RequestBody ClassCategoryRequestDto dto) {
-        return ResponseEntity.ok(classCategoryService.CreateCategory(dto));
+    public ResponseEntity<ClassCategoryResponseDto> create(
+            @RequestParam String name,
+            @RequestParam String color
+    ) {
+        return ResponseEntity.ok(classCategoryService.create(name, color));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ClassCategoryResponseDto> update(
             @PathVariable Long id,
-            @RequestBody ClassCategoryRequestDto dto
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String color
     ) {
-        return ResponseEntity.ok(classCategoryService.UpdateCategory(id, dto));
+        return ResponseEntity.ok(classCategoryService.update(id, name, color));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        classCategoryService.DeleteCategory(id);
+        classCategoryService.softDelete(id);
         return ResponseEntity.noContent().build();
     }
 }

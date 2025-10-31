@@ -41,7 +41,6 @@ public class ClassResponseDtoWithCount {
         dto.setUpdatedAt(c.getUpdatedAt());
         dto.setCurrentStudentCount(count);
 
-        dto.setCategory(ClassCategoryDTO.fromEntity(c.getClassCategory()));
 
         return dto;
     }
