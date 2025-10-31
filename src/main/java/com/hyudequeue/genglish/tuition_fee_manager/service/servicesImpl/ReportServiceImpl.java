@@ -35,6 +35,7 @@ public class ReportServiceImpl implements ReportService {
     private final ReportImageRepository reportImageRepository;
     private final UserRepository userRepository;
     private final ClassRepository classesRepository;
+    private final InvoiceNotificationServiceImpl invoiceNotificationService;
 
     @Override
     public ReportResponseDTO create(CreateReportRequest req) {
@@ -64,7 +65,7 @@ public class ReportServiceImpl implements ReportService {
         if (hasAnyImage(req.getImageThumbBase64(), req.getImageBase64())) {
             upsertImage(report, req.getImageThumbBase64(), req.getImageBase64(), req.getMimeType());
         }
-
+        invoiceNotificationService.notifyReport(report);
         return toDto(report);
     }
 
