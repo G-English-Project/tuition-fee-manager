@@ -235,4 +235,10 @@ public class ReportServiceImpl implements ReportService {
             throw new RuntimeException("Error generating SHA-256 hash", e);
         }
     }
+
+    @Override
+    public Page<ReportResponseDTO> getAllReports(Long classId, Long studentId, Long teacherId, LocalDateTime from, LocalDateTime to, Pageable pageable) {
+        Page<Report> reports = reportRepository.findAllReportsWithFilters(classId, studentId, teacherId, from, to, pageable);
+        return reports.map(this::toDto);
+    }
 }

@@ -142,6 +142,29 @@ public class ReportController {
         return ApiResp.success(reports);
     }
 
+    @Operation(summary = "Get all reports", description = "Get all reports with filters for class, student, teacher.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Reports retrieved successfully")
+    })
+    @GetMapping("/all")
+    public ResponseEntity<ApiResp<Page<ReportResponseDTO>>> getAllReports(
+            @Parameter(description = "Class ID filter") @RequestParam(required = false) Long classId,
+            @Parameter(description = "Student ID filter") @RequestParam(required = false) Long studentId,
+            @Parameter(description = "Teacher ID filter") @RequestParam(required = false) Long teacherId,
+            @Parameter(description = "Start date") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate from,
+            @Parameter(description = "End date") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate to,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int pageNumber,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int pageSize) {
+
+        LocalDateTime fromDateTime = from != null ? from.atStartOfDay() : null;
+        LocalDateTime toDateTime = to != null ? to.atTime(23, 59, 59) : null;
+        
+        Page<ReportResponseDTO> reports = reportService.getAllReports(
+                classId, studentId, teacherId, fromDateTime, toDateTime, PageRequest.of(pageNumber, pageSize)
+        );
+        return ApiResp.success(reports);
+    }
+
     @Operation(summary = "Get report image thumbnail", description = "Retrieves the thumbnail of a report's image.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Thumbnail retrieved successfully")
