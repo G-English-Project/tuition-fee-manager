@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -19,7 +20,7 @@ public class EnrolledClassDto {
     private String className;
     private String description;
     private String status;
-    private Integer amount;
+    private BigDecimal amount;
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
 

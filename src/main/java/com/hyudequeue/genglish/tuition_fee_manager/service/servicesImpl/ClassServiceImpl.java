@@ -201,7 +201,7 @@ public class ClassServiceImpl implements ClassService {
         }
 
         if (classEdit.getAmount() != null && !classEdit.getAmount().equals(existingClass.getAmount())) {
-            existingClass.setAmount(BigDecimal.valueOf(classEdit.getAmount()));
+            existingClass.setAmount(classEdit.getAmount());
             isUpdated = true;
         }
 
