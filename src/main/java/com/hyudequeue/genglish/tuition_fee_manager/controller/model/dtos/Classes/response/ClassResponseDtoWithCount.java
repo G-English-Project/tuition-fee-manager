@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,10 +26,12 @@ public class ClassResponseDtoWithCount {
 
     private long currentStudentCount;
 
-    private ClassCategoryDTO category;
+    // ✅ Sử dụng ClassCategoryDTO bạn đã định nghĩa sẵn
+    private List<ClassCategoryDTO> categories;
 
     public static ClassResponseDtoWithCount fromEntity(Classes c, long count) {
         if (c == null) return null;
+
         ClassResponseDtoWithCount dto = new ClassResponseDtoWithCount();
         dto.setClassId(c.getClassId());
         dto.setClassName(c.getClassName());
@@ -41,6 +44,14 @@ public class ClassResponseDtoWithCount {
         dto.setUpdatedAt(c.getUpdatedAt());
         dto.setCurrentStudentCount(count);
 
+        // ✅ Map danh sách category sang DTO (dùng method fromEntity bạn đã có)
+        if (c.getCategories() != null) {
+            dto.setCategories(
+                    c.getCategories().stream()
+                            .map(ClassCategoryDTO::fromEntity)
+                            .toList()
+            );
+        }
 
         return dto;
     }
