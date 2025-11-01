@@ -330,5 +330,136 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
                                             @Param("toDate") LocalDateTime toDate,
                                             @Param("categoryId") Long categoryId,
                                             @Param("classId") Long classId);
+
+    // Group by Month với Class filter
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+        CONCAT(YEAR(i.createdAt), '-', LPAD(CAST(i.month AS string), 2, '0')),
+        CAST(SUM(i.totalAmount) AS int)
+    )
+    FROM Invoice i
+    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      AND i.classes.classId = :classId
+    GROUP BY YEAR(i.createdAt), i.month
+    ORDER BY YEAR(i.createdAt) DESC, i.month DESC
+""")
+    Page<RevenueSummaryDto> sumRevenueGroupByMonthWithClass(Pageable pageable, @Param("classId") Long classId);
+
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+        CONCAT(YEAR(i.createdAt), '-', LPAD(CAST(i.month AS string), 2, '0')),
+        CAST(SUM(i.totalAmount) AS int)
+    )
+    FROM Invoice i
+    JOIN i.categories c
+    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      AND c.categoryId = :categoryId
+      AND i.classes.classId = :classId
+    GROUP BY YEAR(i.createdAt), i.month
+    ORDER BY YEAR(i.createdAt) DESC, i.month DESC
+""")
+    Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategoryAndClass(
+            Pageable pageable,
+            @Param("categoryId") Long categoryId,
+            @Param("classId") Long classId
+    );
+
+    // Group by Week với Class filter
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+        CONCAT(YEAR(i.createdAt), '-W', LPAD(CAST(WEEK(i.createdAt) AS string), 2, '0')),
+        CAST(SUM(i.totalAmount) AS int)
+    )
+    FROM Invoice i
+    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      AND i.classes.classId = :classId
+    GROUP BY YEAR(i.createdAt), WEEK(i.createdAt)
+    ORDER BY YEAR(i.createdAt) DESC, WEEK(i.createdAt) DESC
+""")
+    Page<RevenueSummaryDto> sumRevenueGroupByWeekWithClass(Pageable pageable, @Param("classId") Long classId);
+
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+        CONCAT(YEAR(i.createdAt), '-W', LPAD(CAST(WEEK(i.createdAt) AS string), 2, '0')),
+        CAST(SUM(i.totalAmount) AS int)
+    )
+    FROM Invoice i
+    JOIN i.categories c
+    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      AND c.categoryId = :categoryId
+      AND i.classes.classId = :classId
+    GROUP BY YEAR(i.createdAt), WEEK(i.createdAt)
+    ORDER BY YEAR(i.createdAt) DESC, WEEK(i.createdAt) DESC
+""")
+    Page<RevenueSummaryDto> sumRevenueGroupByWeekWithCategoryAndClass(
+            Pageable pageable,
+            @Param("categoryId") Long categoryId,
+            @Param("classId") Long classId
+    );
+
+    // Group by Year với Class filter
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+        CAST(YEAR(i.createdAt) AS string),
+        CAST(SUM(i.totalAmount) AS int)
+    )
+    FROM Invoice i
+    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      AND i.classes.classId = :classId
+    GROUP BY YEAR(i.createdAt)
+    ORDER BY YEAR(i.createdAt) DESC
+""")
+    Page<RevenueSummaryDto> sumRevenueGroupByYearWithClass(Pageable pageable, @Param("classId") Long classId);
+
+    @Query("""
+    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
+        CAST(YEAR(i.createdAt) AS string),
+        CAST(SUM(i.totalAmount) AS int)
+    )
+    FROM Invoice i
+    JOIN i.categories c
+    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      AND c.categoryId = :categoryId
+      AND i.classes.classId = :classId
+    GROUP BY YEAR(i.createdAt)
+    ORDER BY YEAR(i.createdAt) DESC
+""")
+    Page<RevenueSummaryDto> sumRevenueGroupByYearWithCategoryAndClass(
+            Pageable pageable,
+            @Param("categoryId") Long categoryId,
+            @Param("classId") Long classId
+    );
+
+    // Date range với Class filter
+    @Query("""
+    SELECT COALESCE(CAST(SUM(i.totalAmount) AS int), 0)
+    FROM Invoice i
+    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      AND i.paidAt >= :fromDate
+      AND i.paidAt < :toDate
+      AND i.classes.classId = :classId
+""")
+    Integer sumRevenueByDateRangeWithClass(
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            @Param("classId") Long classId
+    );
+
+    @Query("""
+    SELECT COALESCE(CAST(SUM(i.totalAmount) AS int), 0)
+    FROM Invoice i
+    JOIN i.categories c
+    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+      AND i.paidAt >= :fromDate
+      AND i.paidAt < :toDate
+      AND c.categoryId = :categoryId
+      AND i.classes.classId = :classId
+""")
+    Integer sumRevenueByDateRangeWithCategoryAndClass(
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            @Param("categoryId") Long categoryId,
+            @Param("classId") Long classId
+    );
 }
 

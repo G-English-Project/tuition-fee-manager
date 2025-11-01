@@ -60,7 +60,8 @@ public class InvoiceServiceImpl implements InvoiceService {
                               ClassEnrollmentRepository classEnrollmentRepository,
                               EmailServiceImpl emailService,
                               InvoiceCategoryRepository categoryRepository,
-                              InvoiceNotificationServiceImpl invoiceNotificationService, InvoiceCategoryRepository invoiceCategoryRepository) {
+                              InvoiceNotificationServiceImpl invoiceNotificationService,
+                              InvoiceCategoryRepository invoiceCategoryRepository) {
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
@@ -131,8 +132,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 
     // =========================
-// CREATE (batch for class)
-// =========================
+    // CREATE (batch for class)
+    // =========================
     @Override
     @Transactional
     public Page<InvoiceResponseDto> createInvoicesForClass(Long classId,
@@ -258,7 +259,6 @@ public class InvoiceServiceImpl implements InvoiceService {
     ) {
         Specification<Invoice> spec = Specification.where(null);
 
-
         if (status != null && !status.isEmpty()) {
             spec = spec.and((root, query, cb) -> root.get("status").in(status));
         }
@@ -302,9 +302,6 @@ public class InvoiceServiceImpl implements InvoiceService {
         Page<Invoice> invoices = invoiceRepository.findAll(spec, pageable);
         return invoices.map(InvoiceResponseDto::toDto);
     }
-
-
-
 
     @Override
     public Page<InvoiceResponseDto> getInvoicesByStatus(Pageable pageable, InvoiceStatusEnum invoiceStatus) {
@@ -362,9 +359,6 @@ public class InvoiceServiceImpl implements InvoiceService {
         return InvoiceResponseDto.toDto(saved);
     }
 
-
-
-
     // =========================
     // DELETE (soft cancel)
     // =========================
@@ -410,9 +404,16 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .sum();
     }
 
+    // =========================
+    // REVENUE SUMMARY - UPDATED WITH CLASS FILTER
+    // =========================
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable, Long categoryId) {
-        if (categoryId != null) {
+    public Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable, Long categoryId, Long classId) {
+        if (classId != null && categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByMonthWithCategoryAndClass(pageable, categoryId, classId);
+        } else if (classId != null) {
+            return invoiceRepository.sumRevenueGroupByMonthWithClass(pageable, classId);
+        } else if (categoryId != null) {
             return invoiceRepository.sumRevenueGroupByMonthWithCategory(pageable, categoryId);
         } else {
             return invoiceRepository.sumRevenueGroupByMonth(pageable);
@@ -429,8 +430,12 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable, Long categoryId) {
-        if (categoryId != null) {
+    public Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable, Long categoryId, Long classId) {
+        if (classId != null && categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByWeekWithCategoryAndClass(pageable, categoryId, classId);
+        } else if (classId != null) {
+            return invoiceRepository.sumRevenueGroupByWeekWithClass(pageable, classId);
+        } else if (categoryId != null) {
             return invoiceRepository.sumRevenueGroupByWeekWithCategory(pageable, categoryId);
         } else {
             return invoiceRepository.sumRevenueGroupByWeek(pageable);
@@ -438,7 +443,25 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable, Long categoryId) {
+    public Page<RevenueSummaryDto> getRevenueSummaryByYear(Pageable pageable, Long categoryId, Long classId) {
+        if (classId != null && categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByYearWithCategoryAndClass(pageable, categoryId, classId);
+        } else if (classId != null) {
+            return invoiceRepository.sumRevenueGroupByYearWithClass(pageable, classId);
+        } else if (categoryId != null) {
+            return invoiceRepository.sumRevenueGroupByYearWithCategory(pageable, categoryId);
+        } else {
+            return invoiceRepository.sumRevenueGroupByYear(pageable);
+        }
+    }
+
+    @Override
+    public Page<RevenueSummaryDto> getRevenueSummaryByDateRange(
+            LocalDate fromDate,
+            LocalDate toDate,
+            Pageable pageable,
+            Long categoryId,
+            Long classId) {
         if (fromDate == null) {
             fromDate = LocalDate.of(1970, 1, 1);
         }
@@ -446,9 +469,21 @@ public class InvoiceServiceImpl implements InvoiceService {
             toDate = LocalDate.now();
         }
 
-        // Repository actually returns Integer
         Integer totalRevenue;
-        if (categoryId != null) {
+        if (classId != null && categoryId != null) {
+            totalRevenue = invoiceRepository.sumRevenueByDateRangeWithCategoryAndClass(
+                    fromDate.atStartOfDay(),
+                    toDate.plusDays(1).atStartOfDay(),
+                    categoryId,
+                    classId
+            );
+        } else if (classId != null) {
+            totalRevenue = invoiceRepository.sumRevenueByDateRangeWithClass(
+                    fromDate.atStartOfDay(),
+                    toDate.plusDays(1).atStartOfDay(),
+                    classId
+            );
+        } else if (categoryId != null) {
             totalRevenue = invoiceRepository.sumRevenueByDateRangeWithCategory(
                     fromDate.atStartOfDay(),
                     toDate.plusDays(1).atStartOfDay(),
@@ -479,28 +514,17 @@ public class InvoiceServiceImpl implements InvoiceService {
             LocalDate toDate
     ) {
         return switch (summaryType.toLowerCase()) {
-            case "month" -> getRevenueSummaryByMonth(pageable, categoryId);
-            case "week" -> getRevenueSummaryByWeek(pageable, categoryId);
-            case "year" -> getRevenueSummaryByYear(pageable, categoryId);
+            case "month" -> getRevenueSummaryByMonth(pageable, categoryId, classId);
+            case "week" -> getRevenueSummaryByWeek(pageable, categoryId, classId);
+            case "year" -> getRevenueSummaryByYear(pageable, categoryId, classId);
             case "class" -> getRevenueSummaryByClass(pageable, categoryId);
             case "daterange" -> {
                 if (fromDate == null || toDate == null)
                     throw new IllegalArgumentException("Date range requires both fromDate and toDate");
-                yield getRevenueSummaryByDateRange(fromDate, toDate, pageable, categoryId);
+                yield getRevenueSummaryByDateRange(fromDate, toDate, pageable, categoryId, classId);
             }
             default -> throw new IllegalArgumentException("Invalid summary type: " + summaryType);
         };
-    }
-
-
-
-    @Override
-    public Page<RevenueSummaryDto> getRevenueSummaryByYear(Pageable pageable, Long categoryId) {
-        if (categoryId != null) {
-            return invoiceRepository.sumRevenueGroupByYearWithCategory(pageable, categoryId);
-        } else {
-            return invoiceRepository.sumRevenueGroupByYear(pageable);
-        }
     }
 
     @Override
@@ -512,7 +536,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         // Cập nhật trạng thái và phương thức
         invoice.setStatus(InvoiceStatusEnum.PAID);
         invoice.setPaymentType(PaymentMethodEnum.MANUAL);
-        invoice.setPaidAt(LocalDateTime.now()); // nếu bạn có field paidAt
+        invoice.setPaidAt(LocalDateTime.now());
         invoiceRepository.save(invoice);
         invoiceNotificationService.notifyManualConfirm(invoice);
     }
@@ -603,7 +627,6 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
 
-
         // ✅ Trả về tất cả thống kê
         return new InvoiceStatResponseDto(
                 unpaidCount,
@@ -616,9 +639,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         );
     }
 
-
     @Async
-    @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Bangkok") // chạy lúc 8h sáng hàng ngày
+    @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Bangkok")
     public void sendOverdueRemindersAutomatically() {
         LocalDate today = LocalDate.now();
         List<Invoice> overdueInvoices = invoiceRepository.findByStatus(InvoiceStatusEnum.OVERDUE);
@@ -682,7 +704,4 @@ public class InvoiceServiceImpl implements InvoiceService {
             );
         }
     }
-
-
-
 }
