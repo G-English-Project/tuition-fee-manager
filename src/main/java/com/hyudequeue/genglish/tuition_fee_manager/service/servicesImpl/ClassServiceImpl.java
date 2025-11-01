@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -200,7 +201,7 @@ public class ClassServiceImpl implements ClassService {
         }
 
         if (classEdit.getAmount() != null && !classEdit.getAmount().equals(existingClass.getAmount())) {
-            existingClass.setAmount(classEdit.getAmount());
+            existingClass.setAmount(BigDecimal.valueOf(classEdit.getAmount()));
             isUpdated = true;
         }
 
@@ -248,7 +249,7 @@ public class ClassServiceImpl implements ClassService {
         Classes classes = classesRepository.findById(req.getClassId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
-        classes.setAmount(req.getAmount());
+        classes.setAmount(BigDecimal.valueOf(req.getAmount()));
         classes.setUpdatedAt(LocalDateTime.now());
         classesRepository.save(classes);
         invoiceNotificationService.notifyClassFeeUpdated(classes, req.getAmount());
@@ -567,6 +568,61 @@ public class ClassServiceImpl implements ClassService {
                 .totalProcessed(request.getStudents().size())
                 .successCount(successfulStudents.size())
                 .failedCount(failedStudents.size())
+                .build();
+    }
+
+    @Override
+    public MonthlyRevenueResponseDto GetMonthlyRevenue(Long classId, LocalDate fromDate, LocalDate toDate) {
+        // Validate class exists
+        Classes classes = classesRepository.findById(classId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Class not found"));
+
+        List<MonthlyRevenueResponseDto.MonthlyRevenueDetail> monthlyRevenues = new ArrayList<>();
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+
+        // Iterate through each month in the range
+        LocalDate currentMonth = fromDate.withDayOfMonth(1);
+        LocalDate endMonth = toDate.withDayOfMonth(1);
+
+        while (!currentMonth.isAfter(endMonth)) {
+            LocalDate firstDayOfMonth = currentMonth;
+            LocalDate lastDayOfMonth = currentMonth.withDayOfMonth(
+                    currentMonth.lengthOfMonth()
+            );
+
+            // Count active students in this month
+            Long activeCount = classEnrollmentRepository.countActiveStudentsInMonth(
+                    classId,
+                    firstDayOfMonth.atStartOfDay(),
+                    lastDayOfMonth.atTime(23, 59, 59)
+            );
+
+            // ✅ FIX: Convert Long to BigDecimal before multiply
+            BigDecimal monthlyRevenue = classes.getAmount()
+                    .multiply(BigDecimal.valueOf(activeCount)); // Sử dụng BigDecimal.valueOf()
+
+            totalRevenue = totalRevenue.add(monthlyRevenue);
+
+            monthlyRevenues.add(
+                    MonthlyRevenueResponseDto.MonthlyRevenueDetail.builder()
+                            .year(currentMonth.getYear())
+                            .month(currentMonth.getMonthValue())
+                            .monthName(currentMonth.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+                            .activeStudentCount(activeCount)
+                            .revenue(monthlyRevenue)
+                            .build()
+            );
+
+            currentMonth = currentMonth.plusMonths(1);
+        }
+
+        return MonthlyRevenueResponseDto.builder()
+                .classId(classes.getClassId())
+                .className(classes.getClassName())
+                .currentClassFee(classes.getAmount())
+                .monthlyRevenues(monthlyRevenues)
+                .totalRevenue(totalRevenue)
                 .build();
     }
 }
