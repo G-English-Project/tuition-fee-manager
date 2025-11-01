@@ -46,13 +46,16 @@ public class UserController {
             @Parameter(description = "Filter by class name (contains)")
             @RequestParam(required = false) String className,
 
+            @Parameter(description = "Filter by student status", example = "ACTIVE")
+            @RequestParam(required = false) StudentStatusEnum studentStatus,
+
             @Parameter(description = "Sort by field (createdAt, fullName, classCount)", example = "createdAt")
             @RequestParam(defaultValue = "createdAt") String sortBy,
 
             @Parameter(description = "Sort direction (asc/desc)", example = "desc")
             @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        return ApiResp.success(userService.GetAllStudent(page, size, classId, className, sortBy, sortDir));
+        return ApiResp.success(userService.GetAllStudent(page, size, classId, className, studentStatus, sortBy, sortDir));
     }
 
 
