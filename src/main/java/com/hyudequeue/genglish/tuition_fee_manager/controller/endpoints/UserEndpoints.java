@@ -2,6 +2,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints;
 
 public final class UserEndpoints {
     public static final String GET_ALL_STUDENT_ENDPOINT = "/student";
+    public static final String GET_ALL_TA_ENDPOINT = "/ta";
     public static final String GET_ALL_ENDPOINT = "";
     public static final String CREATE_ENDPOINT = "";
     public static final String EDIT_ENDPOINT = "{userId}";

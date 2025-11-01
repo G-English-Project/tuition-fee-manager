@@ -169,6 +169,15 @@ public class UserController {
         return ApiResp.success(userService.getAllByRole(role, page, size));
     }
 
+        @Operation(summary = "Get all TAs", description = "Retrieve paginated list of all teaching assistants (TA).")
+        @GetMapping(GET_ALL_TA_ENDPOINT)
+        public ResponseEntity<?> getAllTAs(
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size
+        ) {
+                return ApiResp.success(userService.getAllByRole(RoleEnum.TA, page, size));
+        }
+
     @Operation(summary = "Create bulk students", description = "Create multiple students at once. Only for admin use.")
     @PostMapping(BULK_CREATE_STUDENTS_ENDPOINT)
     @PreAuthorize("hasRole('ADMIN')")
