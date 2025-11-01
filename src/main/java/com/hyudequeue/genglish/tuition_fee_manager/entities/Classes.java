@@ -4,6 +4,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnu
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,8 +32,8 @@ public class Classes {
     @Column(nullable = false)
     private ClassStatusEnum status;
 
-    @Column(nullable = false)
-    private Integer amount;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal amount;
 
     @Column(nullable = false)
     private LocalDate effectiveFrom;
@@ -41,9 +42,10 @@ public class Classes {
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
     @Column(nullable = true)
     private LocalDateTime updatedAt;
-    // Many-to-Many với ClassCategory (giống Invoice)
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "class_category_map",
@@ -51,11 +53,13 @@ public class Classes {
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
     private List<ClassCategory> categories;
+
     @PrePersist
     void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
     }
+
     @PreUpdate
     void onUpdate() {
         this.updatedAt = LocalDateTime.now();

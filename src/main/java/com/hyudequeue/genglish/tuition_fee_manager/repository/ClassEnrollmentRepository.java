@@ -43,5 +43,16 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
         GROUP BY ce.classes.classId
     """)
     List<ClassCountProjection> countActiveByClassIds(@Param("classIds") List<Long> classIds);
-
+    @Query("""
+    SELECT COUNT(ce) 
+    FROM ClassEnrollment ce 
+    WHERE ce.classes.classId = :classId 
+      AND ce.enrolledAt <= :monthEnd 
+      AND (ce.unEnrolledAt IS NULL OR ce.unEnrolledAt >= :monthStart)
+""")
+    Long countActiveStudentsInMonth(
+            @Param("classId") Long classId,
+            @Param("monthStart") LocalDateTime monthStart,
+            @Param("monthEnd") LocalDateTime monthEnd
+    );
 }

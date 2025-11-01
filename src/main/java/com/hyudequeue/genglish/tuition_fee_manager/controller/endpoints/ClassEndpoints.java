@@ -16,4 +16,6 @@ public final class ClassEndpoints {
     public static final String REMOVE_STUDENT = "/{classId}/students/{studentId}/remove";
     public static final String NOTE_STUDENT = "/{classId}/students/{studentId}/note";
     public static final String RESTORE_CLASS = "/{classId}/restore";
+    public static final String REVENUE_BY_MONTH = "/{classId}/revenue-by-month";
+
 }
