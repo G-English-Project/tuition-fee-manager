@@ -106,7 +106,7 @@ public class ClassServiceImpl implements ClassService {
 
         // 🔥 Custom sort logic
         spec = spec.and((root, query, cb) -> {
-            Join<Object, Object> categoryJoin = root.join("classCategory", JoinType.LEFT);
+            Join<Object, Object> categoryJoin = root.join("categories", JoinType.LEFT);
 
             if (prioritizedCategoryName != null && !prioritizedCategoryName.isEmpty()) {
                 // 👇 ép kiểu <Integer> để tránh lỗi Expression<Object>
