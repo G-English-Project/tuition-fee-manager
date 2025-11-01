@@ -5,10 +5,12 @@ import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.MailTemplateBu
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.Map;
 
 @Service
@@ -44,19 +46,44 @@ public class EmailServiceImpl {
             throw new RuntimeException("Failed to send email", e);
         }
     }
-    public void sendHtmlEmail(String receiverEmail, String subject, String body) {
+    public void sendHtmlEmail(String to, String subject, String htmlBody, String base64Image, String mimeType) {
         try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setTo(receiverEmail);
+            helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(body, true); // true = HTML email
+            helper.setText(htmlBody, true);
 
-            mailSender.send(mimeMessage);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email to " + receiverEmail, e);
+            if (base64Image != null && !base64Image.isEmpty()) {
+                byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+                helper.addInline("reportImage", new ByteArrayResource(imageBytes), mimeType);
+            }
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
+    public void sendHtmlEmailWithInlineImage(String to, String subject, String htmlBody, String base64Image, String mimeType) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true);
+
+            if (base64Image != null && !base64Image.isEmpty()) {
+                byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+                helper.addInline("reportImage", new ByteArrayResource(imageBytes), mimeType);
+            }
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }

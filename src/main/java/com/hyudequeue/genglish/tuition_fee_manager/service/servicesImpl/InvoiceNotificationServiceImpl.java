@@ -398,44 +398,45 @@ public class InvoiceNotificationServiceImpl {
             values.put("recommendedAction", report.getRecommendedAction());
             values.put("createdAt", report.getCreatedAt().toString());
 
-            // Nếu report có ảnh thì gắn vào email
+            // Nếu report có ảnh -> dùng CID để hiển thị
             String imageTag = "";
+            String base64Image = null;
+            String mimeType = null;
+
             if (Boolean.TRUE.equals(report.getHasImage()) && report.getImage() != null) {
-                ReportImage img = report.getImage();
-                String mime = (img.getMimeType() == null || img.getMimeType().isEmpty()) ? "image/webp" : img.getMimeType();
-                String imgB64 = img.getImageBase64();
-                if (imgB64 != null && !imgB64.isEmpty()) {
-                    imageTag = "<img src=\"data:" + mime + ";base64," + imgB64 + "\" " +
-                            "alt=\"Report Image\" style=\"max-width:100%;border-radius:10px;margin-top:10px;\"/>";
-                }
+                imageTag = "<img src=\"cid:reportImage\" alt=\"Report Image\" style=\"max-width:100%;border-radius:10px;margin-top:10px;\"/>";
+                base64Image = report.getImage().getImageBase64();
+                mimeType = (report.getImage().getMimeType() == null || report.getImage().getMimeType().isEmpty())
+                        ? "image/webp"
+                        : report.getImage().getMimeType();
             }
+
             values.put("reportImage", imageTag);
 
-            // Build subject & body
             String subject = "📄 Student Report - " + student.getFullName() + " (" + clazz.getClassName() + ")";
             String body = """
-            <html>
-            <body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 20px;'>
-                <div style='background: white; border-radius: 10px; padding: 20px;'>
-                    <h2>Student Report</h2>
-                    <p><b>Student:</b> %s</p>
-                    <p><b>Class:</b> %s</p>
-                    <p><b>Teacher:</b> %s</p>
-                    <hr/>
-                    <p><b>Attendance:</b> %s</p>
-                    <p><b>Homework:</b> %s</p>
-                    <p><b>Participation:</b> %s</p>
-                    <p><b>Skill Progress:</b> %s%%</p>
-                    <h3>Areas for Improvement</h3>
-                    <p>%s</p>
-                    <h3>Recommended Actions</h3>
-                    <p>%s</p>
-                    %s
-                    <p style='font-size: 0.9em; color: gray;'>Created at: %s</p>
-                </div>
-            </body>
-            </html>
-            """.formatted(
+        <html>
+        <body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 20px;'>
+            <div style='background: white; border-radius: 10px; padding: 20px;'>
+                <h2>Student Report</h2>
+                <p><b>Student:</b> %s</p>
+                <p><b>Class:</b> %s</p>
+                <p><b>Teacher:</b> %s</p>
+                <hr/>
+                <p><b>Attendance:</b> %s</p>
+                <p><b>Homework:</b> %s</p>
+                <p><b>Participation:</b> %s</p>
+                <p><b>Skill Progress:</b> %s%%</p>
+                <h3>Areas for Improvement</h3>
+                <p>%s</p>
+                <h3>Recommended Actions</h3>
+                <p>%s</p>
+                %s
+                <p style='font-size: 0.9em; color: gray;'>Created at: %s</p>
+            </div>
+        </body>
+        </html>
+        """.formatted(
                     values.get("studentName"),
                     values.get("className"),
                     values.get("teacherName"),
@@ -456,22 +457,22 @@ public class InvoiceNotificationServiceImpl {
 
             // Notify học sinh
             notificationService.createNotification(student.getUserId(), notifTitle, notifContent);
-            emailService.sendHtmlEmail(student.getEmail(), subject, body);
+            emailService.sendHtmlEmailWithInlineImage(student.getEmail(), subject, body, base64Image, mimeType);
 
             // Notify giáo viên
             notificationService.createNotification(teacher.getUserId(), notifTitle, notifContent);
-            emailService.sendHtmlEmail(teacher.getEmail(), subject, body);
+            emailService.sendHtmlEmailWithInlineImage(teacher.getEmail(), subject, body, base64Image, mimeType);
 
             // Notify admin
             List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
             for (User admin : admins) {
                 notificationService.createNotification(admin.getUserId(), notifTitle, notifContent);
-                emailService.sendHtmlEmail(admin.getEmail(), subject, body);
+                emailService.sendHtmlEmailWithInlineImage(admin.getEmail(), subject, body, base64Image, mimeType);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            // Có thể thay bằng logger.error("Failed to send report notification", e);
         }
     }
+
 }
