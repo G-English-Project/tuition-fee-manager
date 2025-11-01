@@ -75,7 +75,12 @@ public class EmailServiceImpl {
             helper.setText(htmlBody, true);
 
             if (base64Image != null && !base64Image.isEmpty()) {
+
+                // ✅ FIX QUAN TRỌNG — loại bỏ xuống dòng & khoảng trắng
+                base64Image = base64Image.replaceAll("\\s+", "");
+
                 byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+
                 helper.addInline("reportImage", new ByteArrayResource(imageBytes), mimeType);
             }
 
@@ -84,6 +89,7 @@ public class EmailServiceImpl {
             e.printStackTrace();
         }
     }
+
 
 
 }
