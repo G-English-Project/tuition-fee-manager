@@ -332,26 +332,26 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
                                             @Param("classId") Long classId);
 
     // ==========================================
-// GROUP BY MONTH WITH CLASS FILTER
-// ==========================================
+    // ✅ FIXED: GROUP BY MONTH WITH CLASS FILTER
+    // ==========================================
 
     @Query("""
     SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CONCAT(FUNCTION('YEAR', i.createdAt), '-', LPAD(CAST(i.month AS string), 2, '0')),
-        CAST(SUM(i.totalAmount) AS int)
+        CONCAT(CAST(FUNCTION('YEAR', i.createdAt) AS string), '-', LPAD(CAST(i.month AS string), 2, '0')),
+        SUM(CAST(i.totalAmount AS big_decimal))
     )
     FROM Invoice i
     WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
       AND i.classes.classId = :classId
     GROUP BY FUNCTION('YEAR', i.createdAt), i.month
     ORDER BY FUNCTION('YEAR', i.createdAt) DESC, i.month DESC
-""")
+    """)
     Page<RevenueSummaryDto> sumRevenueGroupByMonthWithClass(Pageable pageable, @Param("classId") Long classId);
 
     @Query("""
     SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CONCAT(FUNCTION('YEAR', i.createdAt), '-', LPAD(CAST(i.month AS string), 2, '0')),
-        CAST(SUM(i.totalAmount) AS int)
+        CONCAT(CAST(FUNCTION('YEAR', i.createdAt) AS string), '-', LPAD(CAST(i.month AS string), 2, '0')),
+        SUM(CAST(i.totalAmount AS big_decimal))
     )
     FROM Invoice i
     JOIN i.categories c
@@ -360,32 +360,34 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
       AND i.classes.classId = :classId
     GROUP BY FUNCTION('YEAR', i.createdAt), i.month
     ORDER BY FUNCTION('YEAR', i.createdAt) DESC, i.month DESC
-""")
+    """)
     Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategoryAndClass(
             Pageable pageable,
             @Param("categoryId") Long categoryId,
             @Param("classId") Long classId
     );
 
-    // Group by Week với Class filter
+    // ==========================================
+    // ✅ FIXED: GROUP BY WEEK WITH CLASS FILTER
+    // ==========================================
+
     @Query("""
     SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CONCAT(FUNCTION('YEAR', i.createdAt), '-W', LPAD(CAST(FUNCTION('WEEK', i.createdAt) AS string), 2, '0')),
-        CAST(SUM(i.totalAmount) AS int)
+        CONCAT(CAST(FUNCTION('YEAR', i.createdAt) AS string), '-W', LPAD(CAST(FUNCTION('WEEK', i.createdAt) AS string), 2, '0')),
+        SUM(CAST(i.totalAmount AS big_decimal))
     )
     FROM Invoice i
     WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
       AND i.classes.classId = :classId
     GROUP BY FUNCTION('YEAR', i.createdAt), FUNCTION('WEEK', i.createdAt)
     ORDER BY FUNCTION('YEAR', i.createdAt) DESC, FUNCTION('WEEK', i.createdAt) DESC
-""")
+    """)
     Page<RevenueSummaryDto> sumRevenueGroupByWeekWithClass(Pageable pageable, @Param("classId") Long classId);
-
 
     @Query("""
     SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CONCAT(FUNCTION('YEAR', i.createdAt), '-W', LPAD(CAST(FUNCTION('WEEK', i.createdAt) AS string), 2, '0')),
-        CAST(SUM(i.totalAmount) AS int)
+        CONCAT(CAST(FUNCTION('YEAR', i.createdAt) AS string), '-W', LPAD(CAST(FUNCTION('WEEK', i.createdAt) AS string), 2, '0')),
+        SUM(CAST(i.totalAmount AS big_decimal))
     )
     FROM Invoice i
     JOIN i.categories c
@@ -394,7 +396,7 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
       AND i.classes.classId = :classId
     GROUP BY FUNCTION('YEAR', i.createdAt), FUNCTION('WEEK', i.createdAt)
     ORDER BY FUNCTION('YEAR', i.createdAt) DESC, FUNCTION('WEEK', i.createdAt) DESC
-""")
+    """)
     Page<RevenueSummaryDto> sumRevenueGroupByWeekWithCategoryAndClass(
             Pageable pageable,
             @Param("categoryId") Long categoryId,
@@ -402,26 +404,26 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
     );
 
     // ==========================================
-// GROUP BY YEAR WITH CLASS FILTER
-// ==========================================
+    // ✅ FIXED: GROUP BY YEAR WITH CLASS FILTER
+    // ==========================================
 
     @Query("""
     SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
         CAST(FUNCTION('YEAR', i.createdAt) AS string),
-        CAST(SUM(i.totalAmount) AS int)
+        SUM(CAST(i.totalAmount AS big_decimal))
     )
     FROM Invoice i
     WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
       AND i.classes.classId = :classId
     GROUP BY FUNCTION('YEAR', i.createdAt)
     ORDER BY FUNCTION('YEAR', i.createdAt) DESC
-""")
+    """)
     Page<RevenueSummaryDto> sumRevenueGroupByYearWithClass(Pageable pageable, @Param("classId") Long classId);
 
     @Query("""
     SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
         CAST(FUNCTION('YEAR', i.createdAt) AS string),
-        CAST(SUM(i.totalAmount) AS int)
+        SUM(CAST(i.totalAmount AS big_decimal))
     )
     FROM Invoice i
     JOIN i.categories c
@@ -430,7 +432,7 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
       AND i.classes.classId = :classId
     GROUP BY FUNCTION('YEAR', i.createdAt)
     ORDER BY FUNCTION('YEAR', i.createdAt) DESC
-""")
+    """)
     Page<RevenueSummaryDto> sumRevenueGroupByYearWithCategoryAndClass(
             Pageable pageable,
             @Param("categoryId") Long categoryId,
@@ -438,17 +440,17 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
     );
 
     // ==========================================
-// DATE RANGE WITH CLASS FILTER
-// ==========================================
+    // DATE RANGE WITH CLASS FILTER
+    // ==========================================
 
     @Query("""
-    SELECT COALESCE(CAST(SUM(i.totalAmount) AS int), 0)
+    SELECT COALESCE(SUM(CAST(i.totalAmount AS big_decimal)), 0)
     FROM Invoice i
     WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
       AND i.paidAt >= :fromDate
       AND i.paidAt < :toDate
       AND i.classes.classId = :classId
-""")
+    """)
     Integer sumRevenueByDateRangeWithClass(
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
@@ -456,7 +458,7 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
     );
 
     @Query("""
-    SELECT COALESCE(CAST(SUM(i.totalAmount) AS int), 0)
+    SELECT COALESCE(SUM(CAST(i.totalAmount AS big_decimal)), 0)
     FROM Invoice i
     JOIN i.categories c
     WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
@@ -464,7 +466,7 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
       AND i.paidAt < :toDate
       AND c.categoryId = :categoryId
       AND i.classes.classId = :classId
-""")
+    """)
     Integer sumRevenueByDateRangeWithCategoryAndClass(
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
@@ -472,4 +474,3 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
             @Param("classId") Long classId
     );
 }
-
