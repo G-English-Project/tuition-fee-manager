@@ -4,6 +4,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.resp
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Invoice;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -12,12 +13,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpecificationExecutor<Invoice> {
@@ -332,139 +335,282 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
                                             @Param("classId") Long classId);
 
     // ==========================================
-// GROUP BY MONTH WITH CLASS FILTER
-// ==========================================
+    // ✅ FIXED WITH SUBQUERY - GROUP BY MONTH WITH CLASS
+    // ==========================================
 
-    @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CONCAT(FUNCTION('YEAR', i.createdAt), '-', LPAD(CAST(i.month AS string), 2, '0')),
-        CAST(SUM(i.totalAmount) AS int)
-    )
-    FROM Invoice i
-    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-      AND i.classes.classId = :classId
-    GROUP BY FUNCTION('YEAR', i.createdAt), i.month
-    ORDER BY FUNCTION('YEAR', i.createdAt) DESC, i.month DESC
-""")
-    Page<RevenueSummaryDto> sumRevenueGroupByMonthWithClass(Pageable pageable, @Param("classId") Long classId);
+    @Query(value = """
+        SELECT 
+            CONCAT(year_col, '-', LPAD(month_col, 2, '0')) as period,
+            SUM(total_amount) as revenue
+        FROM (
+            SELECT 
+                YEAR(created_at) as year_col,
+                month as month_col,
+                total_amount
+            FROM invoices
+            WHERE status = 'PAID' AND class_id = :classId
+        ) t
+        GROUP BY year_col, month_col
+        ORDER BY year_col DESC, month_col DESC
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT CONCAT(YEAR(created_at), '-', month))
+        FROM invoices
+        WHERE status = 'PAID' AND class_id = :classId
+        """,
+            nativeQuery = true)
+    Page<Object[]> sumRevenueGroupByMonthWithClassNative(Pageable pageable, @Param("classId") Long classId);
 
-    @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CONCAT(FUNCTION('YEAR', i.createdAt), '-', LPAD(CAST(i.month AS string), 2, '0')),
-        CAST(SUM(i.totalAmount) AS int)
-    )
-    FROM Invoice i
-    JOIN i.categories c
-    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-      AND c.categoryId = :categoryId
-      AND i.classes.classId = :classId
-    GROUP BY FUNCTION('YEAR', i.createdAt), i.month
-    ORDER BY FUNCTION('YEAR', i.createdAt) DESC, i.month DESC
-""")
-    Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategoryAndClass(
+    default Page<RevenueSummaryDto> sumRevenueGroupByMonthWithClass(Pageable pageable, Long classId) {
+        Page<Object[]> results = sumRevenueGroupByMonthWithClassNative(pageable, classId);
+        List<RevenueSummaryDto> dtos = results.getContent().stream()
+                .map(row -> new RevenueSummaryDto(
+                        (String) row[0],
+                        ((BigDecimal) row[1]).intValue()
+                ))
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, results.getTotalElements());
+    }
+
+    @Query(value = """
+        SELECT 
+            CONCAT(year_col, '-', LPAD(month_col, 2, '0')) as period,
+            SUM(total_amount) as revenue
+        FROM (
+            SELECT 
+                YEAR(i.created_at) as year_col,
+                i.month as month_col,
+                i.total_amount
+            FROM invoices i
+            INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+            WHERE i.status = 'PAID' 
+              AND icm.category_id = :categoryId
+              AND i.class_id = :classId
+        ) t
+        GROUP BY year_col, month_col
+        ORDER BY year_col DESC, month_col DESC
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT CONCAT(YEAR(i.created_at), '-', i.month))
+        FROM invoices i
+        INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+        WHERE i.status = 'PAID' 
+          AND icm.category_id = :categoryId
+          AND i.class_id = :classId
+        """,
+            nativeQuery = true)
+    Page<Object[]> sumRevenueGroupByMonthWithCategoryAndClassNative(
             Pageable pageable,
             @Param("categoryId") Long categoryId,
             @Param("classId") Long classId
     );
 
-    // Group by Week với Class filter
-    @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CONCAT(FUNCTION('YEAR', i.createdAt), '-W', LPAD(CAST(FUNCTION('WEEK', i.createdAt) AS string), 2, '0')),
-        CAST(SUM(i.totalAmount) AS int)
-    )
-    FROM Invoice i
-    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-      AND i.classes.classId = :classId
-    GROUP BY FUNCTION('YEAR', i.createdAt), FUNCTION('WEEK', i.createdAt)
-    ORDER BY FUNCTION('YEAR', i.createdAt) DESC, FUNCTION('WEEK', i.createdAt) DESC
-""")
-    Page<RevenueSummaryDto> sumRevenueGroupByWeekWithClass(Pageable pageable, @Param("classId") Long classId);
-
-
-    @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CONCAT(FUNCTION('YEAR', i.createdAt), '-W', LPAD(CAST(FUNCTION('WEEK', i.createdAt) AS string), 2, '0')),
-        CAST(SUM(i.totalAmount) AS int)
-    )
-    FROM Invoice i
-    JOIN i.categories c
-    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-      AND c.categoryId = :categoryId
-      AND i.classes.classId = :classId
-    GROUP BY FUNCTION('YEAR', i.createdAt), FUNCTION('WEEK', i.createdAt)
-    ORDER BY FUNCTION('YEAR', i.createdAt) DESC, FUNCTION('WEEK', i.createdAt) DESC
-""")
-    Page<RevenueSummaryDto> sumRevenueGroupByWeekWithCategoryAndClass(
-            Pageable pageable,
-            @Param("categoryId") Long categoryId,
-            @Param("classId") Long classId
-    );
+    default Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategoryAndClass(
+            Pageable pageable, Long categoryId, Long classId) {
+        Page<Object[]> results = sumRevenueGroupByMonthWithCategoryAndClassNative(pageable, categoryId, classId);
+        List<RevenueSummaryDto> dtos = results.getContent().stream()
+                .map(row -> new RevenueSummaryDto(
+                        (String) row[0],
+                        ((BigDecimal) row[1]).intValue()
+                ))
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, results.getTotalElements());
+    }
 
     // ==========================================
-// GROUP BY YEAR WITH CLASS FILTER
-// ==========================================
+    // ✅ FIXED WITH SUBQUERY - GROUP BY WEEK WITH CLASS
+    // ==========================================
 
-    @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CAST(FUNCTION('YEAR', i.createdAt) AS string),
-        CAST(SUM(i.totalAmount) AS int)
-    )
-    FROM Invoice i
-    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-      AND i.classes.classId = :classId
-    GROUP BY FUNCTION('YEAR', i.createdAt)
-    ORDER BY FUNCTION('YEAR', i.createdAt) DESC
-""")
-    Page<RevenueSummaryDto> sumRevenueGroupByYearWithClass(Pageable pageable, @Param("classId") Long classId);
+    @Query(value = """
+        SELECT 
+            CONCAT(year_col, '-W', LPAD(week_col, 2, '0')) as period,
+            SUM(total_amount) as revenue
+        FROM (
+            SELECT 
+                YEAR(created_at) as year_col,
+                WEEK(created_at, 3) as week_col,
+                total_amount
+            FROM invoices
+            WHERE status = 'PAID' AND class_id = :classId
+        ) t
+        GROUP BY year_col, week_col
+        ORDER BY year_col DESC, week_col DESC
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT CONCAT(YEAR(created_at), '-', WEEK(created_at, 3)))
+        FROM invoices
+        WHERE status = 'PAID' AND class_id = :classId
+        """,
+            nativeQuery = true)
+    Page<Object[]> sumRevenueGroupByWeekWithClassNative(Pageable pageable, @Param("classId") Long classId);
 
-    @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-        CAST(FUNCTION('YEAR', i.createdAt) AS string),
-        CAST(SUM(i.totalAmount) AS int)
-    )
-    FROM Invoice i
-    JOIN i.categories c
-    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-      AND c.categoryId = :categoryId
-      AND i.classes.classId = :classId
-    GROUP BY FUNCTION('YEAR', i.createdAt)
-    ORDER BY FUNCTION('YEAR', i.createdAt) DESC
-""")
-    Page<RevenueSummaryDto> sumRevenueGroupByYearWithCategoryAndClass(
+    default Page<RevenueSummaryDto> sumRevenueGroupByWeekWithClass(Pageable pageable, Long classId) {
+        Page<Object[]> results = sumRevenueGroupByWeekWithClassNative(pageable, classId);
+        List<RevenueSummaryDto> dtos = results.getContent().stream()
+                .map(row -> new RevenueSummaryDto(
+                        (String) row[0],
+                        ((BigDecimal) row[1]).intValue()
+                ))
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, results.getTotalElements());
+    }
+
+    @Query(value = """
+        SELECT 
+            CONCAT(year_col, '-W', LPAD(week_col, 2, '0')) as period,
+            SUM(total_amount) as revenue
+        FROM (
+            SELECT 
+                YEAR(i.created_at) as year_col,
+                WEEK(i.created_at, 3) as week_col,
+                i.total_amount
+            FROM invoices i
+            INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+            WHERE i.status = 'PAID' 
+              AND icm.category_id = :categoryId
+              AND i.class_id = :classId
+        ) t
+        GROUP BY year_col, week_col
+        ORDER BY year_col DESC, week_col DESC
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT CONCAT(YEAR(i.created_at), '-', WEEK(i.created_at, 3)))
+        FROM invoices i
+        INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+        WHERE i.status = 'PAID' 
+          AND icm.category_id = :categoryId
+          AND i.class_id = :classId
+        """,
+            nativeQuery = true)
+    Page<Object[]> sumRevenueGroupByWeekWithCategoryAndClassNative(
             Pageable pageable,
             @Param("categoryId") Long categoryId,
             @Param("classId") Long classId
     );
 
-    // ==========================================
-// DATE RANGE WITH CLASS FILTER
-// ==========================================
+    default Page<RevenueSummaryDto> sumRevenueGroupByWeekWithCategoryAndClass(
+            Pageable pageable, Long categoryId, Long classId) {
+        Page<Object[]> results = sumRevenueGroupByWeekWithCategoryAndClassNative(pageable, categoryId, classId);
+        List<RevenueSummaryDto> dtos = results.getContent().stream()
+                .map(row -> new RevenueSummaryDto(
+                        (String) row[0],
+                        ((BigDecimal) row[1]).intValue()
+                ))
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, results.getTotalElements());
+    }
 
-    @Query("""
-    SELECT COALESCE(CAST(SUM(i.totalAmount) AS int), 0)
-    FROM Invoice i
-    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-      AND i.paidAt >= :fromDate
-      AND i.paidAt < :toDate
-      AND i.classes.classId = :classId
-""")
+    // ==========================================
+    // ✅ FIXED WITH SUBQUERY - GROUP BY YEAR WITH CLASS
+    // ==========================================
+
+    @Query(value = """
+        SELECT 
+            CAST(year_col AS CHAR) as period,
+            SUM(total_amount) as revenue
+        FROM (
+            SELECT 
+                YEAR(created_at) as year_col,
+                total_amount
+            FROM invoices
+            WHERE status = 'PAID' AND class_id = :classId
+        ) t
+        GROUP BY year_col
+        ORDER BY year_col DESC
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT YEAR(created_at))
+        FROM invoices
+        WHERE status = 'PAID' AND class_id = :classId
+        """,
+            nativeQuery = true)
+    Page<Object[]> sumRevenueGroupByYearWithClassNative(Pageable pageable, @Param("classId") Long classId);
+
+    default Page<RevenueSummaryDto> sumRevenueGroupByYearWithClass(Pageable pageable, Long classId) {
+        Page<Object[]> results = sumRevenueGroupByYearWithClassNative(pageable, classId);
+        List<RevenueSummaryDto> dtos = results.getContent().stream()
+                .map(row -> new RevenueSummaryDto(
+                        (String) row[0],
+                        ((BigDecimal) row[1]).intValue()
+                ))
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, results.getTotalElements());
+    }
+
+    @Query(value = """
+        SELECT 
+            CAST(year_col AS CHAR) as period,
+            SUM(total_amount) as revenue
+        FROM (
+            SELECT 
+                YEAR(i.created_at) as year_col,
+                i.total_amount
+            FROM invoices i
+            INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+            WHERE i.status = 'PAID' 
+              AND icm.category_id = :categoryId
+              AND i.class_id = :classId
+        ) t
+        GROUP BY year_col
+        ORDER BY year_col DESC
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT YEAR(i.created_at))
+        FROM invoices i
+        INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+        WHERE i.status = 'PAID' 
+          AND icm.category_id = :categoryId
+          AND i.class_id = :classId
+        """,
+            nativeQuery = true)
+    Page<Object[]> sumRevenueGroupByYearWithCategoryAndClassNative(
+            Pageable pageable,
+            @Param("categoryId") Long categoryId,
+            @Param("classId") Long classId
+    );
+
+    default Page<RevenueSummaryDto> sumRevenueGroupByYearWithCategoryAndClass(
+            Pageable pageable, Long categoryId, Long classId) {
+        Page<Object[]> results = sumRevenueGroupByYearWithCategoryAndClassNative(pageable, categoryId, classId);
+        List<RevenueSummaryDto> dtos = results.getContent().stream()
+                .map(row -> new RevenueSummaryDto(
+                        (String) row[0],
+                        ((BigDecimal) row[1]).intValue()
+                ))
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, results.getTotalElements());
+    }
+
+    // ==========================================
+    // DATE RANGE WITH CLASS FILTER
+    // ==========================================
+
+    @Query(value = """
+        SELECT COALESCE(SUM(total_amount), 0)
+        FROM invoices
+        WHERE status = 'PAID'
+          AND paid_at >= :fromDate
+          AND paid_at < :toDate
+          AND class_id = :classId
+        """,
+            nativeQuery = true)
     Integer sumRevenueByDateRangeWithClass(
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
             @Param("classId") Long classId
     );
 
-    @Query("""
-    SELECT COALESCE(CAST(SUM(i.totalAmount) AS int), 0)
-    FROM Invoice i
-    JOIN i.categories c
-    WHERE i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-      AND i.paidAt >= :fromDate
-      AND i.paidAt < :toDate
-      AND c.categoryId = :categoryId
-      AND i.classes.classId = :classId
-""")
+    @Query(value = """
+        SELECT COALESCE(SUM(i.total_amount), 0)
+        FROM invoices i
+        INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+        WHERE i.status = 'PAID'
+          AND i.paid_at >= :fromDate
+          AND i.paid_at < :toDate
+          AND icm.category_id = :categoryId
+          AND i.class_id = :classId
+        """,
+            nativeQuery = true)
     Integer sumRevenueByDateRangeWithCategoryAndClass(
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
@@ -472,4 +618,3 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
             @Param("classId") Long classId
     );
 }
-
