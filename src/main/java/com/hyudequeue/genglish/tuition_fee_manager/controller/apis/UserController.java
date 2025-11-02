@@ -46,13 +46,16 @@ public class UserController {
             @Parameter(description = "Filter by class name (contains)")
             @RequestParam(required = false) String className,
 
+            @Parameter(description = "Filter by student status", example = "ACTIVE")
+            @RequestParam(required = false) StudentStatusEnum studentStatus,
+
             @Parameter(description = "Sort by field (createdAt, fullName, classCount)", example = "createdAt")
             @RequestParam(defaultValue = "createdAt") String sortBy,
 
             @Parameter(description = "Sort direction (asc/desc)", example = "desc")
             @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        return ApiResp.success(userService.GetAllStudent(page, size, classId, className, sortBy, sortDir));
+        return ApiResp.success(userService.GetAllStudent(page, size, classId, className, studentStatus, sortBy, sortDir));
     }
 
 
@@ -168,6 +171,15 @@ public class UserController {
     ) {
         return ApiResp.success(userService.getAllByRole(role, page, size));
     }
+
+        @Operation(summary = "Get all TAs", description = "Retrieve paginated list of all teaching assistants (TA).")
+        @GetMapping(GET_ALL_TA_ENDPOINT)
+        public ResponseEntity<?> getAllTAs(
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size
+        ) {
+                return ApiResp.success(userService.getAllByRole(RoleEnum.TA, page, size));
+        }
 
     @Operation(summary = "Create bulk students", description = "Create multiple students at once. Only for admin use.")
     @PostMapping(BULK_CREATE_STUDENTS_ENDPOINT)

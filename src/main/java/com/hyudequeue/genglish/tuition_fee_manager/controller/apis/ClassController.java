@@ -14,8 +14,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -247,5 +250,35 @@ public class ClassController {
         request.setClassId(classId);
 
         return ApiResp.success(classService.bulkCreateStudentsAndAssignToClass(request));
+    }
+    @Operation(
+            summary = "Get monthly revenue for a class",
+            description = "Calculate revenue for each month based on active students and class fee. " +
+                    "Revenue = Active Students Count × Class Fee"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Monthly revenue retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Class not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid date range")
+    })
+    @GetMapping(REVENUE_BY_MONTH)
+    public ResponseEntity<?> getMonthlyRevenue(
+            @Parameter(description = "Class ID", required = true)
+            @PathVariable Long classId,
+
+            @Parameter(description = "Start date (ISO format: yyyy-MM-dd)", required = true)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+
+            @Parameter(description = "End date (ISO format: yyyy-MM-dd)", required = true)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
+    ) {
+        if (fromDate.isAfter(toDate)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "fromDate must be before or equal to toDate"
+            );
+        }
+
+        return ApiResp.success(classService.GetMonthlyRevenue(classId, fromDate, toDate));
     }
 }

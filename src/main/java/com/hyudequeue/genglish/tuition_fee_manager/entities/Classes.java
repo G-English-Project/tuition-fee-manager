@@ -4,8 +4,10 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnu
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "Class")
@@ -30,8 +32,8 @@ public class Classes {
     @Column(nullable = false)
     private ClassStatusEnum status;
 
-    @Column(nullable = false)
-    private Integer amount;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal amount;
 
     @Column(nullable = false)
     private LocalDate effectiveFrom;
@@ -40,21 +42,24 @@ public class Classes {
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
     @Column(nullable = true)
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "class_category_id",       // cột trong bảng classes
-            referencedColumnName = "category_id", // tham chiếu đến class_categories.category_id
-            nullable = true
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "class_category_map",
+            joinColumns = @JoinColumn(name = "class_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private ClassCategory classCategory;
+    private List<ClassCategory> categories;
+
     @PrePersist
     void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
     }
+
     @PreUpdate
     void onUpdate() {
         this.updatedAt = LocalDateTime.now();

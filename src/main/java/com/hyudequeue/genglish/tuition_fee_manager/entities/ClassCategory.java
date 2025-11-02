@@ -5,13 +5,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
-import java.util.List;
-
 @Entity
-@Table(
-        name = "class_categories",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"code"})
-)
+@Table(name = "class_categories")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,9 +18,6 @@ public class ClassCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id")
     private Long categoryId;
-
-    @Column(nullable = false, length = 50, unique = true)
-    private String code; // thêm trường code để khớp với unique constraint
 
     @Pattern(
             regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
@@ -45,7 +37,4 @@ public class ClassCategory {
     )
     @Builder.Default
     private CategoryStatusEnum status = CategoryStatusEnum.ACTIVE;
-
-    @OneToMany(mappedBy = "classCategory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Classes> classes;
 }

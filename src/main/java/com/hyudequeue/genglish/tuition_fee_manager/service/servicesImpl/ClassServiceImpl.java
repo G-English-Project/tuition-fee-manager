@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -106,7 +107,7 @@ public class ClassServiceImpl implements ClassService {
 
         // 🔥 Custom sort logic
         spec = spec.and((root, query, cb) -> {
-            Join<Object, Object> categoryJoin = root.join("classCategory", JoinType.LEFT);
+            Join<Object, Object> categoryJoin = root.join("categories", JoinType.LEFT);
 
             if (prioritizedCategoryName != null && !prioritizedCategoryName.isEmpty()) {
                 // 👇 ép kiểu <Integer> để tránh lỗi Expression<Object>
@@ -169,15 +170,16 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     public ClassResponseDto CreateClass(ClassRequestDto classCreate) {
-        // Find category with ID = 1
-        ClassCategory category = classCategoryRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Category with ID 1 not found"));
-
-        // Convert DTO to entity and set category
+        // Convert DTO to entity
         Classes newClass = classCreate.toEntity();
-        newClass.setClassCategory(category);
 
-        // Save and return DTO
+        // ✅ Gán category nếu có
+        if (classCreate.getCategoryIds() != null && !classCreate.getCategoryIds().isEmpty()) {
+            List<ClassCategory> categories = classCategoryRepository.findAllById(classCreate.getCategoryIds());
+            newClass.setCategories(categories);
+        }
+
+        // Save và return DTO
         return ClassResponseDto.fromEntity(classesRepository.save(newClass));
     }
 
@@ -213,6 +215,13 @@ public class ClassServiceImpl implements ClassService {
             isUpdated = true;
         }
 
+        // ✅ Cập nhật class category (thêm hoặc bỏ gán)
+        if (classEdit.getCategoryIds() != null) {
+            List<ClassCategory> categories = classCategoryRepository.findAllById(classEdit.getCategoryIds());
+            existingClass.setCategories(categories); // gán mới, bỏ những category cũ không có trong list
+            isUpdated = true;
+        }
+
         if (isUpdated) {
             existingClass.setUpdatedAt(LocalDateTime.now());
             classesRepository.save(existingClass);
@@ -240,7 +249,7 @@ public class ClassServiceImpl implements ClassService {
         Classes classes = classesRepository.findById(req.getClassId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
-        classes.setAmount(req.getAmount());
+        classes.setAmount(BigDecimal.valueOf(req.getAmount()));
         classes.setUpdatedAt(LocalDateTime.now());
         classesRepository.save(classes);
         invoiceNotificationService.notifyClassFeeUpdated(classes, req.getAmount());
@@ -421,7 +430,7 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     public List<ClassResponseDto> GetClassesByCategory(Long categoryId) {
-        return classRepository.findByClassCategory_CategoryId(categoryId)
+        return classRepository.findByCategories_CategoryId(categoryId)
                 .stream()
                 .map(ClassResponseDto::fromEntity)
                 .toList();
@@ -559,6 +568,61 @@ public class ClassServiceImpl implements ClassService {
                 .totalProcessed(request.getStudents().size())
                 .successCount(successfulStudents.size())
                 .failedCount(failedStudents.size())
+                .build();
+    }
+
+    @Override
+    public MonthlyRevenueResponseDto GetMonthlyRevenue(Long classId, LocalDate fromDate, LocalDate toDate) {
+        // Validate class exists
+        Classes classes = classesRepository.findById(classId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Class not found"));
+
+        List<MonthlyRevenueResponseDto.MonthlyRevenueDetail> monthlyRevenues = new ArrayList<>();
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+
+        // Iterate through each month in the range
+        LocalDate currentMonth = fromDate.withDayOfMonth(1);
+        LocalDate endMonth = toDate.withDayOfMonth(1);
+
+        while (!currentMonth.isAfter(endMonth)) {
+            LocalDate firstDayOfMonth = currentMonth;
+            LocalDate lastDayOfMonth = currentMonth.withDayOfMonth(
+                    currentMonth.lengthOfMonth()
+            );
+
+            // Count active students in this month
+            Long activeCount = classEnrollmentRepository.countActiveStudentsInMonth(
+                    classId,
+                    firstDayOfMonth.atStartOfDay(),
+                    lastDayOfMonth.atTime(23, 59, 59)
+            );
+
+            // ✅ FIX: Convert Long to BigDecimal before multiply
+            BigDecimal monthlyRevenue = classes.getAmount()
+                    .multiply(BigDecimal.valueOf(activeCount)); // Sử dụng BigDecimal.valueOf()
+
+            totalRevenue = totalRevenue.add(monthlyRevenue);
+
+            monthlyRevenues.add(
+                    MonthlyRevenueResponseDto.MonthlyRevenueDetail.builder()
+                            .year(currentMonth.getYear())
+                            .month(currentMonth.getMonthValue())
+                            .monthName(currentMonth.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+                            .activeStudentCount(activeCount)
+                            .revenue(monthlyRevenue)
+                            .build()
+            );
+
+            currentMonth = currentMonth.plusMonths(1);
+        }
+
+        return MonthlyRevenueResponseDto.builder()
+                .classId(classes.getClassId())
+                .className(classes.getClassName())
+                .currentClassFee(classes.getAmount())
+                .monthlyRevenues(monthlyRevenues)
+                .totalRevenue(totalRevenue)
                 .build();
     }
 }

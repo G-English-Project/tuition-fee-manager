@@ -1,10 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Invoice;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Payment;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
@@ -13,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -378,6 +376,102 @@ public class InvoiceNotificationServiceImpl {
                     NotificationTemplateEnum.NEW_FEEDBACK_RECEIVED,
                     values
             );
+        }
+    }
+
+    @Async
+    public void notifyReport(Report report) {
+        try {
+            User student = report.getStudent();
+            User teacher = report.getTeacher();
+            Classes clazz = report.getClassRoom();
+
+            Map<String, String> values = new HashMap<>();
+            values.put("studentName", student.getFullName());
+            values.put("className", clazz.getClassName());
+            values.put("teacherName", teacher.getFullName());
+            values.put("attendance", report.getAttendance().name());
+            values.put("homework", report.getHomework().name());
+            values.put("participation", report.getParticipation().name());
+            values.put("skillProgress", String.valueOf(report.getSkillProgress()));
+            values.put("areasForImprovement", report.getAreasForImprovement());
+            values.put("recommendedAction", report.getRecommendedAction());
+            values.put("createdAt", report.getCreatedAt().toString());
+
+            // Nếu report có ảnh -> dùng CID để hiển thị
+            String imageTag = "";
+            String base64Image = null;
+            String mimeType = null;
+
+            if (Boolean.TRUE.equals(report.getHasImage()) && report.getImage() != null) {
+                imageTag = "<img src=\"cid:reportImage\" alt=\"Report Image\" style=\"max-width:100%;border-radius:10px;margin-top:10px;\"/>";
+                base64Image = report.getImage().getImageBase64();
+                mimeType = (report.getImage().getMimeType() == null || report.getImage().getMimeType().isEmpty())
+                        ? "image/webp"
+                        : report.getImage().getMimeType();
+            }
+
+            values.put("reportImage", imageTag);
+
+            String subject = "📄 Student Report - " + student.getFullName() + " (" + clazz.getClassName() + ")";
+            String body = """
+        <html>
+        <body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 20px;'>
+            <div style='background: white; border-radius: 10px; padding: 20px;'>
+                <h2>Student Report</h2>
+                <p><b>Student:</b> %s</p>
+                <p><b>Class:</b> %s</p>
+                <p><b>Teacher:</b> %s</p>
+                <hr/>
+                <p><b>Attendance:</b> %s</p>
+                <p><b>Homework:</b> %s</p>
+                <p><b>Participation:</b> %s</p>
+                <p><b>Skill Progress:</b> %s%%</p>
+                <h3>Areas for Improvement</h3>
+                <p>%s</p>
+                <h3>Recommended Actions</h3>
+                <p>%s</p>
+                %s
+                <p style='font-size: 0.9em; color: gray;'>Created at: %s</p>
+            </div>
+        </body>
+        </html>
+        """.formatted(
+                    values.get("studentName"),
+                    values.get("className"),
+                    values.get("teacherName"),
+                    values.get("attendance"),
+                    values.get("homework"),
+                    values.get("participation"),
+                    values.get("skillProgress"),
+                    values.get("areasForImprovement"),
+                    values.get("recommendedAction"),
+                    values.get("reportImage"),
+                    values.get("createdAt")
+            );
+
+            // ===== Notify & Send Email =====
+            String notifTitle = "Báo cáo học tập mới từ " + teacher.getFullName();
+            String notifContent = "Giáo viên " + teacher.getFullName() + " vừa tạo báo cáo học tập cho học sinh "
+                    + student.getFullName() + " trong lớp " + clazz.getClassName() + ".";
+
+            // Notify học sinh
+            notificationService.createNotification(student.getUserId(), notifTitle, notifContent);
+            emailService.sendHtmlEmailWithInlineImage(student.getEmail(), subject, body, base64Image, mimeType);
+
+            // Notify giáo viên
+            notificationService.createNotification(teacher.getUserId(), notifTitle, notifContent);
+            emailService.sendHtmlEmailWithInlineImage(teacher.getEmail(), subject, body, base64Image, mimeType);
+
+            // Notify admin
+            List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
+            for (User admin : admins) {
+                notificationService.createNotification(admin.getUserId(), notifTitle, notifContent);
+                emailService.sendHtmlEmailWithInlineImage(admin.getEmail(), subject, body, base64Image, mimeType);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

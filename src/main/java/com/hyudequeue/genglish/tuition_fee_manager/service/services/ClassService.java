@@ -43,5 +43,10 @@ public interface ClassService {
     void RestoreClass(Long classId);
     List<ClassResponseDto> GetClassesByCategory(Long categoryId);
     BulkStudentCreateAndAssignResponseDto bulkCreateStudentsAndAssignToClass(BulkStudentCreateAndAssignDto request);
+    MonthlyRevenueResponseDto GetMonthlyRevenue(
+            Long classId,
+            LocalDate fromDate,
+            LocalDate toDate
+    );
 
 }

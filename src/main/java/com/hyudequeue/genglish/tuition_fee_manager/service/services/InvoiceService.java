@@ -65,17 +65,15 @@ public interface InvoiceService {
     void processInvoiceStatus(Long invoiceId, InvoiceStatusEnum invoiceStatus);
     InvoiceResponseDto getInvoiceById(Long invoiceId);
 
-    Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable, Long categoryId);
+    Page<RevenueSummaryDto> getRevenueSummaryByMonth(Pageable pageable, Long categoryId, Long classId);
+    Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable, Long categoryId, Long classId);
+    Page<RevenueSummaryDto> getRevenueSummaryByYear(Pageable pageable, Long categoryId, Long classId);
+    Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable, Long categoryId, Long classId);
 
     Page<RevenueSummaryDto> getRevenueSummaryByClass(Pageable pageable, Long categoryId);
 
-    Page<RevenueSummaryDto> getRevenueSummaryByWeek(Pageable pageable, Long categoryId);
-
-    Page<RevenueSummaryDto> getRevenueSummaryByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable, Long categoryId);
-
     void manualConfirmInvoice(Long invoiceId);
 
-    Page<RevenueSummaryDto> getRevenueSummaryByYear(Pageable pageable, Long categoryId);
     void bulkSoftDeleteInvoices(List<Long> invoiceIds);
     void bulkHardDeleteInvoices(List<Long> invoiceIds);
     InvoiceStatResponseDto getInvoiceStats();

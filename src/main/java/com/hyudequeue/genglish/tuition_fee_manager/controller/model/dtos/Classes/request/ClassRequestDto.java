@@ -7,17 +7,23 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 public class ClassRequestDto {
     private String className;
     private String description;
-    private Integer amount;
+    private BigDecimal amount;
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
+
+    // ✅ Thêm categoryIds để gán class category
+    private List<Long> categoryIds;
 
     public Classes toEntity() {
         return Classes.builder()

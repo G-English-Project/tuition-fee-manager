@@ -112,4 +112,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
             Pageable pageable
     );
 
+    @Query("""
+    SELECT DISTINCT u
+    FROM User u
+    LEFT JOIN ClassEnrollment ce ON u.userId = ce.user.userId AND ce.unEnrolledAt IS NULL
+    LEFT JOIN Classes c ON ce.classes.classId = c.classId
+    WHERE u.role = :role
+      AND u.status = :status
+      AND (:studentStatus IS NULL OR u.studentStatus = :studentStatus)
+      AND (:classId IS NULL OR c.classId = :classId)
+      AND (:className IS NULL OR LOWER(c.className) LIKE LOWER(CONCAT('%', :className, '%')))
+    """)
+    Page<User> findStudentsByClassFilterWithStudentStatus(
+            @Param("role") RoleEnum role,
+            @Param("status") UserStatusEnum status,
+            @Param("studentStatus") StudentStatusEnum studentStatus,
+            @Param("classId") Long classId,
+            @Param("className") String className,
+            Pageable pageable
+    );
+
+    Page<User> findByRoleAndStatusAndStudentStatusOrderByCreatedAtDesc(RoleEnum role, UserStatusEnum status, StudentStatusEnum studentStatus, Pageable pageable);
+
 }

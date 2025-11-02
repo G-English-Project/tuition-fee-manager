@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 @NoArgsConstructor
@@ -19,27 +20,53 @@ public class ClassResponseDto {
     private String className;
     private String description;
     private ClassStatusEnum status;
-    private Integer amount;
+    private BigDecimal amount;
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static ClassResponseDto fromEntity(Classes classes) {
-        if (classes == null) return null;
+    // ✅ Thêm danh sách category trả về
+    private java.util.List<CategoryDto> categories;
 
-        return new ClassResponseDto(
-                classes.getClassId(),
-                GenerateId.formatId(classes.getClassId()),
-                classes.getClassName(),
-                classes.getDescription(),
-                classes.getStatus(),
-                classes.getAmount(),
-                classes.getEffectiveFrom(),
-                classes.getEffectiveTo(),
-                classes.getCreatedAt(),
-                classes.getUpdatedAt()
-        );
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class CategoryDto {
+        private Long categoryId;
+        private String name;
     }
 
+    public static ClassResponseDto fromEntity(Classes c) {
+        if (c == null) return null;
+
+        ClassResponseDto dto = new ClassResponseDto(
+                c.getClassId(),
+                GenerateId.formatId(c.getClassId()),
+                c.getClassName(),
+                c.getDescription(),
+                c.getStatus(),
+                c.getAmount(),
+                c.getEffectiveFrom(),
+                c.getEffectiveTo(),
+                c.getCreatedAt(),
+                c.getUpdatedAt(),
+                null // Tạm để tí set bên dưới
+        );
+
+        // ✅ Map category sang DTO
+        if (c.getCategories() != null) {
+            dto.setCategories(
+                    c.getCategories().stream()
+                            .map(cat -> new CategoryDto(
+                                    cat.getCategoryId(),
+                                    cat.getName()
+                            ))
+                            .toList()
+            );
+        }
+
+        return dto;
+    }
 }
+

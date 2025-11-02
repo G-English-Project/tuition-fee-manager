@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @Data
 public class ClassCategoryRequestDto {
     @NotBlank(message = "Code cannot be blank")
-    private String code; // 👈 thêm thuộc tính code
     @Pattern(regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
             message = "Color must be valid hex format, e.g. #FFFFFF or #FFF")
     private String color;
@@ -24,7 +23,6 @@ public class ClassCategoryRequestDto {
 
     public ClassCategory toEntity() {
         return ClassCategory.builder()
-                .code(this.code)
                 .color(this.color)
                 .name(this.name)
                 .status(this.status)

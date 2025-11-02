@@ -83,4 +83,6 @@ public class InvoiceCategoryController {
     public ResponseEntity<ApiResp<List<InvoiceCategoryResponseDTO>>> getAll() {
         return ApiResp.success(categoryService.list());
     }
+
+
 }

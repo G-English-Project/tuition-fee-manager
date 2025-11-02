@@ -28,6 +28,8 @@ public interface ReportService {
 
     Page<ReportResponseDTO> listByClassInRange(Long classId, LocalDateTime from, LocalDateTime to, Pageable pageable);
 
+    Page<ReportResponseDTO> getAllReports(Long classId, Long studentId, Long teacherId, LocalDateTime from, LocalDateTime to, Pageable pageable);
+
     // Ảnh (endpoint riêng)
     ReportImageDTO getThumb(Long reportId);
 

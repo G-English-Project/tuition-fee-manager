@@ -12,15 +12,13 @@ public class ClassCategoryDTO {
     private Long categoryId;
     private String name;
     private String color;
-    private String code;
 
     public static ClassCategoryDTO fromEntity(ClassCategory category) {
         if (category == null) return null;
         return new ClassCategoryDTO(
                 category.getCategoryId(),
                 category.getName(),
-                category.getColor(),
-                category.getCode()
+                category.getColor()
         );
     }
 }
