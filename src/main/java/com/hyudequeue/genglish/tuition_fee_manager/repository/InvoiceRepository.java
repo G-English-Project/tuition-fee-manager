@@ -335,17 +335,23 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
                                             @Param("classId") Long classId);
 
     // ==========================================
-    // ✅ NATIVE QUERY - GROUP BY MONTH WITH CLASS
+    // ✅ FIXED WITH SUBQUERY - GROUP BY MONTH WITH CLASS
     // ==========================================
 
     @Query(value = """
         SELECT 
-            CONCAT(YEAR(created_at), '-', LPAD(month, 2, '0')) as period,
+            CONCAT(year_col, '-', LPAD(month_col, 2, '0')) as period,
             SUM(total_amount) as revenue
-        FROM invoices
-        WHERE status = 'PAID' AND class_id = :classId
-        GROUP BY YEAR(created_at), month
-        ORDER BY YEAR(created_at) DESC, month DESC
+        FROM (
+            SELECT 
+                YEAR(created_at) as year_col,
+                month as month_col,
+                total_amount
+            FROM invoices
+            WHERE status = 'PAID' AND class_id = :classId
+        ) t
+        GROUP BY year_col, month_col
+        ORDER BY year_col DESC, month_col DESC
         """,
             countQuery = """
         SELECT COUNT(DISTINCT CONCAT(YEAR(created_at), '-', month))
@@ -368,15 +374,21 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 
     @Query(value = """
         SELECT 
-            CONCAT(YEAR(i.created_at), '-', LPAD(i.month, 2, '0')) as period,
-            SUM(i.total_amount) as revenue
-        FROM invoices i
-        INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
-        WHERE i.status = 'PAID' 
-          AND icm.category_id = :categoryId
-          AND i.class_id = :classId
-        GROUP BY YEAR(i.created_at), i.month
-        ORDER BY YEAR(i.created_at) DESC, i.month DESC
+            CONCAT(year_col, '-', LPAD(month_col, 2, '0')) as period,
+            SUM(total_amount) as revenue
+        FROM (
+            SELECT 
+                YEAR(i.created_at) as year_col,
+                i.month as month_col,
+                i.total_amount
+            FROM invoices i
+            INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+            WHERE i.status = 'PAID' 
+              AND icm.category_id = :categoryId
+              AND i.class_id = :classId
+        ) t
+        GROUP BY year_col, month_col
+        ORDER BY year_col DESC, month_col DESC
         """,
             countQuery = """
         SELECT COUNT(DISTINCT CONCAT(YEAR(i.created_at), '-', i.month))
@@ -406,17 +418,23 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
     }
 
     // ==========================================
-    // ✅ NATIVE QUERY - GROUP BY WEEK WITH CLASS
+    // ✅ FIXED WITH SUBQUERY - GROUP BY WEEK WITH CLASS
     // ==========================================
 
     @Query(value = """
         SELECT 
-            CONCAT(YEAR(created_at), '-W', LPAD(WEEK(created_at, 3), 2, '0')) as period,
+            CONCAT(year_col, '-W', LPAD(week_col, 2, '0')) as period,
             SUM(total_amount) as revenue
-        FROM invoices
-        WHERE status = 'PAID' AND class_id = :classId
-        GROUP BY YEAR(created_at), WEEK(created_at, 3)
-        ORDER BY YEAR(created_at) DESC, WEEK(created_at, 3) DESC
+        FROM (
+            SELECT 
+                YEAR(created_at) as year_col,
+                WEEK(created_at, 3) as week_col,
+                total_amount
+            FROM invoices
+            WHERE status = 'PAID' AND class_id = :classId
+        ) t
+        GROUP BY year_col, week_col
+        ORDER BY year_col DESC, week_col DESC
         """,
             countQuery = """
         SELECT COUNT(DISTINCT CONCAT(YEAR(created_at), '-', WEEK(created_at, 3)))
@@ -439,15 +457,21 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 
     @Query(value = """
         SELECT 
-            CONCAT(YEAR(i.created_at), '-W', LPAD(WEEK(i.created_at, 3), 2, '0')) as period,
-            SUM(i.total_amount) as revenue
-        FROM invoices i
-        INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
-        WHERE i.status = 'PAID' 
-          AND icm.category_id = :categoryId
-          AND i.class_id = :classId
-        GROUP BY YEAR(i.created_at), WEEK(i.created_at, 3)
-        ORDER BY YEAR(i.created_at) DESC, WEEK(i.created_at, 3) DESC
+            CONCAT(year_col, '-W', LPAD(week_col, 2, '0')) as period,
+            SUM(total_amount) as revenue
+        FROM (
+            SELECT 
+                YEAR(i.created_at) as year_col,
+                WEEK(i.created_at, 3) as week_col,
+                i.total_amount
+            FROM invoices i
+            INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+            WHERE i.status = 'PAID' 
+              AND icm.category_id = :categoryId
+              AND i.class_id = :classId
+        ) t
+        GROUP BY year_col, week_col
+        ORDER BY year_col DESC, week_col DESC
         """,
             countQuery = """
         SELECT COUNT(DISTINCT CONCAT(YEAR(i.created_at), '-', WEEK(i.created_at, 3)))
@@ -477,17 +501,22 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
     }
 
     // ==========================================
-    // ✅ NATIVE QUERY - GROUP BY YEAR WITH CLASS
+    // ✅ FIXED WITH SUBQUERY - GROUP BY YEAR WITH CLASS
     // ==========================================
 
     @Query(value = """
         SELECT 
-            CAST(YEAR(created_at) AS CHAR) as period,
+            CAST(year_col AS CHAR) as period,
             SUM(total_amount) as revenue
-        FROM invoices
-        WHERE status = 'PAID' AND class_id = :classId
-        GROUP BY YEAR(created_at)
-        ORDER BY YEAR(created_at) DESC
+        FROM (
+            SELECT 
+                YEAR(created_at) as year_col,
+                total_amount
+            FROM invoices
+            WHERE status = 'PAID' AND class_id = :classId
+        ) t
+        GROUP BY year_col
+        ORDER BY year_col DESC
         """,
             countQuery = """
         SELECT COUNT(DISTINCT YEAR(created_at))
@@ -510,15 +539,20 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 
     @Query(value = """
         SELECT 
-            CAST(YEAR(i.created_at) AS CHAR) as period,
-            SUM(i.total_amount) as revenue
-        FROM invoices i
-        INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
-        WHERE i.status = 'PAID' 
-          AND icm.category_id = :categoryId
-          AND i.class_id = :classId
-        GROUP BY YEAR(i.created_at)
-        ORDER BY YEAR(i.created_at) DESC
+            CAST(year_col AS CHAR) as period,
+            SUM(total_amount) as revenue
+        FROM (
+            SELECT 
+                YEAR(i.created_at) as year_col,
+                i.total_amount
+            FROM invoices i
+            INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+            WHERE i.status = 'PAID' 
+              AND icm.category_id = :categoryId
+              AND i.class_id = :classId
+        ) t
+        GROUP BY year_col
+        ORDER BY year_col DESC
         """,
             countQuery = """
         SELECT COUNT(DISTINCT YEAR(i.created_at))
