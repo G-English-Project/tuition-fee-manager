@@ -67,10 +67,17 @@ public final class AllowedEndpoint {
     };
 
     public static final String[] TEACHER = {
+            // Class management (read-only + student management)
             ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.GET_ALL_CLASSES,
             ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.GET_CLASS_BY_ID,
             ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.CURRENT_STUDENTS,
             ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.ALL_STUDENTS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.ENROLLMENT_BY_STUDENT,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.ASSIGN_STUDENT,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.ASSIGN_MULTIPLE_STUDENTS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.REMOVE_STUDENT,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.NOTE_STUDENT,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.REVENUE_BY_MONTH,
 
             ApiPathConstants.USER_API + UserEndpoints.GET_ALL_STUDENT_ENDPOINT,
             ApiPathConstants.USER_API + UserEndpoints.PROFILE_ENDPOINT,
@@ -95,7 +102,22 @@ public final class AllowedEndpoint {
     };
 
     public static final String[] TA = {
-            ApiPathConstants.CLASS_API + "/**",
+            // Class management (full access - create, edit, delete)
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.GET_ALL_CLASSES,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.GET_CLASS_BY_ID,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.CREATE_CLASS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.EDIT_CLASS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.REMOVE_CLASS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.MODIFY_CLASS_FEE,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.CURRENT_STUDENTS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.ALL_STUDENTS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.ENROLLMENT_BY_STUDENT,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.ASSIGN_STUDENT,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.ASSIGN_MULTIPLE_STUDENTS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.REMOVE_STUDENT,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.NOTE_STUDENT,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.RESTORE_CLASS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.REVENUE_BY_MONTH,
 
             ApiPathConstants.USER_API + UserEndpoints.GET_ALL_STUDENT_ENDPOINT,
             ApiPathConstants.USER_API + UserEndpoints.GET_ALL_TA_ENDPOINT,
