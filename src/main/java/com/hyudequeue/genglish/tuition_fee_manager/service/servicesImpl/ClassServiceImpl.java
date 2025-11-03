@@ -275,6 +275,13 @@ public class ClassServiceImpl implements ClassService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Student already enrolled in this class");
         }
 
+        // ✅ FIX: Nếu học viên được gán lớp → ON ACTIVE
+        if (user.getStudentStatus() == null || user.getStudentStatus() != StudentStatusEnum.ACTIVE) {
+            user.setStudentStatus(StudentStatusEnum.ACTIVE);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+        }
+
         ClassEnrollment newEnrollment = ClassEnrollment.builder()
                 .user(user)
                 .classes(classes)
@@ -290,27 +297,31 @@ public class ClassServiceImpl implements ClassService {
 
 
 
+
     @Override
     public void RemoveStudentFromClass(Long classId, Long studentId) {
-        // Find the enrollment record
         ClassEnrollment enrollment = classEnrollmentRepository
                 .findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(classId, studentId)
-                .orElseThrow(() -> new RuntimeException("Enrollment not found or already unenrolled"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Enrollment not found or already un-enrolled"));
 
-        // Mark as unenrolled
         enrollment.setUnEnrolledAt(LocalDateTime.now());
-
-        // Fetch user (student) and class info for notification
-        User user = userRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        Classes classes = classRepository.findById(classId)
-                .orElseThrow(() -> new RuntimeException("Class not found"));
-
-        invoiceNotificationService.notifyStudentRemovedFromClass(user, classes);
-
-        // Save the updated enrollment
         classEnrollmentRepository.save(enrollment);
+
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // check xem có lớp nào khác không
+        boolean stillHasActiveClass = classEnrollmentRepository
+                .existsByUser_UserIdAndUnEnrolledAtIsNull(studentId);
+
+        if (!stillHasActiveClass) {
+            user.setStudentStatus(StudentStatusEnum.WAITING);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+        }
     }
+
+
 
 
     @Override
