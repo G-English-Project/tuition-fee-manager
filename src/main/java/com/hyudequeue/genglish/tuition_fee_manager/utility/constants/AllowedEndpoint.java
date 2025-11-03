@@ -75,7 +75,7 @@ public final class AllowedEndpoint {
             ApiPathConstants.USER_API + UserEndpoints.GET_ALL_STUDENT_ENDPOINT,
             ApiPathConstants.USER_API + UserEndpoints.PROFILE_ENDPOINT,
 
-            ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_ALL_FEEDBACK,
+            ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_ALL_FEEDBACKS,
             ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT,
             ApiPathConstants.REVIEW_API + ReviewEndpoints.GET_ALL_REVIEWS,
             ApiPathConstants.REVIEW_API + ReviewEndpoints.GET_REVIEWS_BY_STUDENT,
@@ -89,7 +89,7 @@ public final class AllowedEndpoint {
   
             ApiPathConstants.TEACHER_API + TeacherEndpoints.GET_ALL,
             ApiPathConstants.TEACHER_API + TeacherEndpoints.GET_BY_ID,
-            ApiPathConstants.TEACHER_API + TeacherEndpoints.EDIT,
+            ApiPathConstants.TEACHER_API + TeacherEndpoints.UPDATE,
             
             ApiPathConstants.USER_API + UserEndpoints.EDIT_ENDPOINT
     };
