@@ -14,6 +14,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassCategoryRepository;
@@ -326,7 +327,6 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     public MultipleStudentAssignmentResponseDto AssignMultipleStudentsToClass(Long classId, List<Long> studentIds) {
-        // Validate class exists
         Classes classes = classesRepository.findById(classId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
@@ -335,47 +335,50 @@ public class ClassServiceImpl implements ClassService {
 
         for (Long studentId : studentIds) {
             try {
-                // Check if user exists and is a student
                 User user = userRepository.findById(studentId).orElse(null);
                 if (user == null) {
                     failedAssignments.add(
-                        MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
-                            .studentId(studentId)
-                            .reason("Student not found")
-                            .studentName("Unknown")
-                            .build()
+                            MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
+                                    .studentId(studentId)
+                                    .reason("Student not found")
+                                    .studentName("Unknown")
+                                    .build()
                     );
                     continue;
                 }
 
                 if (user.getRole() != RoleEnum.STUDENT) {
                     failedAssignments.add(
-                        MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
-                            .studentId(studentId)
-                            .reason("User is not a student")
-                            .studentName(user.getFullName())
-                            .build()
+                            MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
+                                    .studentId(studentId)
+                                    .reason("User is not a student")
+                                    .studentName(user.getFullName())
+                                    .build()
                     );
                     continue;
                 }
 
-                // Check if already enrolled
+                // ✅ SET student_status = ACTIVE nếu chưa có hoặc khác
+                if (user.getStudentStatus() == null || user.getStudentStatus() != StudentStatusEnum.ACTIVE) {
+                    user.setStudentStatus(StudentStatusEnum.ACTIVE);
+                    userRepository.save(user);
+                }
+
                 boolean alreadyEnrolled = classEnrollmentRepository
                         .findByClasses_ClassIdAndUser_UserIdAndUnEnrolledAtIsNull(classId, studentId)
                         .isPresent();
 
                 if (alreadyEnrolled) {
                     failedAssignments.add(
-                        MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
-                            .studentId(studentId)
-                            .reason("Student already enrolled in this class")
-                            .studentName(user.getFullName())
-                            .build()
+                            MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
+                                    .studentId(studentId)
+                                    .reason("Student already enrolled in this class")
+                                    .studentName(user.getFullName())
+                                    .build()
                     );
                     continue;
                 }
 
-                // Create enrollment
                 ClassEnrollment newEnrollment = ClassEnrollment.builder()
                         .user(user)
                         .classes(classes)
@@ -383,25 +386,22 @@ public class ClassServiceImpl implements ClassService {
                         .build();
 
                 newEnrollment = classEnrollmentRepository.save(newEnrollment);
-                
-                // Send notification
+
                 try {
                     invoiceNotificationService.notifyStudentAssignedToClass(user, classes);
                 } catch (Exception e) {
-                    // Log notification error but don't fail the enrollment
                     System.err.println("Failed to send notification for student " + studentId + ": " + e.getMessage());
                 }
 
                 successfulEnrollments.add(EnrollmentResponseDto.fromEntity(newEnrollment));
 
             } catch (Exception e) {
-                // Handle any unexpected errors
                 failedAssignments.add(
-                    MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
-                        .studentId(studentId)
-                        .reason("Unexpected error: " + e.getMessage())
-                        .studentName("Unknown")
-                        .build()
+                        MultipleStudentAssignmentResponseDto.FailedAssignmentDto.builder()
+                                .studentId(studentId)
+                                .reason("Unexpected error: " + e.getMessage())
+                                .studentName("Unknown")
+                                .build()
                 );
             }
         }
@@ -414,6 +414,7 @@ public class ClassServiceImpl implements ClassService {
                 .failedCount(failedAssignments.size())
                 .build();
     }
+
 
     @Override
     public void RestoreClass(Long classId) {
@@ -499,6 +500,7 @@ public class ClassServiceImpl implements ClassService {
                         .passwordHash(hashedPassword)
                         .role(RoleEnum.STUDENT)
                         .status(UserStatusEnum.ACTIVE)
+                        .studentStatus(StudentStatusEnum.ACTIVE)
                         .changedDefaultPassword(false)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
