@@ -56,13 +56,6 @@ public final class AllowedEndpoint {
             // Feedback
             ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT,
 
-            // Report (allow students to view their reports)
-            "/api/v1/reports/student/**",
-            "/api/v1/reports/*/thumb",
-            "/api/v1/reports/*/full",
-            "/api/v1/reports/*",
-
-            // Teacher (read-only for students)
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_ALL,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_ID,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.SEARCH_BY_NAME,
@@ -73,7 +66,53 @@ public final class AllowedEndpoint {
 
     };
 
+    public static final String[] TEACHER = {
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.GET_ALL_CLASSES,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.GET_CLASS_BY_ID,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.CURRENT_STUDENTS,
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.ALL_STUDENTS,
+
+            ApiPathConstants.USER_API + UserEndpoints.GET_ALL_STUDENT_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.PROFILE_ENDPOINT,
+
+            ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_ALL_FEEDBACK,
+            ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT,
+            ApiPathConstants.REVIEW_API + ReviewEndpoints.GET_ALL_REVIEWS,
+            ApiPathConstants.REVIEW_API + ReviewEndpoints.GET_REVIEWS_BY_STUDENT,
+
+
+            ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.GET_ALL_BY_USER,
+            ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.GET_ACTIVE_BY_USER,
+            ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.MARK_AS_READ,
+            ApiPathConstants.NOTIFICATION_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.NotificationEndpoints.COUNT_UNREAD,
+
+  
+            ApiPathConstants.TEACHER_API + TeacherEndpoints.GET_ALL,
+            ApiPathConstants.TEACHER_API + TeacherEndpoints.GET_BY_ID,
+            ApiPathConstants.TEACHER_API + TeacherEndpoints.EDIT,
+            
+            ApiPathConstants.USER_API + UserEndpoints.EDIT_ENDPOINT
+    };
+
+    public static final String[] TA = {
+            ApiPathConstants.CLASS_API + "/**",
+
+            ApiPathConstants.USER_API + UserEndpoints.GET_ALL_STUDENT_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.GET_ALL_TA_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.GET_ALL_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.CREATE_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.EDIT_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.PROFILE_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.SEARCH_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.BULK_CREATE_STUDENTS_ENDPOINT,
+
+            ApiPathConstants.PAYMENT_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.PaymentEndpoints.GET_BY_ID,
+
+
+            ApiPathConstants.TEACHER_API + "/**"
+    };
+
     private AllowedEndpoint() {
-        // prevent instantiation
+
     }
 }

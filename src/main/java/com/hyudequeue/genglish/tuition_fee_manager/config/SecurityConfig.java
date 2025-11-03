@@ -63,6 +63,8 @@ public class SecurityConfig {
                         .requestMatchers(AllowedEndpoint.GENERAL).permitAll()
                         .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
                         .requestMatchers(AllowedEndpoint.STUDENT).hasAnyAuthority("STUDENT","ADMIN")
+                        .requestMatchers(AllowedEndpoint.TEACHER).hasAnyAuthority("TEACHER","TA","ADMIN")
+                        .requestMatchers(AllowedEndpoint.TA).hasAnyAuthority("TA","ADMIN")
                         .requestMatchers("/api/v1/payment/webhook").permitAll()
                         .anyRequest().hasAuthority("ADMIN")
                 )
