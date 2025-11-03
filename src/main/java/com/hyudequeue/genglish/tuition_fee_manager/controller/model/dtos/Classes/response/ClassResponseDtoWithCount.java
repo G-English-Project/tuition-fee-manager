@@ -27,12 +27,20 @@ public class ClassResponseDtoWithCount {
 
     private long currentStudentCount;
 
-    // ✅ Sử dụng ClassCategoryDTO bạn đã định nghĩa sẵn
     private List<ClassCategoryDTO> categories;
 
-    public static ClassResponseDtoWithCount fromEntity(Classes c, long count) {
-        if (c == null) return null;
+    // ✅ New field
+    private MentorDto mentor;
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MentorDto {
+        private Long userId;
+        private String fullName;
+    }
+
+    public static ClassResponseDtoWithCount fromEntity(Classes c, long count) {
         ClassResponseDtoWithCount dto = new ClassResponseDtoWithCount();
         dto.setClassId(c.getClassId());
         dto.setClassName(c.getClassName());
@@ -45,7 +53,6 @@ public class ClassResponseDtoWithCount {
         dto.setUpdatedAt(c.getUpdatedAt());
         dto.setCurrentStudentCount(count);
 
-        // ✅ Map danh sách category sang DTO (dùng method fromEntity bạn đã có)
         if (c.getCategories() != null) {
             dto.setCategories(
                     c.getCategories().stream()
@@ -54,6 +61,15 @@ public class ClassResponseDtoWithCount {
             );
         }
 
+        // ✅ Map mentor
+        if (c.getMentorBy() != null) {
+            dto.setMentor(new MentorDto(
+                    c.getMentorBy().getUserId(),
+                    c.getMentorBy().getFullName()
+            ));
+        }
+
         return dto;
     }
 }
+

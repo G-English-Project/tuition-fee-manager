@@ -625,4 +625,34 @@ public class ClassServiceImpl implements ClassService {
                 .totalRevenue(totalRevenue)
                 .build();
     }
+
+    @Override
+    public ClassResponseDto assignMentor(Long classId, Long mentorId) {
+        Classes classes = classesRepository.findById(classId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+
+        User mentor = userRepository.findById(mentorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (mentor.getRole() != RoleEnum.TEACHER && mentor.getRole() != RoleEnum.TA) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User must be TEACHER or TA");
+        }
+
+        classes.setMentorBy(mentor);
+        classes.setUpdatedAt(LocalDateTime.now());
+        classesRepository.save(classes);
+
+        return ClassResponseDto.fromEntity(classes);
+    }
+    @Override
+    public void removeMentor(Long classId) {
+        Classes classes = classesRepository.findById(classId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+
+        classes.setMentorBy(null);
+        classes.setUpdatedAt(LocalDateTime.now());
+
+        classesRepository.save(classes);
+    }
+
 }

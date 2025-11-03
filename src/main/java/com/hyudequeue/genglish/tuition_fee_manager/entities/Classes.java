@@ -40,6 +40,10 @@ public class Classes {
 
     private LocalDate effectiveTo;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mentor_by", referencedColumnName = "userId")
+    private User mentorBy;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
