@@ -1,6 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,7 @@ public class StudentAccountResponseDto {
     private RoleEnum role;
     private String password;
     private UserStatusEnum status;
+    private StudentStatusEnum studentStatus; // ✅ THÊM
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDate dateOfBirth;
@@ -36,9 +38,11 @@ public class StudentAccountResponseDto {
                 user.getRole(),
                 user.getPasswordHash(),
                 user.getStatus(),
+                user.getStudentStatus(), // ✅ THÊM
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
                 user.getDateOfBirth()
         );
     }
 }
+

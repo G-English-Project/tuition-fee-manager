@@ -36,45 +36,49 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAllByEnrolledClass(@Param("classes") Classes classes);
 
     @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(
-        u.userId,
-        u.email,
-        u.fullName,
-        c.classId,
-        c.className,
-        u.createdAt
-    )
-    FROM User u
-    LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
-    LEFT JOIN Classes c ON ce.classes = c
-    WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
-      AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
-    ORDER BY u.createdAt DESC
+SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(
+    u.userId,
+    u.email,
+    u.fullName,
+    c.classId,
+    c.className,
+    u.studentStatus,
+    u.createdAt
+)
+FROM User u
+LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
+LEFT JOIN Classes c ON ce.classes = c
+WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
+  AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
+ORDER BY u.createdAt DESC
 """)
     Page<UserWithClassDto> findAllActiveStudentsWithCurrentClass(Pageable pageable);
 
+
     @Query("""
-    SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(
-        u.userId,
-        u.email,
-        u.fullName,
-        c.classId,
-        c.className,
-        u.createdAt
-    )
-    FROM User u
-    LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
-    LEFT JOIN Classes c ON ce.classes = c
-    WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
-      AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
-      AND (
-            LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-         OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
-         OR LOWER(c.className) LIKE LOWER(CONCAT('%', :keyword, '%'))
-      )
-        ORDER BY u.createdAt DESC
-    """)
+SELECT new com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserWithClassDto(
+    u.userId,
+    u.email,
+    u.fullName,
+    c.classId,
+    c.className,
+    u.studentStatus,
+    u.createdAt
+)
+FROM User u
+LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
+LEFT JOIN Classes c ON ce.classes = c
+WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
+  AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
+  AND (
+        LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+     OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+     OR LOWER(c.className) LIKE LOWER(CONCAT('%', :keyword, '%'))
+  )
+ORDER BY u.createdAt DESC
+""")
     Page<UserWithClassDto> searchStudentsWithClassByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
 
     Page<User> findByRoleAndStatusOrderByCreatedAtDesc(RoleEnum role, UserStatusEnum status, Pageable pageable);
 
