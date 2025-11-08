@@ -26,8 +26,10 @@ public class ClassResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // ✅ Thêm danh sách category trả về
     private java.util.List<CategoryDto> categories;
+
+    // ✅ Thêm mentor vào DTO
+    private MentorDto mentor;
 
     @Data
     @AllArgsConstructor
@@ -35,6 +37,14 @@ public class ClassResponseDto {
     public static class CategoryDto {
         private Long categoryId;
         private String name;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MentorDto {
+        private Long userId;
+        private String fullName;
     }
 
     public static ClassResponseDto fromEntity(Classes c) {
@@ -51,22 +61,29 @@ public class ClassResponseDto {
                 c.getEffectiveTo(),
                 c.getCreatedAt(),
                 c.getUpdatedAt(),
-                null // Tạm để tí set bên dưới
+                null, // categories -> set later
+                null  // mentor -> set later
         );
 
-        // ✅ Map category sang DTO
+        // ✅ Set categories
         if (c.getCategories() != null) {
             dto.setCategories(
                     c.getCategories().stream()
-                            .map(cat -> new CategoryDto(
-                                    cat.getCategoryId(),
-                                    cat.getName()
-                            ))
+                            .map(cat -> new CategoryDto(cat.getCategoryId(), cat.getName()))
                             .toList()
             );
+        }
+
+        // ✅ Set mentor
+        if (c.getMentorBy() != null) {
+            dto.setMentor(new MentorDto(
+                    c.getMentorBy().getUserId(),
+                    c.getMentorBy().getFullName()
+            ));
         }
 
         return dto;
     }
 }
+
 

@@ -48,5 +48,7 @@ public interface ClassService {
             LocalDate fromDate,
             LocalDate toDate
     );
+    ClassResponseDto assignMentor(Long classId, Long mentorId);
+    void removeMentor(Long classId);
 
 }

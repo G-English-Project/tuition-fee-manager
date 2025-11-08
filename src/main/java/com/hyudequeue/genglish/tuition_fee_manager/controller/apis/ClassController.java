@@ -1,9 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.BulkStudentCreateAndAssignDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassFeeModifyRequestDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.ClassRequestDto;
-import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.MultipleStudentAssignmentDto;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.*;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
@@ -281,4 +278,17 @@ public class ClassController {
 
         return ApiResp.success(classService.GetMonthlyRevenue(classId, fromDate, toDate));
     }
+
+    @PatchMapping("/{classId}/assign-mentor")
+    public ClassResponseDto assignMentor(
+            @PathVariable Long classId,
+            @RequestBody AssignMentorRequestDto request
+    ) {
+        return classService.assignMentor(classId, request.getMentorId());
+    }
+    @PatchMapping("/{classId}/remove-mentor")
+    public void removeMentor(@PathVariable Long classId) {
+        classService.removeMentor(classId);
+    }
+
 }

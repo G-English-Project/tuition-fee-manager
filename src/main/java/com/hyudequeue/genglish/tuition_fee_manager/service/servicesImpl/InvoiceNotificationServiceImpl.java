@@ -379,6 +379,13 @@ public class InvoiceNotificationServiceImpl {
         }
     }
 
+    private String toStars(String enumName) {
+        // Lấy số trong enum, ví dụ: LEVEL_3 → 3
+        int score = enumName.replaceAll("\\D", "").isEmpty()
+                ? 0 : Integer.parseInt(enumName.replaceAll("\\D", ""));
+        return "⭐".repeat(Math.max(0, score));
+    }
+
     @Async
     public void notifyReport(Report report) {
         try {
@@ -390,15 +397,20 @@ public class InvoiceNotificationServiceImpl {
             values.put("studentName", student.getFullName());
             values.put("className", clazz.getClassName());
             values.put("teacherName", teacher.getFullName());
+
+            // ✅ giữ nguyên chữ y như report lưu
             values.put("attendance", report.getAttendance().name());
             values.put("homework", report.getHomework().name());
             values.put("participation", report.getParticipation().name());
-            values.put("skillProgress", String.valueOf(report.getSkillProgress()));
+
+            // ✅ chỉ skillProgress hiển thị sao
+            values.put("skillProgress", "⭐".repeat(report.getSkillProgress()));
+
             values.put("areasForImprovement", report.getAreasForImprovement());
             values.put("recommendedAction", report.getRecommendedAction());
             values.put("createdAt", report.getCreatedAt().toString());
 
-            // Nếu report có ảnh -> dùng CID để hiển thị
+            // ===== HÌNH ẢNH =====
             String imageTag = "";
             String base64Image = null;
             String mimeType = null;
@@ -406,33 +418,45 @@ public class InvoiceNotificationServiceImpl {
             if (Boolean.TRUE.equals(report.getHasImage()) && report.getImage() != null) {
                 imageTag = "<img src=\"cid:reportImage\" alt=\"Report Image\" style=\"max-width:100%;border-radius:10px;margin-top:10px;\"/>";
                 base64Image = report.getImage().getImageBase64();
-                mimeType = (report.getImage().getMimeType() == null || report.getImage().getMimeType().isEmpty())
-                        ? "image/webp"
-                        : report.getImage().getMimeType();
+
+                String rawMime = report.getImage().getMimeType();
+                if (rawMime == null || rawMime.isBlank()) {
+                    mimeType = "image/webp";
+                } else if (!rawMime.contains("/")) {
+                    mimeType = "image/" + rawMime.toLowerCase();
+                } else {
+                    mimeType = rawMime.toLowerCase();
+                }
             }
 
             values.put("reportImage", imageTag);
 
-            String subject = "📄 Student Report - " + student.getFullName() + " (" + clazz.getClassName() + ")";
+            // ===== SUBJECT =====
+            String subject = "📄 Báo cáo học tập - " + student.getFullName() + " (" + clazz.getClassName() + ")";
+
+            // ===== TEMPLATE EMAIL =====
             String body = """
         <html>
         <body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 20px;'>
             <div style='background: white; border-radius: 10px; padding: 20px;'>
-                <h2>Student Report</h2>
-                <p><b>Student:</b> %s</p>
-                <p><b>Class:</b> %s</p>
-                <p><b>Teacher:</b> %s</p>
+                <h2 style='color:#2a7ae2;'>BÁO CÁO HỌC TẬP</h2>
+                <p><b>Học sinh:</b> %s</p>
+                <p><b>Lớp:</b> %s</p>
+                <p><b>Giáo viên phụ trách:</b> %s</p>
                 <hr/>
-                <p><b>Attendance:</b> %s</p>
-                <p><b>Homework:</b> %s</p>
-                <p><b>Participation:</b> %s</p>
-                <p><b>Skill Progress:</b> %s%%</p>
-                <h3>Areas for Improvement</h3>
+                <p><b>Chuyên cần:</b> %s</p>
+                <p><b>Bài tập về nhà:</b> %s</p>
+                <p><b>Thái độ trên lớp:</b> %s</p>
+                <p><b>Tiến bộ kỹ năng:</b> %s</p>
+
+                <h3>Nhận xét</h3>
                 <p>%s</p>
-                <h3>Recommended Actions</h3>
+
+                <h3>Cần cải thiện</h3>
                 <p>%s</p>
+
                 %s
-                <p style='font-size: 0.9em; color: gray;'>Created at: %s</p>
+                <p style='font-size: 0.9em; color: gray;'>Ngày tạo báo cáo: %s</p>
             </div>
         </body>
         </html>
@@ -450,20 +474,20 @@ public class InvoiceNotificationServiceImpl {
                     values.get("createdAt")
             );
 
-            // ===== Notify & Send Email =====
-            String notifTitle = "Báo cáo học tập mới từ " + teacher.getFullName();
-            String notifContent = "Giáo viên " + teacher.getFullName() + " vừa tạo báo cáo học tập cho học sinh "
-                    + student.getFullName() + " trong lớp " + clazz.getClassName() + ".";
+            // ===== NOTIFY =====
+            String notifTitle = "Báo cáo học tập mới";
+            String notifContent = "Giáo viên " + teacher.getFullName() + " đã tạo báo cáo học tập cho học sinh "
+                    + student.getFullName() + " (Lớp " + clazz.getClassName() + ").";
 
-            // Notify học sinh
+            // Học sinh
             notificationService.createNotification(student.getUserId(), notifTitle, notifContent);
             emailService.sendHtmlEmailWithInlineImage(student.getEmail(), subject, body, base64Image, mimeType);
 
-            // Notify giáo viên
+            // Giáo viên
             notificationService.createNotification(teacher.getUserId(), notifTitle, notifContent);
             emailService.sendHtmlEmailWithInlineImage(teacher.getEmail(), subject, body, base64Image, mimeType);
 
-            // Notify admin
+            // Admin
             List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
             for (User admin : admins) {
                 notificationService.createNotification(admin.getUserId(), notifTitle, notifContent);
@@ -474,5 +498,4 @@ public class InvoiceNotificationServiceImpl {
             e.printStackTrace();
         }
     }
-
 }

@@ -55,4 +55,7 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
             @Param("monthStart") LocalDateTime monthStart,
             @Param("monthEnd") LocalDateTime monthEnd
     );
+
+    boolean existsByUser_UserIdAndUnEnrolledAtIsNull(Long userId);
+
 }

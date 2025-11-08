@@ -1,7 +1,7 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response;
 
-
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum; // ✅ thêm import
 import lombok.*;
 
 import java.time.LocalDate;
@@ -14,11 +14,13 @@ public class UserInClassWithNoteDto {
     private String email;
     private String fullName;
     private String phone;
-    private String status;
+    private String status; // UserStatus (ACTIVE / DISABLED)
+    private StudentStatusEnum studentStatus; // ✅ Thêm student status
     private LocalDateTime enrolledAt;
     private LocalDateTime unEnrolledAt;
     private LocalDate dateOfBirth;
     private String note;
+
     public static UserInClassWithNoteDto fromEnrollment(ClassEnrollment e) {
         var u = e.getUser();
         return UserInClassWithNoteDto.builder()
@@ -27,9 +29,10 @@ public class UserInClassWithNoteDto {
                 .fullName(u.getFullName())
                 .phone(u.getPhone())
                 .status(u.getStatus().name())
+                .studentStatus(u.getStudentStatus()) // ✅ Map thêm studentStatus
                 .enrolledAt(e.getEnrolledAt())
                 .unEnrolledAt(e.getUnEnrolledAt())
-                .dateOfBirth(e.getUser().getDateOfBirth())
+                .dateOfBirth(u.getDateOfBirth())
                 .note(e.getNote())
                 .build();
     }
