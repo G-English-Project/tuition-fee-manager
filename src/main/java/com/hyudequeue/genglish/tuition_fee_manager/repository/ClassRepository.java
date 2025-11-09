@@ -40,6 +40,7 @@ public interface ClassRepository extends JpaRepository<Classes, Long>, JpaSpecif
     List<Classes> findByCategories_NameContainingIgnoreCase(@Param("name") String name);
 
 
+    List<Classes> findByMentorBy_UserId(Long teacherId);
 
 
 }

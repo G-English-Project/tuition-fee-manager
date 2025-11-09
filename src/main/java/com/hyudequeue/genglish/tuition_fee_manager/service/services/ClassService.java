@@ -50,5 +50,6 @@ public interface ClassService {
     );
     ClassResponseDto assignMentor(Long classId, Long mentorId);
     void removeMentor(Long classId);
+    List<ClassResponseDto> getClassesByTeacherId(Long teacherId);
 
 }

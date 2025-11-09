@@ -667,5 +667,12 @@ public class ClassServiceImpl implements ClassService {
 
         classesRepository.save(classes);
     }
+    @Override
+    public List<ClassResponseDto> getClassesByTeacherId(Long teacherId) {
+        return classRepository.findByMentorBy_UserId(teacherId)
+                .stream()
+                .map(ClassResponseDto::fromEntity)
+                .toList();
+    }
 
 }

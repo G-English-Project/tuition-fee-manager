@@ -290,5 +290,15 @@ public class ClassController {
     public void removeMentor(@PathVariable Long classId) {
         classService.removeMentor(classId);
     }
+    @Operation(
+            summary = "Get classes assigned to a teacher",
+            description = "Returns all classes where the teacher is assigned as mentor."
+    )
+    @GetMapping(GET_CLASSES_BY_TEACHER)
+    public ResponseEntity<?> getClassesByTeacherId(
+            @PathVariable Long teacherId
+    ) {
+        return ApiResp.success(classService.getClassesByTeacherId(teacherId));
+    }
 
 }
