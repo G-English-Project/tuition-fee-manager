@@ -7,10 +7,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.resp
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceStatResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.PaymentMethodEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.*;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceCategoryRepository;
@@ -596,8 +593,8 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .sum();
 
         // 3. Học sinh Inactive
-        int inactiveStudentCount = userRepository.countByRoleAndStatus(
-                RoleEnum.STUDENT, UserStatusEnum.DISABLED
+        int inactiveStudentCount = userRepository.countByRoleAndStudentStatus(
+                RoleEnum.STUDENT, StudentStatusEnum.INACTIVE
         );
 
         // 4. Tổng tiền của tháng hiện tại (PAID, UNPAID, OVERDUE)
