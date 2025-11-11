@@ -145,7 +145,7 @@ ORDER BY u.createdAt DESC
     WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
       AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
       AND ce.unEnrolledAt IS NULL
-      AND c.teacherId = :teacherId
+      AND c.mentorBy.userId = :teacherId
     ORDER BY u.fullName ASC
     """)
     Page<User> findStudentsByTeacherId(@Param("teacherId") Long teacherId, Pageable pageable);
@@ -158,7 +158,7 @@ ORDER BY u.createdAt DESC
       AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
       AND u.studentStatus = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum.ACTIVE
       AND ce.unEnrolledAt IS NULL
-      AND c.teacherId = :teacherId
+      AND c.mentorBy.userId = :teacherId
     ORDER BY u.fullName ASC
     """)
     Page<User> findActiveStudentsByTeacherId(@Param("teacherId") Long teacherId, Pageable pageable);
