@@ -138,4 +138,29 @@ ORDER BY u.createdAt DESC
 
     Page<User> findByRoleAndStatusAndStudentStatusOrderByCreatedAtDesc(RoleEnum role, UserStatusEnum status, StudentStatusEnum studentStatus, Pageable pageable);
 
+    @Query("""
+    SELECT DISTINCT u FROM User u
+    JOIN ClassEnrollment ce ON ce.user.userId = u.userId
+    JOIN Classes c ON c.classId = ce.classes.classId
+    WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
+      AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
+      AND ce.unEnrolledAt IS NULL
+      AND c.teacherId = :teacherId
+    ORDER BY u.fullName ASC
+    """)
+    Page<User> findStudentsByTeacherId(@Param("teacherId") Long teacherId, Pageable pageable);
+
+    @Query("""
+    SELECT DISTINCT u FROM User u
+    JOIN ClassEnrollment ce ON ce.user.userId = u.userId
+    JOIN Classes c ON c.classId = ce.classes.classId
+    WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
+      AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
+      AND u.studentStatus = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum.ACTIVE
+      AND ce.unEnrolledAt IS NULL
+      AND c.teacherId = :teacherId
+    ORDER BY u.fullName ASC
+    """)
+    Page<User> findActiveStudentsByTeacherId(@Param("teacherId") Long teacherId, Pageable pageable);
+
 }

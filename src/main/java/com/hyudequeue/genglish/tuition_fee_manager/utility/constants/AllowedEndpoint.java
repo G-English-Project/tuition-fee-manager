@@ -80,6 +80,8 @@ public final class AllowedEndpoint {
             ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.REVENUE_BY_MONTH,
 
             ApiPathConstants.USER_API + UserEndpoints.GET_ALL_STUDENT_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.GET_STUDENTS_BY_TEACHER_ENDPOINT,
+            ApiPathConstants.USER_API + UserEndpoints.GET_ACTIVE_STUDENTS_BY_TEACHER_ENDPOINT,
             ApiPathConstants.USER_API + UserEndpoints.PROFILE_ENDPOINT,
 
             ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_ALL_FEEDBACKS,

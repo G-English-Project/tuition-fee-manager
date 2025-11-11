@@ -394,4 +394,47 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Override
+    public Page<StudentProfileDto> getActiveStudentsByTeacher(Long teacherId) {
+        User teacher = userRepository.findById(teacherId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
+        
+        if (teacher.getRole() != RoleEnum.TEACHER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not a teacher");
+        }
+        
+        Page<User> studentsPage = userRepository.findActiveStudentsByTeacherId(teacherId, Pageable.unpaged());
+        
+        List<StudentProfileDto> studentDtos = studentsPage.getContent().stream()
+                .map(this::mapToStudentProfileDto)
+                .collect(Collectors.toList());
+        
+        return new PageImpl<>(studentDtos, Pageable.unpaged(), studentDtos.size());
+    }
+
+    private StudentProfileDto mapToStudentProfileDto(User user) {
+        List<ClassEnrollment> enrollments = classEnrollmentRepository.findByUserAndUnEnrolledAtIsNull(user);
+        List<EnrolledClassDto> enrolledClasses = enrollments.stream()
+                .map(enrollment -> EnrolledClassDto.builder()
+                        .classId(enrollment.getClasses().getClassId())
+                        .className(enrollment.getClasses().getClassName())
+                        .enrolledAt(enrollment.getEnrolledAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return StudentProfileDto.builder()
+                .userId(user.getUserId())
+                .shownId(String.format("%06d", user.getUserId()))
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .status(user.getStatus().name())
+                .studentStatus(user.getStudentStatus() != null ? user.getStudentStatus().name() : null)
+                .createdAt(user.getCreatedAt())
+                .enrolledClasses(enrolledClasses)
+                .dateOfBirth(user.getDateOfBirth())
+                .build();
+    }
+
 }

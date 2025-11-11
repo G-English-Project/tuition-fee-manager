@@ -57,5 +57,7 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
     );
 
     boolean existsByUser_UserIdAndUnEnrolledAtIsNull(Long userId);
+    
+    List<ClassEnrollment> findByUserAndUnEnrolledAtIsNull(com.hyudequeue.genglish.tuition_fee_manager.entities.User user);
 
 }
