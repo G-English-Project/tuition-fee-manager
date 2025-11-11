@@ -395,7 +395,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<StudentProfileDto> getActiveStudentsByTeacher(Long teacherId) {
+    public Page<StudentProfileDto> getActiveStudentsByTeacher(Long teacherId, int page, int size) {
         User teacher = userRepository.findById(teacherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
         
@@ -403,13 +403,14 @@ public class UserServiceImpl implements UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not a teacher");
         }
         
-        Page<User> studentsPage = userRepository.findActiveStudentsByTeacherId(teacherId, Pageable.unpaged());
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> studentsPage = userRepository.findActiveStudentsByTeacherId(teacherId, pageable);
         
         List<StudentProfileDto> studentDtos = studentsPage.getContent().stream()
                 .map(this::mapToStudentProfileDto)
                 .collect(Collectors.toList());
         
-        return new PageImpl<>(studentDtos, Pageable.unpaged(), studentDtos.size());
+        return new PageImpl<>(studentDtos, pageable, studentsPage.getTotalElements());
     }
 
     private StudentProfileDto mapToStudentProfileDto(User user) {
