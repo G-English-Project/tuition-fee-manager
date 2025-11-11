@@ -140,8 +140,8 @@ ORDER BY u.createdAt DESC
 
     @Query("""
     SELECT DISTINCT u FROM User u
-    JOIN ClassEnrollment ce ON ce.user.userId = u.userId
-    JOIN Classes c ON c.classId = ce.classes.classId
+    JOIN ClassEnrollment ce ON ce.user = u
+    JOIN Classes c ON ce.classes = c
     WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
       AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
       AND ce.unEnrolledAt IS NULL
@@ -152,8 +152,8 @@ ORDER BY u.createdAt DESC
 
     @Query("""
     SELECT DISTINCT u FROM User u
-    JOIN ClassEnrollment ce ON ce.user.userId = u.userId
-    JOIN Classes c ON c.classId = ce.classes.classId
+    JOIN ClassEnrollment ce ON ce.user = u
+    JOIN Classes c ON ce.classes = c
     WHERE u.role = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum.STUDENT
       AND u.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum.ACTIVE
       AND u.studentStatus = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum.ACTIVE
