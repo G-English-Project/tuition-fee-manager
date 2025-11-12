@@ -315,7 +315,7 @@ public class ClassServiceImpl implements ClassService {
                 .existsByUser_UserIdAndUnEnrolledAtIsNull(studentId);
 
         if (!stillHasActiveClass) {
-            user.setStudentStatus(StudentStatusEnum.WAITING);
+            user.setStudentStatus(StudentStatusEnum.INACTIVE);
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
         }

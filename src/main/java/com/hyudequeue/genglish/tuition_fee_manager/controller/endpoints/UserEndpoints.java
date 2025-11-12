@@ -11,6 +11,8 @@ public final class UserEndpoints {
     public static final String SEARCH_ENDPOINT = "search";
     public static final String CHANGE_PASSWORD_ENDPOINT = "/{userId}/password";
     public static final String BULK_CREATE_STUDENTS_ENDPOINT = "/bulk/students";
+    public static final String GET_STUDENTS_BY_TEACHER_ENDPOINT = "/students/by-teacher";
+    public static final String GET_ACTIVE_STUDENTS_BY_TEACHER_ENDPOINT = "/students/teacher";
 
 
 }

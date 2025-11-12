@@ -23,4 +23,5 @@ public interface UserService {
     Page<UserResponseDto> getAllByRole(RoleEnum role, int page, int size);
     BulkUserCreateResponseDto createBulkStudents(BulkUserCreateRequestDto request);
     void updateStudentStatus(Long userId, StudentStatusEnum studentStatus);
+    Page<StudentProfileDto> getActiveStudentsByTeacher(Long teacherId, int page, int size);
 }

@@ -199,4 +199,13 @@ public class UserController {
         return ApiResp.success("Student status updated successfully");
     }
 
+    @GetMapping(GET_ACTIVE_STUDENTS_BY_TEACHER_ENDPOINT)
+    @Operation(summary = "Get active students by teacher", description = "Get all active students enrolled in classes taught by specified teacher")
+    public ResponseEntity<?> getActiveStudentsByTeacher(
+            @Parameter(description = "Teacher ID", required = true) @RequestParam Long teacherId,
+            @Parameter(description = "Page number", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") int size) {
+        return ApiResp.success(userService.getActiveStudentsByTeacher(teacherId, page, size));
+    }
+
 }
