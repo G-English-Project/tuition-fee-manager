@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .requestMatchers(AllowedEndpoint.STUDENT).hasAnyAuthority("STUDENT","ADMIN","TEACHER")
                         .requestMatchers("/api/v1/payment/webhook").permitAll()
                         .anyRequest().hasAnyAuthority("ADMIN","TEACHER")
+
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .exceptionHandling(ex -> ex
