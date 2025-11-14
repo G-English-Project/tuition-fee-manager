@@ -238,6 +238,7 @@ public class ClassServiceImpl implements ClassService {
         classes.setStatus(ClassStatusEnum.INACTIVE);
         classesRepository.save(classes);
     }
+
     @Override
     public ClassResponseDto ModifyClassFee(ClassFeeModifyRequestDto req) {
         if (req == null || req.getClassId() == null) {
@@ -447,6 +448,7 @@ public class ClassServiceImpl implements ClassService {
                 .map(ClassResponseDto::fromEntity)
                 .toList();
     }
+
     @Override
     @Transactional
     public BulkStudentCreateAndAssignResponseDto bulkCreateStudentsAndAssignToClass(BulkStudentCreateAndAssignDto request) {
