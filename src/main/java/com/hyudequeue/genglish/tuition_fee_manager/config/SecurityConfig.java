@@ -62,9 +62,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(AllowedEndpoint.GENERAL).permitAll()
                         .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
-                        .requestMatchers(AllowedEndpoint.STUDENT).hasAnyRole("STUDENT","ADMIN","TEACHER")
+                        .requestMatchers(AllowedEndpoint.STUDENT).hasAnyAuthority("STUDENT","ADMIN","TEACHER")
                         .requestMatchers("/api/v1/payment/webhook").permitAll()
-                        .anyRequest().hasAnyRole("ADMIN","TEACHER")
+                        .anyRequest().hasAnyAuthority
+                                ("ADMIN","TEACHER")
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .exceptionHandling(ex -> ex
