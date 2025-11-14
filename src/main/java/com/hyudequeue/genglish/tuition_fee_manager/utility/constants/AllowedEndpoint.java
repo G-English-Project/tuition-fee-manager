@@ -56,6 +56,10 @@ public final class AllowedEndpoint {
             // Feedback
             ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT,
 
+            // Report
+            ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT,
+            ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT_IN_RANGE,
+
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_ALL,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_ID,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.SEARCH_BY_NAME,
