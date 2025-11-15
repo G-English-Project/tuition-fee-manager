@@ -106,31 +106,19 @@ public class ClassServiceImpl implements ClassService {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
 
-        // 🔥 Custom sort logic
+        if (prioritizedCategoryName != null && !prioritizedCategoryName.isEmpty()) {
+            spec = spec.and((root, query, cb) -> {
+                Join<Object, Object> categoryJoin = root.join("categories", JoinType.INNER);
+                return cb.equal(cb.lower(categoryJoin.get("name")), prioritizedCategoryName.toLowerCase());
+            });
+        }
+
         spec = spec.and((root, query, cb) -> {
             Join<Object, Object> categoryJoin = root.join("categories", JoinType.LEFT);
-
-            if (prioritizedCategoryName != null && !prioritizedCategoryName.isEmpty()) {
-                // 👇 ép kiểu <Integer> để tránh lỗi Expression<Object>
-                Expression<Integer> caseExpr = cb.<Integer>selectCase()
-                        .when(
-                                cb.equal(cb.lower(categoryJoin.get("name")), prioritizedCategoryName.toLowerCase()),
-                                0
-                        )
-                        .otherwise(1);
-
-                query.orderBy(
-                        cb.asc(caseExpr), // Ưu tiên category được chỉ định
-                        cb.asc(categoryJoin.get("name")), // Sort theo alphabet
-                        cb.asc(root.get("className")) // Sort phụ theo tên lớp
-                );
-            } else {
-                // Không có category ưu tiên thì sort bình thường
-                query.orderBy(
-                        cb.asc(categoryJoin.get("name")),
-                        cb.asc(root.get("className"))
-                );
-            }
+            query.orderBy(
+                    cb.asc(categoryJoin.get("name")),
+                    cb.asc(root.get("className"))
+            );
             return null;
         });
 
