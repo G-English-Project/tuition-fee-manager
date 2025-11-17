@@ -67,7 +67,6 @@ public final class AllowedEndpoint {
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_LANGUAGE,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_MIN_RATING,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_TOP_RATED
-
     };
 
     public static final String[] TEACHER = {
