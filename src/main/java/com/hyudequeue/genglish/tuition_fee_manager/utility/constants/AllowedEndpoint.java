@@ -23,7 +23,6 @@ public final class AllowedEndpoint {
 
     // 👨‍🎓 Student
     public static final String[] STUDENT = {
-
             // Class
             ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.GET_ALL_CLASSES,
             ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.GET_CLASS_BY_ID,
@@ -51,17 +50,16 @@ public final class AllowedEndpoint {
             ApiPathConstants.USER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.PROFILE_ENDPOINT,
             ApiPathConstants.USER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.UserEndpoints.EDIT_ENDPOINT,
 
-            // Review
+            //Review
             ApiPathConstants.REVIEW_API + ReviewEndpoints.GET_REVIEWS_BY_STUDENT,
 
             // Feedback
             ApiPathConstants.FEEDBACK_API + FeedbackEndpoints.GET_FEEDBACKS_BY_STUDENT,
 
-            // Report - Hardcoded absolute paths
-            "/api/v1/reports/student/**",
-            "/api/v1/reports/student-in-range/**",
+            // Report
+            ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT,
+            ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT_IN_RANGE,
 
-            // Teacher info
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_ALL,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_ID,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.SEARCH_BY_NAME,
@@ -70,7 +68,6 @@ public final class AllowedEndpoint {
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_MIN_RATING,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_TOP_RATED
     };
-
 
     public static final String[] TEACHER = {
             // Class management (read-only + student management)
