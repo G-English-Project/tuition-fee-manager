@@ -40,6 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -659,9 +660,23 @@ public class ClassServiceImpl implements ClassService {
     }
     @Override
     public List<ClassResponseDto> getClassesByTeacherId(Long teacherId) {
-        return classRepository.findByMentorBy_UserId(teacherId)
-                .stream()
-                .map(ClassResponseDto::fromEntity)
+        List<Classes> classes = classRepository.findByMentorBy_UserId(teacherId);
+        List<Long> classIds = classes.stream().map(Classes::getClassId).toList();
+        
+        Map<Long, Long> studentCountMap = new HashMap<>();
+        if (!classIds.isEmpty()) {
+            List<ClassCountProjection> counts = classEnrollmentRepository.countActiveByClassIds(classIds);
+            studentCountMap = counts.stream()
+                    .collect(Collectors.toMap(ClassCountProjection::getClassId, ClassCountProjection::getCnt));
+        }
+        
+        Map<Long, Long> finalCountMap = studentCountMap;
+        return classes.stream()
+                .map(c -> {
+                    ClassResponseDto dto = ClassResponseDto.fromEntity(c);
+                    dto.setCurrentStudentCount(finalCountMap.getOrDefault(c.getClassId(), 0L).intValue());
+                    return dto;
+                })
                 .toList();
     }
 
