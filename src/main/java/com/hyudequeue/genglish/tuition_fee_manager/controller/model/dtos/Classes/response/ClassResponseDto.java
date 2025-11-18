@@ -62,8 +62,9 @@ public class ClassResponseDto {
                 c.getEffectiveTo(),
                 c.getCreatedAt(),
                 c.getUpdatedAt(),
-                null, // categories -> set later
-                null  // mentor -> set later
+                null,
+                null,
+                null
         );
 
         // ✅ Set categories
