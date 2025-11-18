@@ -40,6 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -658,10 +659,33 @@ public class ClassServiceImpl implements ClassService {
         classesRepository.save(classes);
     }
     @Override
-    public List<ClassResponseDto> getClassesByTeacherId(Long teacherId) {
-        return classRepository.findByMentorBy_UserId(teacherId)
-                .stream()
-                .map(ClassResponseDto::fromEntity)
+    public List<ClassResponseDto> getClassesByTeacherId(Long teacherId, Long categoryId) {
+        List<Classes> classes = classRepository.findByMentorBy_UserId(teacherId);
+        
+        if (categoryId != null) {
+            classes = classes.stream()
+                    .filter(c -> c.getCategories() != null && 
+                            c.getCategories().stream()
+                                    .anyMatch(cat -> cat.getCategoryId().equals(categoryId)))
+                    .toList();
+        }
+        
+        List<Long> classIds = classes.stream().map(Classes::getClassId).toList();
+        
+        Map<Long, Long> studentCountMap = new HashMap<>();
+        if (!classIds.isEmpty()) {
+            List<ClassCountProjection> counts = classEnrollmentRepository.countActiveByClassIds(classIds);
+            studentCountMap = counts.stream()
+                    .collect(Collectors.toMap(ClassCountProjection::getClassId, ClassCountProjection::getCnt));
+        }
+        
+        Map<Long, Long> finalCountMap = studentCountMap;
+        return classes.stream()
+                .map(c -> {
+                    ClassResponseDto dto = ClassResponseDto.fromEntity(c);
+                    dto.setCurrentStudentCount(finalCountMap.getOrDefault(c.getClassId(), 0L).intValue());
+                    return dto;
+                })
                 .toList();
     }
 

@@ -296,9 +296,10 @@ public class ClassController {
     )
     @GetMapping(GET_CLASSES_BY_TEACHER)
     public ResponseEntity<?> getClassesByTeacherId(
-            @PathVariable Long teacherId
+            @PathVariable Long teacherId,
+            @RequestParam(required = false) Long categoryId
     ) {
-        return ApiResp.success(classService.getClassesByTeacherId(teacherId));
+        return ApiResp.success(classService.getClassesByTeacherId(teacherId, categoryId));
     }
 
 }

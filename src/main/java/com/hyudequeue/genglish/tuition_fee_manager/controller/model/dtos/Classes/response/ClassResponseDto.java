@@ -28,8 +28,9 @@ public class ClassResponseDto {
 
     private java.util.List<CategoryDto> categories;
 
-    // ✅ Thêm mentor vào DTO
     private MentorDto mentor;
+    
+    private Integer currentStudentCount;
 
     @Data
     @AllArgsConstructor
@@ -61,8 +62,9 @@ public class ClassResponseDto {
                 c.getEffectiveTo(),
                 c.getCreatedAt(),
                 c.getUpdatedAt(),
-                null, // categories -> set later
-                null  // mentor -> set later
+                null,
+                null,
+                null
         );
 
         // ✅ Set categories
