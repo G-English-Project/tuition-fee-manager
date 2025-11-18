@@ -659,8 +659,17 @@ public class ClassServiceImpl implements ClassService {
         classesRepository.save(classes);
     }
     @Override
-    public List<ClassResponseDto> getClassesByTeacherId(Long teacherId) {
+    public List<ClassResponseDto> getClassesByTeacherId(Long teacherId, Long categoryId) {
         List<Classes> classes = classRepository.findByMentorBy_UserId(teacherId);
+        
+        if (categoryId != null) {
+            classes = classes.stream()
+                    .filter(c -> c.getCategories() != null && 
+                            c.getCategories().stream()
+                                    .anyMatch(cat -> cat.getCategoryId().equals(categoryId)))
+                    .toList();
+        }
+        
         List<Long> classIds = classes.stream().map(Classes::getClassId).toList();
         
         Map<Long, Long> studentCountMap = new HashMap<>();
