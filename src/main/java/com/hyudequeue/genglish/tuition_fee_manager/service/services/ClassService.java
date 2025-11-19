@@ -14,6 +14,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.re
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -51,5 +52,7 @@ public interface ClassService {
     ClassResponseDto assignMentor(Long classId, Long mentorId);
     void removeMentor(Long classId);
     List<ClassResponseDto> getClassesByTeacherId(Long teacherId, Long categoryId);
+
+    Page<ClassLandingPageResponseDto> getActiveClassesForLandingPage(Pageable pageable);
 
 }

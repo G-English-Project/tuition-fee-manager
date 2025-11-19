@@ -4,6 +4,9 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedbac
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedback.response.FeedbackResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.FeedbackService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,5 +53,13 @@ public class FeedbackController {
     @GetMapping(GET_FEEDBACKS_BY_TEACHER)
     public List<FeedbackResponseDto> getFeedbacksByTeacherId(@PathVariable Long teacherId) {
         return feedbackService.getFeedbacksByTeacherId(teacherId);
+    }
+
+    @GetMapping(GET_GOOD_FEEDBACKS)
+    public Page<FeedbackResponseDto> getGoodFeedbacks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return feedbackService.getGoodFeedbacks(pageable);
     }
 }

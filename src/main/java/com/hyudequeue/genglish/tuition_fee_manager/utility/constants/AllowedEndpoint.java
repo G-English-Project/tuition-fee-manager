@@ -148,6 +148,13 @@ public final class AllowedEndpoint {
             ApiPathConstants.TEACHER_API + "/**"
     };
 
+    public static final String[] PUBLIC_FEEDBACKS = {
+            "/api/v1/feedbacks/good-feedbacks"
+    };
+    public static final String[] PUBLIC_CLASSES = {
+            "/api/v1/classes/landing/active-classes"
+    };
+
     private AllowedEndpoint() {
 
     }

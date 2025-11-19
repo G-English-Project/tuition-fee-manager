@@ -8,6 +8,8 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.FeedbackRepository
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.FeedbackService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -111,5 +113,11 @@ public class FeedbackServiceImpl implements FeedbackService {
         return feedbackRepository.findByTeacherUserId(teacherId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<FeedbackResponseDto> getGoodFeedbacks(Pageable pageable) {
+        Page<Feedback> feedbackPage = feedbackRepository.findGoodFeedbacks(pageable);
+        return feedbackPage.map(this::mapToDto);
     }
 }

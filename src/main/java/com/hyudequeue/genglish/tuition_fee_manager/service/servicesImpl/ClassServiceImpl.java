@@ -688,5 +688,35 @@ public class ClassServiceImpl implements ClassService {
                 })
                 .toList();
     }
+    @Override
+    public Page<ClassLandingPageResponseDto> getActiveClassesForLandingPage(Pageable pageable) {
+        // Lấy các lớp đang ACTIVE, sort theo effectiveFrom DESC
+        Specification<Classes> spec = Specification.where(null);
 
+        // Chỉ lấy lớp ACTIVE
+        spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), ClassStatusEnum.ACTIVE));
+
+        // Sort theo effectiveFrom DESC (lớp mới nhất trước)
+        spec = spec.and((root, query, cb) -> {
+            query.orderBy(cb.desc(root.get("effectiveFrom")));
+            return null;
+        });
+
+        Page<Classes> classesPage = classesRepository.findAll(spec, pageable);
+
+        // Lấy số lượng học viên cho mỗi lớp
+        List<Long> classIds = classesPage.getContent().stream()
+                .map(Classes::getClassId)
+                .toList();
+
+        Map<Long, Long> countMap = classIds.isEmpty()
+                ? Map.of()
+                : classEnrollmentRepository.countActiveByClassIds(classIds).stream()
+                .collect(Collectors.toMap(ClassCountProjection::getClassId, ClassCountProjection::getCnt));
+
+        return classesPage.map(c -> ClassLandingPageResponseDto.fromEntity(
+                c,
+                countMap.getOrDefault(c.getClassId(), 0L).intValue()
+        ));
+    }
 }
