@@ -12,6 +12,7 @@ public class FeedbackEndpoints {
 
     public static final String GET_FEEDBACKS_BY_STUDENT = BASE + "/student/{studentId}";
     public static final String GET_FEEDBACKS_BY_TEACHER = BASE + "/teacher/{teacherId}";
+    public static final String GET_GOOD_FEEDBACKS = "/good-feedbacks";
 
     private FeedbackEndpoints() {
         // Prevent instantiation
