@@ -63,7 +63,8 @@ public class ClassResponseDto {
                 c.getCreatedAt(),
                 c.getUpdatedAt(),
                 null, // categories -> set later
-                null  // mentor -> set later
+                null,  // mentor -> set later
+                null //currentstudentcount set later
         );
 
         // ✅ Set categories
