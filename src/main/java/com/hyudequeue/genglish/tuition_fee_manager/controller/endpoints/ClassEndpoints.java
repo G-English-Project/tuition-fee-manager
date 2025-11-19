@@ -18,5 +18,6 @@ public final class ClassEndpoints {
     public static final String RESTORE_CLASS = "/{classId}/restore";
     public static final String REVENUE_BY_MONTH = "/{classId}/revenue-by-month";
     public static final String GET_CLASSES_BY_TEACHER = "/teacher/{teacherId}";
+    public static final String GET_ACTIVE_CLASSES_FOR_LANDING = "/landing/active-classes";
 
 }

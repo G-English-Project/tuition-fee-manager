@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -300,5 +302,20 @@ public class ClassController {
     ) {
         return ApiResp.success(classService.getClassesByTeacherId(teacherId));
     }
-
+    @Operation(
+            summary = "Get active classes for landing page",
+            description = "Public endpoint to retrieve active classes with student count, mentor name, and categories. " +
+                    "Sorted by effective start date (newest first)."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Active classes retrieved successfully")
+    })
+    @GetMapping(GET_ACTIVE_CLASSES_FOR_LANDING)
+    public ResponseEntity<?> getActiveClassesForLandingPage(
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ApiResp.success(classService.getActiveClassesForLandingPage(pageable));
+    }
 }
