@@ -1,6 +1,9 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.AttendanceEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.HomeworkEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ParticipationEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
@@ -398,10 +401,10 @@ public class InvoiceNotificationServiceImpl {
             values.put("className", clazz.getClassName());
             values.put("teacherName", teacher.getFullName());
 
-            // ✅ giữ nguyên chữ y như report lưu
-            values.put("attendance", report.getAttendance().name());
-            values.put("homework", report.getHomework().name());
-            values.put("participation", report.getParticipation().name());
+            values.put("attendance", mapAttendance(report.getAttendance()));
+            values.put("homework", mapHomework(report.getHomework()));
+            values.put("participation", mapParticipation(report.getParticipation()));
+
 
             // ✅ chỉ skillProgress hiển thị sao
             values.put("skillProgress", "⭐".repeat(report.getSkillProgress()));
@@ -498,4 +501,38 @@ public class InvoiceNotificationServiceImpl {
             e.printStackTrace();
         }
     }
+    private String toStars(int count) {
+        return "⭐".repeat(Math.max(count, 1));
+    }
+
+    private String mapAttendance(AttendanceEnum e) {
+        return switch (e) {
+            case EXCELLENT -> toStars(5);
+            case GOOD -> toStars(4);
+            case NORMAL -> toStars(3);
+            case NEEDS_IMPROVEMENT -> toStars(2);
+            case POOR -> toStars(1);
+        };
+    }
+
+    private String mapHomework(HomeworkEnum e) {
+        return switch (e) {
+            case ALWAYS_COMPLETES -> toStars(5);
+            case USUALLY_COMPLETES -> toStars(4);
+            case NORMAL -> toStars(3);
+            case OFTEN_INCOMPLETE -> toStars(2);
+            case RARELY_COMPLETES -> toStars(1);
+        };
+    }
+
+    private String mapParticipation(ParticipationEnum e) {
+        return switch (e) {
+            case VERY_ACTIVE -> toStars(5);
+            case ACTIVE -> toStars(4);
+            case NORMAL -> toStars(3);
+            case PASSIVE -> toStars(2);
+            case VERY_PASSIVE -> toStars(1);
+        };
+    }
+
 }

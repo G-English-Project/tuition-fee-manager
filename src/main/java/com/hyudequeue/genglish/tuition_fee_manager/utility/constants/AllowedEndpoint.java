@@ -59,6 +59,15 @@ public final class AllowedEndpoint {
             // Report
             ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT,
             ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT_IN_RANGE,
+// Report
+            ApiPathConstants.REPORT_API + ReportEndpoints.GET_REPORT_BY_ID,
+            ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT,
+            ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_STUDENT_IN_RANGE,
+            ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_CLASS,
+            ApiPathConstants.REPORT_API + ReportEndpoints.LIST_REPORTS_BY_CLASS_IN_RANGE,
+            ApiPathConstants.REPORT_API + "/all",
+            ApiPathConstants.REPORT_API + ReportEndpoints.GET_REPORT_IMAGE_THUMB,
+            ApiPathConstants.REPORT_API + ReportEndpoints.GET_REPORT_IMAGE_FULL,
 
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_ALL,
             ApiPathConstants.TEACHER_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.TeacherEndpoints.GET_BY_ID,
