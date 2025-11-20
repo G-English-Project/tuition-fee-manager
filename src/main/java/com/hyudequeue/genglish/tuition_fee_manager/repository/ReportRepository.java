@@ -11,18 +11,22 @@ import java.time.LocalDateTime;
 
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
-    Page<Report> findByStudent_UserId(Long studentId, Pageable pageable);
+    @Query("SELECT r FROM Report r WHERE r.student.userId = :studentId ORDER BY r.createdAt DESC")
+    Page<Report> findByStudent_UserId(@Param("studentId") Long studentId, Pageable pageable);
 
-    Page<Report> findByClassRoom_ClassId(Long classId, Pageable pageable);
+    @Query("SELECT r FROM Report r WHERE r.classRoom.classId = :classId ORDER BY r.createdAt DESC")
+    Page<Report> findByClassRoom_ClassId(@Param("classId") Long classId, Pageable pageable);
 
-    Page<Report> findByStudent_UserIdAndCreatedAtBetween(Long studentId,
-                                                         LocalDateTime from,
-                                                         LocalDateTime to,
+    @Query("SELECT r FROM Report r WHERE r.student.userId = :studentId AND r.createdAt BETWEEN :from AND :to ORDER BY r.createdAt DESC")
+    Page<Report> findByStudent_UserIdAndCreatedAtBetween(@Param("studentId") Long studentId,
+                                                         @Param("from") LocalDateTime from,
+                                                         @Param("to") LocalDateTime to,
                                                          Pageable pageable);
 
-    Page<Report> findByClassRoom_ClassIdAndCreatedAtBetween(Long classId,
-                                                            LocalDateTime from,
-                                                            LocalDateTime to,
+    @Query("SELECT r FROM Report r WHERE r.classRoom.classId = :classId AND r.createdAt BETWEEN :from AND :to ORDER BY r.createdAt DESC")
+    Page<Report> findByClassRoom_ClassIdAndCreatedAtBetween(@Param("classId") Long classId,
+                                                            @Param("from") LocalDateTime from,
+                                                            @Param("to") LocalDateTime to,
                                                             Pageable pageable);
 
     @Query("""
