@@ -38,6 +38,7 @@ public class ClassResponseDto {
     public static class CategoryDto {
         private Long categoryId;
         private String name;
+        private String color;
     }
 
     @Data
@@ -72,7 +73,7 @@ public class ClassResponseDto {
         if (c.getCategories() != null) {
             dto.setCategories(
                     c.getCategories().stream()
-                            .map(cat -> new CategoryDto(cat.getCategoryId(), cat.getName()))
+                            .map(cat -> new CategoryDto(cat.getCategoryId(), cat.getName(), cat.getColor()))
                             .toList()
             );
         }
