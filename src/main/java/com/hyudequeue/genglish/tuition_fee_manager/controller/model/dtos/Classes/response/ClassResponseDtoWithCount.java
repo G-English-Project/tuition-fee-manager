@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 public class ClassResponseDtoWithCount {
+
     private Long classId;
     private String className;
     private String description;
@@ -29,19 +31,11 @@ public class ClassResponseDtoWithCount {
 
     private List<ClassCategoryDTO> categories;
 
-    // ✅ New field
-    private MentorDto mentor;
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class MentorDto {
-        private Long userId;
-        private String fullName;
-    }
+    private List<UserResponseDto> mentors; // ⬅ MULTI MENTORS
 
     public static ClassResponseDtoWithCount fromEntity(Classes c, long count) {
         ClassResponseDtoWithCount dto = new ClassResponseDtoWithCount();
+
         dto.setClassId(c.getClassId());
         dto.setClassName(c.getClassName());
         dto.setDescription(c.getDescription());
@@ -53,6 +47,7 @@ public class ClassResponseDtoWithCount {
         dto.setUpdatedAt(c.getUpdatedAt());
         dto.setCurrentStudentCount(count);
 
+        // ⭐ Set categories
         if (c.getCategories() != null) {
             dto.setCategories(
                     c.getCategories().stream()
@@ -61,15 +56,15 @@ public class ClassResponseDtoWithCount {
             );
         }
 
-        // ✅ Map mentor
-        if (c.getMentorBy() != null) {
-            dto.setMentor(new MentorDto(
-                    c.getMentorBy().getUserId(),
-                    c.getMentorBy().getFullName()
-            ));
+        // ⭐ Set mentors (nhiều người)
+        if (c.getMentors() != null) {
+            dto.setMentors(
+                    c.getMentors().stream()
+                            .map(UserResponseDto::toDto)
+                            .toList()
+            );
         }
 
         return dto;
     }
 }
-

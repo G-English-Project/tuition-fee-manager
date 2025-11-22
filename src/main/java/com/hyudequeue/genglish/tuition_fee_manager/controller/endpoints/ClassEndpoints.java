@@ -19,5 +19,7 @@ public final class ClassEndpoints {
     public static final String REVENUE_BY_MONTH = "/{classId}/revenue-by-month";
     public static final String GET_CLASSES_BY_TEACHER = "/teacher/{teacherId}";
     public static final String GET_ACTIVE_CLASSES_FOR_LANDING = "/landing/active-classes";
+    public static final String ASSIGN_MENTOR = "/{classId}/assign-mentor";
+    public static final String REMOVE_MENTOR = "/{classId}/remove-mentor/{mentorId}";
 
 }

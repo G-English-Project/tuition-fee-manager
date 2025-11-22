@@ -49,8 +49,11 @@ public interface ClassService {
             LocalDate fromDate,
             LocalDate toDate
     );
-    ClassResponseDto assignMentor(Long classId, Long mentorId);
-    void removeMentor(Long classId);
+
+    ClassResponseDto addMentorsToClass(Long classId, List<Long> mentorIds);
+
+    ClassResponseDto removeMentorFromClass(Long classId, Long mentorId);
+
     List<ClassResponseDto> getClassesByTeacherId(Long teacherId, Long categoryId);
 
     Page<ClassLandingPageResponseDto> getActiveClassesForLandingPage(Pageable pageable);

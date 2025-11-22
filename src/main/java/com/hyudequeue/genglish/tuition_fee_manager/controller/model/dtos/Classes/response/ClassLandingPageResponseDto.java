@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +18,10 @@ public class ClassLandingPageResponseDto {
     private BigDecimal amount;
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
-    private String mentorName;
+
+    // ⭐ LIST mentors
+    private List<UserResponseDto> mentors;
+
     private Integer currentStudentCount;
     private List<CategoryTagDto> categories;
 
@@ -30,6 +34,8 @@ public class ClassLandingPageResponseDto {
     }
 
     public static ClassLandingPageResponseDto fromEntity(Classes classes, Integer studentCount) {
+
+        // ⭐ Map categories
         List<CategoryTagDto> categoryTags = classes.getCategories() != null
                 ? classes.getCategories().stream()
                 .map(cat -> CategoryTagDto.builder()
@@ -40,6 +46,13 @@ public class ClassLandingPageResponseDto {
                 .toList()
                 : List.of();
 
+        // ⭐ Map mentors (nhiều mentor)
+        List<UserResponseDto> mentorDtos = classes.getMentors() != null
+                ? classes.getMentors().stream()
+                .map(UserResponseDto::toDto)
+                .toList()
+                : List.of();
+
         return ClassLandingPageResponseDto.builder()
                 .classId(classes.getClassId())
                 .className(classes.getClassName())
@@ -47,7 +60,7 @@ public class ClassLandingPageResponseDto {
                 .amount(classes.getAmount())
                 .effectiveFrom(classes.getEffectiveFrom())
                 .effectiveTo(classes.getEffectiveTo())
-                .mentorName(classes.getMentorBy() != null ? classes.getMentorBy().getFullName() : null)
+                .mentors(mentorDtos)
                 .currentStudentCount(studentCount)
                 .categories(categoryTags)
                 .build();

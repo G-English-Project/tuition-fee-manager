@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.UserResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
@@ -11,6 +12,8 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -26,10 +29,10 @@ public class ClassResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private java.util.List<CategoryDto> categories;
+    private List<CategoryDto> categories;
 
-    private MentorDto mentor;
-    
+    private List<UserResponseDto> mentors;
+
     private Integer currentStudentCount;
 
     @Data
@@ -39,14 +42,6 @@ public class ClassResponseDto {
         private Long categoryId;
         private String name;
         private String color;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class MentorDto {
-        private Long userId;
-        private String fullName;
     }
 
     public static ClassResponseDto fromEntity(Classes c) {
@@ -64,30 +59,36 @@ public class ClassResponseDto {
                 c.getCreatedAt(),
                 c.getUpdatedAt(),
 
-                null, // categories -> set later
-                null,  // mentor -> set later
-                null //currentstudentcount set later
+                null, // categories sẽ set sau
+                null, // mentors sẽ set sau
+                null  // currentStudentCount set sau
         );
 
         // ✅ Set categories
         if (c.getCategories() != null) {
             dto.setCategories(
                     c.getCategories().stream()
-                            .map(cat -> new CategoryDto(cat.getCategoryId(), cat.getName(), cat.getColor()))
+                            .map(cat -> new CategoryDto(
+                                    cat.getCategoryId(),
+                                    cat.getName(),
+                                    cat.getColor()
+                            ))
                             .toList()
             );
         }
 
-        // ✅ Set mentor
-        if (c.getMentorBy() != null) {
-            dto.setMentor(new MentorDto(
-                    c.getMentorBy().getUserId(),
-                    c.getMentorBy().getFullName()
-            ));
+        // ✅ Set mentors (nhiều mentorBy)
+        if (c.getMentors() != null) {
+            dto.setMentors(
+                    c.getMentors().stream()
+                            .map(UserResponseDto::toDto) // dùng DTO có sẵn của bạn
+                            .toList()
+            );
         }
 
         return dto;
     }
 }
+
 
 

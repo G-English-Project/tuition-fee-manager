@@ -631,36 +631,59 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public ClassResponseDto assignMentor(Long classId, Long mentorId) {
-        Classes classes = classesRepository.findById(classId)
+    public ClassResponseDto addMentorsToClass(Long classId, List<Long> mentorIds) {
+        Classes classes = classRepository.findById(classId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
-        User mentor = userRepository.findById(mentorId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        List<User> mentors = userRepository.findAllById(mentorIds).stream()
+                .filter(u -> u.getRole() == RoleEnum.TEACHER)
+                .toList();
 
-        if (mentor.getRole() != RoleEnum.TEACHER && mentor.getRole() != RoleEnum.TA) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User must be TEACHER or TA");
+        if (mentors.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No valid mentors found");
         }
 
-        classes.setMentorBy(mentor);
+        if (classes.getMentors() == null) {
+            classes.setMentors(new ArrayList<>());
+        }
+
+        if (classes.getMentors() == null) {
+            classes.setMentors(new ArrayList<>());
+        } else if (!(classes.getMentors() instanceof ArrayList)) {
+            classes.setMentors(new ArrayList<>(classes.getMentors()));
+        }
+
+        classes.getMentors().addAll(mentors);
+
+        classes.setUpdatedAt(LocalDateTime.now());
+
+        classesRepository.save(classes);
+
+        return ClassResponseDto.fromEntity(classes);
+    }
+
+    @Override
+    public ClassResponseDto removeMentorFromClass(Long classId, Long mentorId) {
+        Classes classes = classRepository.findById(classId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+
+        if (classes.getMentors() != null) {
+            classes.setMentors(
+                    classes.getMentors().stream()
+                            .filter(m -> !m.getUserId().equals(mentorId))
+                            .collect(Collectors.toCollection(ArrayList::new))
+            );
+        }
+
         classes.setUpdatedAt(LocalDateTime.now());
         classesRepository.save(classes);
 
         return ClassResponseDto.fromEntity(classes);
     }
-    @Override
-    public void removeMentor(Long classId) {
-        Classes classes = classesRepository.findById(classId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
-        classes.setMentorBy(null);
-        classes.setUpdatedAt(LocalDateTime.now());
-
-        classesRepository.save(classes);
-    }
     @Override
     public List<ClassResponseDto> getClassesByTeacherId(Long teacherId, Long categoryId) {
-        List<Classes> classes = classRepository.findByMentorBy_UserId(teacherId);
+        List<Classes> classes = classRepository.findByMentorId(teacherId);
         
         if (categoryId != null) {
             classes = classes.stream()

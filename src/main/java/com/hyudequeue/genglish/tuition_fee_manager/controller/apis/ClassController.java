@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.controller.apis;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.request.*;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
@@ -281,21 +282,22 @@ public class ClassController {
         return ApiResp.success(classService.GetMonthlyRevenue(classId, fromDate, toDate));
     }
 
-    @PatchMapping("/{classId}/assign-mentor")
-    public ClassResponseDto assignMentor(
+    @PatchMapping(ASSIGN_MENTOR)
+    public ClassResponseDto addMentors(
             @PathVariable Long classId,
-            @RequestBody AssignMentorRequestDto request
+            @RequestBody List<Long> mentorIds
     ) {
-        return classService.assignMentor(classId, request.getMentorId());
+        return classService.addMentorsToClass(classId, mentorIds);
     }
-    @PatchMapping("/{classId}/remove-mentor")
-    public void removeMentor(@PathVariable Long classId) {
-        classService.removeMentor(classId);
+
+    @PatchMapping(REMOVE_MENTOR)
+    public ClassResponseDto removeMentor(
+            @PathVariable Long classId,
+            @PathVariable Long mentorId
+    ) {
+        return classService.removeMentorFromClass(classId, mentorId);
     }
-    @Operation(
-            summary = "Get classes assigned to a teacher",
-            description = "Returns all classes where the teacher is assigned as mentor."
-    )
+
     @GetMapping(GET_CLASSES_BY_TEACHER)
     public ResponseEntity<?> getClassesByTeacherId(
             @PathVariable Long teacherId,
