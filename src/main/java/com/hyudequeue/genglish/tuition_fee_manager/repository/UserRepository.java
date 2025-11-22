@@ -168,5 +168,42 @@ ORDER BY u.createdAt DESC
     """)
     Page<User> findActiveStudentsByTeacherId(@Param("teacherId") Long teacherId, Pageable pageable);
 
+    @Query("""
+SELECT DISTINCT u
+FROM User u
+LEFT JOIN ClassEnrollment ce ON ce.user = u AND ce.unEnrolledAt IS NULL
+LEFT JOIN Classes c ON ce.classes = c
+WHERE u.role = :role
+  AND u.status = :status
+  AND (:studentStatus IS NULL OR u.studentStatus = :studentStatus)
+  AND (:classId IS NULL OR c.classId = :classId)
+  AND (:className IS NULL OR LOWER(c.className) LIKE LOWER(CONCAT('%', :className, '%')))
+""")
+    Page<User> findStudentsWithFilters(
+            @Param("role") RoleEnum role,
+            @Param("status") UserStatusEnum status,
+            @Param("studentStatus") StudentStatusEnum studentStatus,
+            @Param("classId") Long classId,
+            @Param("className") String className,
+            Pageable pageable
+    );
+
+    @Query("""
+SELECT u
+FROM User u
+WHERE u.role = :role
+  AND u.status = :status
+  AND NOT EXISTS (
+      SELECT ce FROM ClassEnrollment ce
+      WHERE ce.user = u
+        AND ce.unEnrolledAt IS NULL
+  )
+""")
+    Page<User> findStudentsWithoutClass(
+            @Param("role") RoleEnum role,
+            @Param("status") UserStatusEnum status,
+            Pageable pageable
+    );
+
 
 }

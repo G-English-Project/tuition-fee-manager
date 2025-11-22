@@ -83,16 +83,35 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Page<UserWithClassesDto> GetAllStudent(int page, int size, Long classId, String className, StudentStatusEnum studentStatus, String sortBy, String sortDir) {
-        Sort sort = Sort.by(sortBy);
-        if (sortDir.equalsIgnoreCase("desc")) sort = sort.descending();
+    public Page<UserWithClassesDto> GetAllStudent(
+            int page,
+            int size,
+            Long classId,
+            String className,
+            StudentStatusEnum studentStatus,
+            String sortBy,
+            String sortDir,
+            Boolean noClass
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<User> usersPage;
 
-        // --- Case 1: Lọc theo classId hoặc className ---
-        if (classId != null || (className != null && !className.isBlank())) {
-            usersPage = userRepository.findStudentsByClassFilterWithStudentStatus(
+        // Case 1: Filter students WITHOUT class
+        if (Boolean.TRUE.equals(noClass)) {
+            usersPage = userRepository.findStudentsWithoutClass(
+                    RoleEnum.STUDENT,
+                    UserStatusEnum.ACTIVE,
+                    pageable
+            );
+        }
+        // Case 2: Filter by classId / className / studentStatus
+        else {
+            usersPage = userRepository.findStudentsWithFilters(
                     RoleEnum.STUDENT,
                     UserStatusEnum.ACTIVE,
                     studentStatus,
@@ -100,51 +119,22 @@ public class UserServiceImpl implements UserService {
                     className,
                     pageable
             );
-        } else {
-            // --- Case 2: Lấy tất cả student ---
-            if (studentStatus != null) {
-                usersPage = userRepository.findByRoleAndStatusAndStudentStatusOrderByCreatedAtDesc(
-                        RoleEnum.STUDENT, UserStatusEnum.ACTIVE, studentStatus, pageable);
-            } else {
-                usersPage = userRepository.findByRoleAndStatusOrderByCreatedAtDesc(
-                        RoleEnum.STUDENT, UserStatusEnum.ACTIVE, pageable);
-            }
         }
 
-        if (usersPage.isEmpty()) {
-            return usersPage.map(u -> null);
-        }
-
-        List<Long> userIds = usersPage.getContent().stream().map(User::getUserId).toList();
-        List<ClassEnrollment> activeEnrollments = classEnrollmentRepository
-                .findByUser_UserIdInAndUnEnrolledAtIsNull(userIds);
-
-        Map<Long, List<ClassEnrollment>> byUserId = activeEnrollments.stream()
-                .collect(Collectors.groupingBy(e -> e.getUser().getUserId()));
-
-        return usersPage.map(u -> {
-            List<EnrolledClassLiteDto> currentClasses = byUserId.getOrDefault(u.getUserId(), List.of())
-                    .stream()
-                    .map(e -> EnrolledClassLiteDto.builder()
-                            .classId(e.getClasses().getClassId())
-                            .className(e.getClasses().getClassName())
-                            .enrolledAt(e.getEnrolledAt())
-                            .build())
-                    .toList();
-
-            return UserWithClassesDto.builder()
-                    .userId(u.getUserId())
-                    .email(u.getEmail())
-                    .fullName(u.getFullName())
-                    .phone(u.getPhone())
-                    .status(u.getStatus().name())
-                    .studentStatus(u.getStudentStatus() != null ? u.getStudentStatus().name() : null)
-                    .createdAt(u.getCreatedAt())
-                    .currentClasses(currentClasses)
-                    .dateOfBirth(u.getDateOfBirth())
-                    .build();
-        });
+        // Map result
+        return usersPage.map(u -> UserWithClassesDto.builder()
+                .userId(u.getUserId())
+                .email(u.getEmail())
+                .fullName(u.getFullName())
+                .phone(u.getPhone())
+                .status(u.getStatus().name())
+                .studentStatus(u.getStudentStatus() != null ? u.getStudentStatus().name() : null)
+                .createdAt(u.getCreatedAt())
+                .dateOfBirth(u.getDateOfBirth())
+                .build()
+        );
     }
+
 
 
     @Override

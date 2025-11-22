@@ -11,7 +11,7 @@ import org.springframework.data.domain.Page;
 
 public interface UserService {
     Page<UserWithClassesDto> GetAllStudent(
-            int page, int size, Long classId, String className, StudentStatusEnum studentStatus, String sortBy, String sortDir
+            int page, int size, Long classId, String className, StudentStatusEnum studentStatus, String sortBy, String sortDir, Boolean noClass
     );
 
     UserResponseDto createUserByRole(UserCreateRequestDto req, RoleEnum role);

@@ -32,14 +32,17 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping(GET_ALL_STUDENT_ENDPOINT)
-    @Operation(summary = "Get all students", description = "Retrieve a paginated list of all student users, with optional filters.")
+    @Operation(
+            summary = "Get all students",
+            description = "Retrieve a paginated list of all student users, with optional filters."
+    )
     public ResponseEntity<?> getAllStudents(
             @Parameter(description = "Page number", example = "0")
             @RequestParam(defaultValue = "0") int page,
 
             @Parameter(description = "Page size", example = "10")
             @RequestParam(defaultValue = "10") int size,
-            
+
             @Parameter(description = "Filter by class ID")
             @RequestParam(required = false) Long classId,
 
@@ -53,9 +56,16 @@ public class UserController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
 
             @Parameter(description = "Sort direction (asc/desc)", example = "desc")
-            @RequestParam(defaultValue = "desc") String sortDir
+            @RequestParam(defaultValue = "desc") String sortDir,
+
+            @Parameter(description = "Filter students who have NO class (true = no class)")
+            @RequestParam(required = false) Boolean noClass
     ) {
-        return ApiResp.success(userService.GetAllStudent(page, size, classId, className, studentStatus, sortBy, sortDir));
+        return ApiResp.success(
+                userService.GetAllStudent(
+                        page, size, classId, className, studentStatus, sortBy, sortDir, noClass
+                )
+        );
     }
 
 
