@@ -171,15 +171,7 @@ public class UserController {
     ) {
         return ApiResp.success(userService.getAllByRole(role, page, size));
     }
-
-        @Operation(summary = "Get all TAs", description = "Retrieve paginated list of all teaching assistants (TA).")
-        @GetMapping(GET_ALL_TA_ENDPOINT)
-        public ResponseEntity<?> getAllTAs(
-                        @RequestParam(defaultValue = "0") int page,
-                        @RequestParam(defaultValue = "10") int size
-        ) {
-                return ApiResp.success(userService.getAllByRole(RoleEnum.TA, page, size));
-        }
+    
 
     @Operation(summary = "Create bulk students", description = "Create multiple students at once. Only for admin use.")
     @PostMapping(BULK_CREATE_STUDENTS_ENDPOINT)
@@ -206,6 +198,19 @@ public class UserController {
             @Parameter(description = "Page number", example = "0") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") int size) {
         return ApiResp.success(userService.getActiveStudentsByTeacher(teacherId, page, size));
+    }
+    @Operation(summary = "Update user role", description = "Update the role of a specific user. ADMIN only.")
+    @PatchMapping("/{userId}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateUserRole(
+            @Parameter(description = "User ID", required = true)
+            @PathVariable Long userId,
+
+            @Parameter(description = "New role (STUDENT, TEACHER, ADMIN)", required = true)
+            @RequestParam RoleEnum role
+    ) {
+        userService.updateUserRole(userId, role);
+        return ApiResp.success("User role updated successfully");
     }
 
 }

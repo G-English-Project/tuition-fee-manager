@@ -437,5 +437,30 @@ public class UserServiceImpl implements UserService {
                 .dateOfBirth(user.getDateOfBirth())
                 .build();
     }
+    @Override
+    @Transactional
+    public void updateUserRole(Long userId, RoleEnum role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // Nếu đổi sang STUDENT thì phải gán studentStatus
+        if (role == RoleEnum.STUDENT) {
+            if (user.getDateOfBirth() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Student must have date of birth to generate default password");
+            }
+            if (user.getStudentStatus() == null) {
+                user.setStudentStatus(StudentStatusEnum.WAITING);
+            }
+        } else {
+            // Nếu không phải student thì xóa studentStatus
+            user.setStudentStatus(null);
+        }
+
+        user.setRole(role);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+    }
 
 }
