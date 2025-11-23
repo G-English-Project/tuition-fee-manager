@@ -93,15 +93,16 @@ public class UserServiceImpl implements UserService {
             String sortDir,
             Boolean noClass
     ) {
-        Sort sort = sortDir.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
+        // Sort
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<User> usersPage;
 
-        // Case 1: Filter students WITHOUT class
+        // ⭐ CASE 0: Filter students WITHOUT ANY class
         if (Boolean.TRUE.equals(noClass)) {
             usersPage = userRepository.findStudentsWithoutClass(
                     RoleEnum.STUDENT,
@@ -109,9 +110,10 @@ public class UserServiceImpl implements UserService {
                     pageable
             );
         }
-        // Case 2: Filter by classId / className / studentStatus
-        else {
-            usersPage = userRepository.findStudentsWithFilters(
+
+        // ⭐ CASE 1: filter by classId/className
+        else if (classId != null || (className != null && !className.isBlank())) {
+            usersPage = userRepository.findStudentsByClassFilterWithStudentStatus(
                     RoleEnum.STUDENT,
                     UserStatusEnum.ACTIVE,
                     studentStatus,
@@ -121,19 +123,70 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        // Map result
-        return usersPage.map(u -> UserWithClassesDto.builder()
-                .userId(u.getUserId())
-                .email(u.getEmail())
-                .fullName(u.getFullName())
-                .phone(u.getPhone())
-                .status(u.getStatus().name())
-                .studentStatus(u.getStudentStatus() != null ? u.getStudentStatus().name() : null)
-                .createdAt(u.getCreatedAt())
-                .dateOfBirth(u.getDateOfBirth())
-                .build()
-        );
+        // ⭐ CASE 2: no class filter → get all students optionally by studentStatus
+        else {
+            if (studentStatus != null) {
+                usersPage = userRepository.findByRoleAndStatusAndStudentStatusOrderByCreatedAtDesc(
+                        RoleEnum.STUDENT,
+                        UserStatusEnum.ACTIVE,
+                        studentStatus,
+                        pageable
+                );
+            } else {
+                usersPage = userRepository.findByRoleAndStatusOrderByCreatedAtDesc(
+                        RoleEnum.STUDENT,
+                        UserStatusEnum.ACTIVE,
+                        pageable
+                );
+            }
+        }
+
+        // No results → return empty mapping
+        if (usersPage.isEmpty()) {
+            return usersPage.map(u -> null);
+        }
+
+        // ⭐ Get list of userIds in current page
+        List<Long> userIds = usersPage.getContent().stream()
+                .map(User::getUserId)
+                .toList();
+
+        // ⭐ Fetch all active enrollments (avoid N+1)
+        List<ClassEnrollment> activeEnrollments = classEnrollmentRepository
+                .findByUser_UserIdInAndUnEnrolledAtIsNull(userIds);
+
+        // ⭐ Group enrollments by userId
+        Map<Long, List<ClassEnrollment>> byUserId = activeEnrollments.stream()
+                .collect(Collectors.groupingBy(e -> e.getUser().getUserId()));
+
+        // ⭐ Map page to DTO
+        return usersPage.map(u -> {
+            List<EnrolledClassLiteDto> currentClasses = byUserId
+                    .getOrDefault(u.getUserId(), List.of())
+                    .stream()
+                    .map(e -> EnrolledClassLiteDto.builder()
+                            .classId(e.getClasses().getClassId())
+                            .className(e.getClasses().getClassName())
+                            .enrolledAt(e.getEnrolledAt())
+                            .build()
+                    )
+                    .toList();
+
+            return UserWithClassesDto.builder()
+                    .userId(u.getUserId())
+                    .email(u.getEmail())
+                    .fullName(u.getFullName())
+                    .phone(u.getPhone())
+                    .status(u.getStatus().name())
+                    .studentStatus(u.getStudentStatus() != null ? u.getStudentStatus().name() : null)
+                    .createdAt(u.getCreatedAt())
+                    .dateOfBirth(u.getDateOfBirth())
+                    .currentClasses(currentClasses)
+                    .build();
+        });
     }
+
+
 
 
 
