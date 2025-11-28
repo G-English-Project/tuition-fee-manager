@@ -34,7 +34,20 @@ public class UserController {
     @GetMapping(GET_ALL_STUDENT_ENDPOINT)
     @Operation(
             summary = "Get all students",
-            description = "Retrieve a paginated list of all student users, with optional filters."
+            description = """
+                Retrieve a paginated list of all student users.
+
+                Supported filters:
+                • classId – filter students by class ID
+                • className – filter students by class name (contains)
+                • studentStatus – filter by student's learning status
+                • noClass = true – get only students without any active class
+
+                Supported sorting fields:
+                • createdAt – sort by created date
+                • fullName – sort alphabetically by student name
+                • className – sort alphabetically by the student's first active class
+                """
     )
     public ResponseEntity<?> getAllStudents(
             @Parameter(description = "Page number", example = "0")
@@ -52,10 +65,19 @@ public class UserController {
             @Parameter(description = "Filter by student status", example = "ACTIVE")
             @RequestParam(required = false) StudentStatusEnum studentStatus,
 
-            @Parameter(description = "Sort by field (createdAt, fullName, classCount)", example = "createdAt")
+            @Parameter(
+                    description = """
+                        Sort by field.
+                        Supported values:
+                        • createdAt
+                        • fullName
+                        • className (sort alphabetically by the student's primary class)
+                        """,
+                    example = "createdAt"
+            )
             @RequestParam(defaultValue = "createdAt") String sortBy,
 
-            @Parameter(description = "Sort direction (asc/desc)", example = "desc")
+            @Parameter(description = "Sort direction (asc or desc)", example = "desc")
             @RequestParam(defaultValue = "desc") String sortDir,
 
             @Parameter(description = "Filter students who have NO class (true = no class)")
@@ -67,6 +89,7 @@ public class UserController {
                 )
         );
     }
+
 
 
     @Operation(summary = "Create user by role", description = "Create a new user with given role (ADMIN or STUDENT).")

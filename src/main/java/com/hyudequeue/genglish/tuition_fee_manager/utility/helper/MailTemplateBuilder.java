@@ -52,6 +52,8 @@ public class MailTemplateBuilder {
             // --- NHẮC NHỞ ---
             case STUDENT_OVERDUE_REMINDER -> "Nhắc nhở học phí còn nợ sau 10 ngày";
             case STUDENT_MANUAL_REMINDER -> "Nhắc học phí chưa thanh toán";
+            case FEEDBACK_REMINDER -> "Nhắc nhở điền feedback định kỳ";
+
             default -> "Thông báo hệ thống";
         };
     }
@@ -90,6 +92,12 @@ public class MailTemplateBuilder {
                             + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.";
             case STUDENT_MANUAL_REMINDER ->
                     "Chào {studentName}, bạn vui lòng kiểm tra và hoàn tất thanh toán cho hóa đơn '{invoiceContent}' trong thời gian sớm nhất.";
+            case FEEDBACK_REMINDER ->
+                    "Chào {studentName},<br/><br/>"
+                            + "Đã 2 tháng kể từ lần góp ý gần nhất. Trung tâm rất mong nhận được chia sẻ của bạn.<br/>"
+                            + "Vui lòng điền form tại đây:<br/><b>{feedbackLink}</b><br/><br/>"
+                            + "Xin cảm ơn bạn!";
+
             default -> "[Không tìm thấy nội dung thông báo]";
         };
     }

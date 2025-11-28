@@ -28,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -123,7 +124,7 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        // ⭐ CASE 2: no class filter → get all students optionally by studentStatus
+        // ⭐ CASE 2: NO FILTER
         else {
             if (studentStatus != null) {
                 usersPage = userRepository.findByRoleAndStatusAndStudentStatusOrderByCreatedAtDesc(
@@ -141,26 +142,23 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        // No results → return empty mapping
         if (usersPage.isEmpty()) {
             return usersPage.map(u -> null);
         }
 
-        // ⭐ Get list of userIds in current page
+        // ⭐ Fetch class info
         List<Long> userIds = usersPage.getContent().stream()
                 .map(User::getUserId)
                 .toList();
 
-        // ⭐ Fetch all active enrollments (avoid N+1)
         List<ClassEnrollment> activeEnrollments = classEnrollmentRepository
                 .findByUser_UserIdInAndUnEnrolledAtIsNull(userIds);
 
-        // ⭐ Group enrollments by userId
         Map<Long, List<ClassEnrollment>> byUserId = activeEnrollments.stream()
                 .collect(Collectors.groupingBy(e -> e.getUser().getUserId()));
 
-        // ⭐ Map page to DTO
-        return usersPage.map(u -> {
+        // ⭐ Map to DTO
+        List<UserWithClassesDto> dtoList = usersPage.getContent().stream().map(u -> {
             List<EnrolledClassLiteDto> currentClasses = byUserId
                     .getOrDefault(u.getUserId(), List.of())
                     .stream()
@@ -183,8 +181,37 @@ public class UserServiceImpl implements UserService {
                     .dateOfBirth(u.getDateOfBirth())
                     .currentClasses(currentClasses)
                     .build();
-        });
+        }).toList();
+
+
+        // ⭐⭐⭐ CUSTOM SORT — Sort theo tên lớp ⭐⭐⭐
+        if (sortBy.equalsIgnoreCase("className")) {
+
+            Comparator<UserWithClassesDto> comparator = Comparator.comparing(dto -> {
+                if (dto.getCurrentClasses() == null || dto.getCurrentClasses().isEmpty()) {
+                    return ""; // Không có lớp → để lên đầu hoặc cuối tùy sortDir
+                }
+                return dto.getCurrentClasses().get(0).getClassName(); // sort theo lớp đầu tiên
+            }, Comparator.nullsLast(String::compareToIgnoreCase));
+
+            if (sortDir.equalsIgnoreCase("desc")) {
+                comparator = comparator.reversed();
+            }
+
+            dtoList = dtoList.stream()
+                    .sorted(comparator)
+                    .toList();
+        }
+
+
+        // ⭐ rebuild page
+        return new PageImpl<>(
+                dtoList,
+                pageable,
+                usersPage.getTotalElements()
+        );
     }
+
 
 
 

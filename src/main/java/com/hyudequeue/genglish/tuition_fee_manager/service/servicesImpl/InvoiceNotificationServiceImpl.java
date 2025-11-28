@@ -1,16 +1,14 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.AttendanceEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.HomeworkEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ParticipationEnum;
-import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.*;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -439,31 +437,31 @@ public class InvoiceNotificationServiceImpl {
 
             // ===== TEMPLATE EMAIL =====
             String body = """
-        <html>
-        <body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 20px;'>
-            <div style='background: white; border-radius: 10px; padding: 20px;'>
-                <h2 style='color:#2a7ae2;'>BÁO CÁO HỌC TẬP</h2>
-                <p><b>Học sinh:</b> %s</p>
-                <p><b>Lớp:</b> %s</p>
-                <p><b>Giáo viên phụ trách:</b> %s</p>
-                <hr/>
-                <p><b>Chuyên cần:</b> %s</p>
-                <p><b>Bài tập về nhà:</b> %s</p>
-                <p><b>Thái độ trên lớp:</b> %s</p>
-                <p><b>Tiến bộ kỹ năng:</b> %s</p>
+                    <html>
+                    <body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 20px;'>
+                        <div style='background: white; border-radius: 10px; padding: 20px;'>
+                            <h2 style='color:#2a7ae2;'>BÁO CÁO HỌC TẬP</h2>
+                            <p><b>Học sinh:</b> %s</p>
+                            <p><b>Lớp:</b> %s</p>
+                            <p><b>Giáo viên phụ trách:</b> %s</p>
+                            <hr/>
+                            <p><b>Chuyên cần:</b> %s</p>
+                            <p><b>Bài tập về nhà:</b> %s</p>
+                            <p><b>Thái độ trên lớp:</b> %s</p>
+                            <p><b>Tiến bộ kỹ năng:</b> %s</p>
 
-                <h3>Nhận xét</h3>
-                <p>%s</p>
+                            <h3>Nhận xét</h3>
+                            <p>%s</p>
 
-                <h3>Cần cải thiện</h3>
-                <p>%s</p>
+                            <h3>Cần cải thiện</h3>
+                            <p>%s</p>
 
-                %s
-                <p style='font-size: 0.9em; color: gray;'>Ngày tạo báo cáo: %s</p>
-            </div>
-        </body>
-        </html>
-        """.formatted(
+                            %s
+                            <p style='font-size: 0.9em; color: gray;'>Ngày tạo báo cáo: %s</p>
+                        </div>
+                    </body>
+                    </html>
+                    """.formatted(
                     values.get("studentName"),
                     values.get("className"),
                     values.get("teacherName"),
@@ -501,6 +499,7 @@ public class InvoiceNotificationServiceImpl {
             e.printStackTrace();
         }
     }
+
     private String toStars(int count) {
         return "⭐".repeat(Math.max(count, 1));
     }
@@ -535,4 +534,37 @@ public class InvoiceNotificationServiceImpl {
         };
     }
 
+    @Async
+    @Scheduled(cron = "0 0 9 1 1/2 *")
+    public void remindActiveStudentsFeedback() {
+        // Lấy danh sách học viên ACTIVE
+        List<User> allStudents = userRepository.findByRole(RoleEnum.STUDENT);
+
+        String feedbackLink = "https://portal.gsenglish.org";
+
+        allStudents.stream()
+                .filter(u -> u.getStudentStatus() == StudentStatusEnum.ACTIVE)
+                .filter(u -> u.getStatus().name().equals("ACTIVE"))
+                .forEach(student -> {
+
+                    Map<String, String> values = Map.of(
+                            "studentName", student.getFullName(),
+                            "feedbackLink", feedbackLink
+                    );
+
+                    // Create notification
+                    notificationService.createNotification(
+                            student.getUserId(),
+                            "Nhắc nhở điền feedback định kỳ",
+                            "Đã đến lúc điền feedback. Vui lòng xem email để biết chi tiết!"
+                    );
+
+                    // Send email
+                    emailService.sendNotificationEmail(
+                            student.getEmail(),
+                            NotificationTemplateEnum.FEEDBACK_REMINDER,
+                            values
+                    );
+                });
+    }
 }
