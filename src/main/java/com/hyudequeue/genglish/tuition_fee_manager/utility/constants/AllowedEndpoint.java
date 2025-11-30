@@ -149,7 +149,7 @@ public final class AllowedEndpoint {
             "/api/v1/feedbacks/good-feedbacks"
     };
     public static final String[] PUBLIC_CLASSES = {
-            "/api/v1/classes/landing/active-classes"
+            ApiPathConstants.CLASS_API + com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.ClassEndpoints.GET_ACTIVE_CLASSES_FOR_LANDING
     };
 
     private AllowedEndpoint() {
