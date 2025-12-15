@@ -3,8 +3,10 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedback.request.FeedbackRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedback.response.FeedbackResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Feedback;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.FeedbackRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.FeedbackService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
+    private final ClassRepository classRepository;
 
     private FeedbackResponseDto mapToDto(Feedback feedback) {
         return FeedbackResponseDto.builder()
@@ -29,6 +32,8 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .studentName(feedback.getStudent().getFullName())
                 .teacherId(feedback.getTeacher().getUserId())
                 .teacherName(feedback.getTeacher().getFullName())
+                .classId(feedback.getClasses() != null ? feedback.getClasses().getClassId() : null)
+                .className(feedback.getClasses() != null ? feedback.getClasses().getClassName() : null)
                 .professionalLevel(feedback.getProfessionalLevel())
                 .materialSuitability(feedback.getMaterialSuitability())
                 .supportLevel(feedback.getSupportLevel())
@@ -44,10 +49,17 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         User teacher = userRepository.findById(dto.getTeacherId())
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
+        
+        Classes classes = null;
+        if (dto.getClassId() != null) {
+            classes = classRepository.findById(dto.getClassId())
+                    .orElse(null);
+        }
 
         Feedback feedback = Feedback.builder()
                 .student(student)
                 .teacher(teacher)
+                .classes(classes)
                 .professionalLevel(dto.getProfessionalLevel())
                 .materialSuitability(dto.getMaterialSuitability())
                 .supportLevel(dto.getSupportLevel())
@@ -81,9 +93,16 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         User teacher = userRepository.findById(dto.getTeacherId())
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
+        
+        Classes classes = null;
+        if (dto.getClassId() != null) {
+            classes = classRepository.findById(dto.getClassId())
+                    .orElse(null);
+        }
 
         feedback.setStudent(student);
         feedback.setTeacher(teacher);
+        feedback.setClasses(classes);
         feedback.setProfessionalLevel(dto.getProfessionalLevel());
         feedback.setMaterialSuitability(dto.getMaterialSuitability());
         feedback.setSupportLevel(dto.getSupportLevel());

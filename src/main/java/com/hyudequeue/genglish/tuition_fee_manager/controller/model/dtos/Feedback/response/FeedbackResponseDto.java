@@ -15,6 +15,8 @@ public class FeedbackResponseDto {
     private String studentName;
     private Long teacherId;
     private String teacherName;
+    private Long classId;
+    private String className;
     private Integer professionalLevel;
     private Integer materialSuitability;
     private SupportLevelEnum supportLevel;

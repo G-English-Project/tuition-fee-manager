@@ -29,6 +29,10 @@ public class Feedback {
     @JoinColumn(name = "teacher_id", nullable = false)
     private User teacher;
 
+    @ManyToOne
+    @JoinColumn(name = "class_id")
+    private Classes classes;
+
     @Column(nullable = false)
     private Integer professionalLevel;
 

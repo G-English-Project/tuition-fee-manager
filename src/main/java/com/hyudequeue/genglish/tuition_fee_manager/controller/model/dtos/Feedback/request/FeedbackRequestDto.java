@@ -7,6 +7,7 @@ import lombok.Data;
 public class FeedbackRequestDto {
     private Long studentId;
     private Long teacherId;
+    private Long classId;
     private Integer professionalLevel;
     private Integer materialSuitability;
     private SupportLevelEnum supportLevel;
