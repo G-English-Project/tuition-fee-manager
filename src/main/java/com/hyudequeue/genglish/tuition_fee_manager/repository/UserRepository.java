@@ -205,5 +205,24 @@ WHERE u.role = :role
             Pageable pageable
     );
 
+    @Query("""
+SELECT u
+FROM User u
+WHERE u.role = :role
+  AND u.status = :status
+  AND (:studentStatus IS NULL OR u.studentStatus = :studentStatus)
+  AND NOT EXISTS (
+      SELECT ce FROM ClassEnrollment ce
+      WHERE ce.user = u
+        AND ce.unEnrolledAt IS NULL
+  )
+""")
+    Page<User> findStudentsWithoutClassWithStudentStatus(
+            @Param("role") RoleEnum role,
+            @Param("status") UserStatusEnum status,
+            @Param("studentStatus") StudentStatusEnum studentStatus,
+            Pageable pageable
+    );
+
 
 }

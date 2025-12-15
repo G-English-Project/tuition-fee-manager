@@ -105,9 +105,10 @@ public class UserServiceImpl implements UserService {
 
         // ⭐ CASE 0: Filter students WITHOUT ANY class
         if (Boolean.TRUE.equals(noClass)) {
-            usersPage = userRepository.findStudentsWithoutClass(
+            usersPage = userRepository.findStudentsWithoutClassWithStudentStatus(
                     RoleEnum.STUDENT,
                     UserStatusEnum.ACTIVE,
+                    studentStatus,
                     pageable
             );
         }
