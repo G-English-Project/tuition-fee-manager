@@ -27,7 +27,7 @@ public class PayOSConfig {
     @PrePersist
     @PreUpdate
     private void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
     }
 }
 

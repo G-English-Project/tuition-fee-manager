@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Service
 @Slf4j
@@ -49,7 +48,7 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
 
         PayOSConfig config = getOrCreateConfig();
         config.setActiveSecret(secretNumber);
-        config.setUpdatedAt(LocalDateTime.now());
+        config.setUpdatedAt(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
         payOSConfigRepository.save(config);
 
         log.info("PayOS secret switched to: {}", secretNumber);
@@ -67,7 +66,7 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
                     // Initialize with default secret 1 (Payment Gate 1)
                     PayOSConfig defaultConfig = PayOSConfig.builder()
                             .activeSecret(1)
-                            .updatedAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")))
                             .build();
                     return payOSConfigRepository.save(defaultConfig);
                 });
