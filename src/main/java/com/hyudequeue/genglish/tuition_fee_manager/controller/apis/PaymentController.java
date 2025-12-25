@@ -79,43 +79,23 @@ public class PaymentController {
         }
     }
 
-//    @Operation(summary = "Payment webhook (PayOS)", description = "Handle asynchronous webhook callback from PayOS.")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "Webhook processed")
-//    })
-//    @PostMapping(WEBHOOK)
-//    public ResponseEntity<ApiResp<String>> handleWebhook(
-//            @RequestBody Webhook webhook
-//    ) {
-//        try{
-//            log.info("Webhook called");
-//            // Use active secret for webhook verification
-//            Integer activeSecret = payOSConfigService.getActiveSecret();
-//            PayOSProperties activeProperties = (activeSecret != null && activeSecret == 2) ? payOSProperties2 : payOSProperties;
-//            PayOS payOS = new PayOS(activeProperties.getClientId(), activeProperties.getApiKey(), activeProperties.getChecksumKey());
-//            payOS.verifyPaymentWebhookData(webhook);
-//            log.info("Pass verify");
-//            paymentService.handleWebhook(webhook);
-//            log.info("Webhook success");
-//            return ApiResp.success("OK");
-//        }
-//        catch (Exception e){
-//            log.error("Error handling webhook: "+ e.toString());
-//            throw new ResponseStatusException(HttpStatusCode.valueOf(500), "Error handling webhook, check server log");
-//        }
-//    }
-
     @Operation(summary = "Payment webhook (PayOS)", description = "Handle asynchronous webhook callback from PayOS.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Webhook processed")
     })
     @PostMapping(WEBHOOK)
-    public ResponseEntity<ApiResp<String>> handleWebhookConfirmPayOs(
+    public ResponseEntity<ApiResp<String>> handleWebhook(
             @RequestBody Webhook webhook
     ) {
         try{
             log.info("Webhook called");
+            // Use active secret for webhook verification
+            Integer activeSecret = payOSConfigService.getActiveSecret();
+            PayOSProperties activeProperties = (activeSecret != null && activeSecret == 2) ? payOSProperties2 : payOSProperties;
+            PayOS payOS = new PayOS(activeProperties.getClientId(), activeProperties.getApiKey(), activeProperties.getChecksumKey());
+            payOS.verifyPaymentWebhookData(webhook);
             log.info("Pass verify");
+            paymentService.handleWebhook(webhook);
             log.info("Webhook success");
             return ApiResp.success("OK");
         }
@@ -124,6 +104,26 @@ public class PaymentController {
             throw new ResponseStatusException(HttpStatusCode.valueOf(500), "Error handling webhook, check server log");
         }
     }
+
+//    @Operation(summary = "Payment webhook (PayOS)", description = "Handle asynchronous webhook callback from PayOS.")
+//    @ApiResponses(value = {
+//            @ApiResponse(responseCode = "200", description = "Webhook processed")
+//    })
+//    @PostMapping(WEBHOOK)
+//    public ResponseEntity<ApiResp<String>> handleWebhookConfirmPayOs(
+//            @RequestBody Webhook webhook
+//    ) {
+//        try{
+//            log.info("Webhook called");
+//            log.info("Pass verify");
+//            log.info("Webhook success");
+//            return ApiResp.success("OK");
+//        }
+//        catch (Exception e){
+//            log.error("Error handling webhook: "+ e.toString());
+//            throw new ResponseStatusException(HttpStatusCode.valueOf(500), "Error handling webhook, check server log");
+//        }
+//    }
 
     @Operation(summary = "Get payment by ID", description = "Return a payment by its ID.")
     @ApiResponses(value = {
