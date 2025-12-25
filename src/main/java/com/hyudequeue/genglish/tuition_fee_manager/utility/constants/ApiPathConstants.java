@@ -14,5 +14,6 @@ public final class ApiPathConstants {
     public static final String REVIEW_API = API + V1 + "/review";
     public static final String FEEDBACK_API = "/api/v1/feedbacks";
     public static final String TEACHER_API = API + V1 + "/teacher";
+    public static final String PAYOS_CONFIG_API = API + V1 + "/payos-config";
 
 }

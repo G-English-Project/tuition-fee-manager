@@ -13,6 +13,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.PaymentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.PayOSConfigService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.PaymentService;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PayOSProperties;
@@ -37,6 +38,8 @@ import java.util.Map;
 @Slf4j
 public class PaymentServiceImpl implements PaymentService {
     private final PayOSProperties payOSProperties;
+    private final PayOSProperties payOSProperties2;
+    private final PayOSConfigService payOSConfigService;
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
     private final UserRepository userRepository;
@@ -44,14 +47,30 @@ public class PaymentServiceImpl implements PaymentService {
     private final EmailServiceImpl emailService;
     private final InvoiceNotificationServiceImpl invoiceNotificationService;
 
-    public PaymentServiceImpl(PayOSProperties payOSProperties, PaymentRepository paymentRepository, InvoiceRepository invoiceRepository, UserRepository userRepository, NotificationService notificationService, EmailServiceImpl emailService, InvoiceNotificationServiceImpl invoiceNotificationService) {
+    public PaymentServiceImpl(
+            PayOSProperties payOSProperties,
+            @org.springframework.beans.factory.annotation.Qualifier("payOSProperties2") PayOSProperties payOSProperties2,
+            PayOSConfigService payOSConfigService,
+            PaymentRepository paymentRepository,
+            InvoiceRepository invoiceRepository,
+            UserRepository userRepository,
+            NotificationService notificationService,
+            EmailServiceImpl emailService,
+            InvoiceNotificationServiceImpl invoiceNotificationService) {
         this.payOSProperties = payOSProperties;
+        this.payOSProperties2 = payOSProperties2;
+        this.payOSConfigService = payOSConfigService;
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.emailService = emailService;
         this.invoiceNotificationService = invoiceNotificationService;
+    }
+
+    private PayOSProperties getActivePayOSProperties() {
+        Integer activeSecret = payOSConfigService.getActiveSecret();
+        return activeSecret != null && activeSecret == 2 ? payOSProperties2 : payOSProperties;
     }
 
     @Override
@@ -81,7 +100,8 @@ public class PaymentServiceImpl implements PaymentService {
             req.setBuyerPhone(invoice.getUser() != null ? invoice.getUser().getPhone() : null);
         }
 
-        Payment payment = paymentRepository.save(Payment.fromCreateRequest(req, invoice, payOSProperties));
+        PayOSProperties activeProperties = getActivePayOSProperties();
+        Payment payment = paymentRepository.save(Payment.fromCreateRequest(req, invoice, activeProperties));
 
         long nowSeconds = System.currentTimeMillis() / 1000;
         long ttlSeconds = (req.getExpiredAt() != null) ? req.getExpiredAt() : 15 * 60;
@@ -90,7 +110,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
         long effectiveExpiredAt = nowSeconds + ttlSeconds;
 
-        PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
+        PayOS payOS = new PayOS(activeProperties.getClientId(), activeProperties.getApiKey(), activeProperties.getChecksumKey());
         PaymentData data = Payment.toPaymentData(payment, effectiveExpiredAt);
         CheckoutResponseData checkoutData = payOS.createPaymentLink(data);
         return PaymentPayOSResponse.builder()
@@ -101,7 +121,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public boolean cancelPayment(Long paymentId) throws Exception {
-        PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
+        PayOSProperties activeProperties = getActivePayOSProperties();
+        PayOS payOS = new PayOS(activeProperties.getClientId(), activeProperties.getApiKey(), activeProperties.getChecksumKey());
         PaymentLinkData data = payOS.cancelPaymentLink(paymentId, "Cancelled");
         return !data.getCanceledAt().isBlank();
     }

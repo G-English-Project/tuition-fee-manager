@@ -6,6 +6,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.requ
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.response.PaymentPayOSResponse;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.response.PaymentResponseDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.res.ApiResp;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.PayOSConfigService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.PaymentService;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PayOSProperties;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,7 +14,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +28,25 @@ import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.P
 import static com.hyudequeue.genglish.tuition_fee_manager.utility.constants.ApiPathConstants.PAYMENT_API;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping(PAYMENT_API)
 @Slf4j
 public class PaymentController {
 
     private final PaymentService paymentService;
     private final PayOSProperties payOSProperties;
+    private final PayOSProperties payOSProperties2;
+    private final PayOSConfigService payOSConfigService;
+
+    public PaymentController(
+            PaymentService paymentService,
+            PayOSProperties payOSProperties,
+            @org.springframework.beans.factory.annotation.Qualifier("payOSProperties2") PayOSProperties payOSProperties2,
+            PayOSConfigService payOSConfigService) {
+        this.paymentService = paymentService;
+        this.payOSProperties = payOSProperties;
+        this.payOSProperties2 = payOSProperties2;
+        this.payOSConfigService = payOSConfigService;
+    }
 
     @Operation(summary = "Create payment", description = "Create a payment for an invoice and return payment info (payUrl/qr if available).")
     @ApiResponses(value = {
@@ -77,7 +89,10 @@ public class PaymentController {
     ) {
         try{
             log.info("Webhook called");
-            PayOS payOS = new PayOS(payOSProperties.getClientId(), payOSProperties.getApiKey(), payOSProperties.getChecksumKey());
+            // Use active secret for webhook verification
+            Integer activeSecret = payOSConfigService.getActiveSecret();
+            PayOSProperties activeProperties = (activeSecret != null && activeSecret == 2) ? payOSProperties2 : payOSProperties;
+            PayOS payOS = new PayOS(activeProperties.getClientId(), activeProperties.getApiKey(), activeProperties.getChecksumKey());
             payOS.verifyPaymentWebhookData(webhook);
             log.info("Pass verify");
             paymentService.handleWebhook(webhook);
