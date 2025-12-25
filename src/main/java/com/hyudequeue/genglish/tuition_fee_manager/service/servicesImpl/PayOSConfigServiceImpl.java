@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @Slf4j
@@ -32,6 +33,7 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
         return PayOSConfigResponse.builder()
                 .activeSecret(config.getActiveSecret())
                 .activeSecretLabel(getSecretLabel(config.getActiveSecret()))
+                .updatedAt(config.getUpdatedAt())
                 .build();
     }
 
@@ -55,6 +57,7 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
         return PayOSConfigResponse.builder()
                 .activeSecret(config.getActiveSecret())
                 .activeSecretLabel(getSecretLabel(config.getActiveSecret()))
+                .updatedAt(config.getUpdatedAt())
                 .build();
     }
 
