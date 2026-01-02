@@ -5,6 +5,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Feedbac
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface FeedbackService {
@@ -16,4 +17,13 @@ public interface FeedbackService {
     List<FeedbackResponseDto> getFeedbacksByStudentId(Long studentId);
     List<FeedbackResponseDto> getFeedbacksByTeacherId(Long teacherId);
     Page<FeedbackResponseDto> getGoodFeedbacks(Pageable pageable);
+    Page<FeedbackResponseDto> searchFeedbacks(
+            Long teacherId,
+            Long classId,
+            Integer overallRate,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable
+    );
+
 }

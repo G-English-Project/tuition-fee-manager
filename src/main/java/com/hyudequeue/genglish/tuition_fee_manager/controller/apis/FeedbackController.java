@@ -7,8 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.hyudequeue.genglish.tuition_fee_manager.controller.endpoints.FeedbackEndpoints.*;
@@ -62,4 +64,25 @@ public class FeedbackController {
         Pageable pageable = PageRequest.of(page, size);
         return feedbackService.getGoodFeedbacks(pageable);
     }
+
+    @GetMapping("/search")
+    public Page<FeedbackResponseDto> searchFeedbacks(
+            @RequestParam(required = false) Long teacherId,
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) Integer overallRate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime fromDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime toDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return feedbackService.searchFeedbacks(
+                teacherId, classId, overallRate, fromDate, toDate, pageable
+        );
+    }
+
 }

@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -139,4 +140,26 @@ public class FeedbackServiceImpl implements FeedbackService {
         Page<Feedback> feedbackPage = feedbackRepository.findGoodFeedbacks(pageable);
         return feedbackPage.map(this::mapToDto);
     }
+
+    @Override
+    public Page<FeedbackResponseDto> searchFeedbacks(
+            Long teacherId,
+            Long classId,
+            Integer overallRate,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable) {
+
+        return feedbackRepository
+                .searchFeedbacks(
+                        teacherId,
+                        classId,
+                        overallRate,
+                        fromDate,
+                        toDate,
+                        pageable
+                )
+                .map(this::mapToDto);
+    }
+
 }
