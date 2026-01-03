@@ -636,7 +636,7 @@ public class ClassServiceImpl implements ClassService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
         List<User> mentors = userRepository.findAllById(mentorIds).stream()
-                .filter(u -> u.getRole() == RoleEnum.TEACHER)
+                .filter(u -> u.getRole() == RoleEnum.TEACHER || u.getRole() == RoleEnum.ADMIN)
                 .toList();
 
         if (mentors.isEmpty()) {
