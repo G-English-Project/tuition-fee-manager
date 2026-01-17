@@ -99,28 +99,41 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     }
     @Query("""
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  cast(i.month as string),
+  concat(
+    cast(function('year', coalesce(i.paidAt, i.dueDate)) as string),
+    '-',
+    lpad(cast(i.month as string), 2, '0')
+  ),
   sum(cast(i.totalAmount as big_decimal))
 )
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-group by cast(i.month as string)
-order by cast(i.month as string) desc
+group by function('year', coalesce(i.paidAt, i.dueDate)), i.month
+order by function('year', coalesce(i.paidAt, i.dueDate)) desc, i.month desc
 """)
     Page<RevenueSummaryDto> sumRevenueGroupByMonth(Pageable pageable);
 
+
     @Query("""
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  cast(i.month as string),
+  concat(
+    cast(function('year', coalesce(i.paidAt, i.dueDate)) as string),
+    '-',
+    lpad(cast(i.month as string), 2, '0')
+  ),
   sum(cast(i.totalAmount as big_decimal))
 )
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
   and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
-group by cast(i.month as string)
-order by cast(i.month as string) desc
+group by function('year', coalesce(i.paidAt, i.dueDate)), i.month
+order by function('year', coalesce(i.paidAt, i.dueDate)) desc, i.month desc
 """)
-    Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategory(Pageable pageable, @Param("categoryId") Long categoryId);
+    Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategory(
+            Pageable pageable,
+            @Param("categoryId") Long categoryId
+    );
+
 
 
     @Query("""
