@@ -97,7 +97,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
         }
         return result;
     }
-    @Query("""
+    @Query(
+            value = """
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
   cast(function('date_format', coalesce(i.paidAt, i.dueDate), '%Y-%m') as string),
   sum(i.totalAmount)
@@ -106,8 +107,15 @@ from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
 group by cast(function('date_format', coalesce(i.paidAt, i.dueDate), '%Y-%m') as string)
 order by cast(function('date_format', coalesce(i.paidAt, i.dueDate), '%Y-%m') as string) desc
-""")
+""",
+            countQuery = """
+select count(distinct cast(function('date_format', coalesce(i.paidAt, i.dueDate), '%Y-%m') as string))
+from Invoice i
+where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+"""
+    )
     Page<RevenueSummaryDto> sumRevenueGroupByMonth(Pageable pageable);
+
 
 
 
@@ -129,7 +137,8 @@ order by cast(function('date_format', coalesce(i.paidAt, i.dueDate), '%Y-%m') as
 
 
 
-    @Query("""
+    @Query(
+            value = """
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
   i.classes.className,
   sum(cast(i.totalAmount as big_decimal))
@@ -138,8 +147,15 @@ from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
 group by i.classes.className
 order by sum(cast(i.totalAmount as big_decimal)) desc
-""")
+""",
+            countQuery = """
+select count(distinct i.classes.className)
+from Invoice i
+where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+"""
+    )
     Page<RevenueSummaryDto> sumRevenueGroupByClass(Pageable pageable);
+
 
     @Query("""
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
@@ -154,7 +170,8 @@ order by sum(cast(i.totalAmount as big_decimal)) desc
 """)
     Page<RevenueSummaryDto> sumRevenueGroupByClassWithCategory(Pageable pageable, @Param("categoryId") Long categoryId);
 
-    @Query("""
+    @Query(
+            value = """
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
   cast(
     function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%x-W%v')
@@ -166,8 +183,15 @@ from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
 group by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%x-W%v') as string)
 order by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%x-W%v') as string) desc
-""")
+""",
+            countQuery = """
+select count(distinct cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as timestamp)), '%x-W%v') as string))
+from Invoice i
+where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+"""
+    )
     Page<RevenueSummaryDto> sumRevenueGroupByWeek(Pageable pageable);
+
 
     @Query("""
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
@@ -206,7 +230,8 @@ order by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as times
                                                     @Param("month") Integer month,
                                                     @Param("categoryId") Long categoryId,
                                                     Pageable pageable);
-    @Query("""
+    @Query(
+            value = """
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
   cast(function('year', coalesce(i.paidAt, i.dueDate)) as string),
   sum(cast(i.totalAmount as big_decimal))
@@ -214,9 +239,16 @@ select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
 group by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
-order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
-""")
+order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string) desc
+""",
+            countQuery = """
+select count(distinct cast(function('year', coalesce(i.paidAt, i.dueDate)) as string))
+from Invoice i
+where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+"""
+    )
     Page<RevenueSummaryDto> sumRevenueGroupByYear(Pageable pageable);
+
 
     @Query("""
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
