@@ -96,7 +96,7 @@ public class Invoice {
         // Nếu có item thì show cả danh sách item + summary
         if (items != null && !items.isEmpty()) {
             String itemList = items.stream()
-                    .map(InvoiceItem::getDescription) // hoặc getItemName()
+                    .map(InvoiceItem::getFeeName) // hoặc getItemName()
                     .reduce((a, b) -> a + ", " + b)
                     .orElse("No items");
 
