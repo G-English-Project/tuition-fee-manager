@@ -90,21 +90,20 @@ public class Invoice {
 
     @Transient
     public String getInvoiceContent() {
+
+        // Có item → chỉ hiển thị item
+        if (items != null && !items.isEmpty()) {
+            return items.stream()
+                    .map(InvoiceItem::getFeeName)
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse("");
+        }
+
+        // Không có item → fallback summary
         String className = classes != null ? classes.getClassName() : "Unknown class";
         String monthInfo = month != null ? "tháng " + month : "";
 
-        // Nếu có item thì show cả danh sách item + summary
-        if (items != null && !items.isEmpty()) {
-            String itemList = items.stream()
-                    .map(InvoiceItem::getFeeName) // hoặc getItemName()
-                    .reduce((a, b) -> a + ", " + b)
-                    .orElse("No items");
-
-            return itemList + "\nHọc phí " + className + " " + monthInfo;
-        }
-
-        // Nếu không có item thì chỉ show summary
         return "Học phí " + className + " " + monthInfo;
     }
-
+    
 }
