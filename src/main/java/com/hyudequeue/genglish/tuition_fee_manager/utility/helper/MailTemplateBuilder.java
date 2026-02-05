@@ -88,12 +88,13 @@ public class MailTemplateBuilder {
                     "Bạn có hóa đơn thanh toán mới với nội dung {invoiceContent}, vui lòng kiểm tra.";
             case STUDENT_SUCCESSFUL_PAYMENT ->
                     "<h3>BIÊN LAI THU TIỀN (RECEIPT)</h3>"
-                            + "<p>Thông tin thanh toán:</p>"
                             + "<ul>"
                             + "<li><b>Tên học viên:</b> {studentName}</li>"
+                            + "<li><b>Lớp:</b> {className}</li>"
                             + "<li><b>Mã hóa đơn:</b> {invoiceId}</li>"
                             + "<li><b>Nội dung thu phí:</b> {invoiceContent}</li>"
                             + "<li><b>Số tiền đã thanh toán:</b> {amount} VND</li>"
+                            + "<li><b>Thời gian thanh toán:</b> {paidAt}</li>"
                             + "</ul>"
                             + "<p>Email này là biên lai xác nhận thanh toán. "
                             + "Vui lòng lưu lại để đối chiếu khi cần.</p>";
