@@ -26,7 +26,7 @@ public class NotificationTemplateBuilder {
     private static String getSubjectTemplate(NotificationTemplateEnum type) {
         return switch (type) {
             // --- THẦY/CÔ ---
-            case STUDENT_PAID_INVOICE -> "Học sinh {studentName} đã thanh toán";
+            case STUDENT_PAID_INVOICE -> "Biên lai thu tiền – Hóa đơn #{invoiceId}";
             case CLASS_INVOICE_CREATED -> "Tạo đơn học phí mới cho lớp {className}";
             case STUDENT_INVOICE_CREATED -> "Tạo hóa đơn cho học sinh {studentName}";
             case OVERDUE_INVOICE_ALERT -> "Cảnh báo: Có hóa đơn quá hạn";
@@ -57,7 +57,9 @@ public class NotificationTemplateBuilder {
         return switch (type) {
             // --- THẦY/CÔ ---
             case STUDENT_PAID_INVOICE ->
-                    "Học sinh {studentName} đã thanh toán hóa đơn với nội dung: {invoiceContent}.";
+                    "Biên lai thu tiền cho học sinh {studentName}. "
+                            + "Nội dung: {invoiceContent}. "
+                            + "Số tiền: {amount} VND.";
             case CLASS_INVOICE_CREATED ->
                     "Đã tạo thành công đơn học phí cho lớp {className}.";
             case STUDENT_INVOICE_CREATED ->

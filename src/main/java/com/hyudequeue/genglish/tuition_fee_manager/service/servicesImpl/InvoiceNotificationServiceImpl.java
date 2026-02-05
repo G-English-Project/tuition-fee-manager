@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -141,55 +143,67 @@ public class InvoiceNotificationServiceImpl {
 
     @Async
     public void notifyPaymentSuccess(Invoice invoice, Payment payment) {
-        // --- Notify Student ---
-        Long studentId = invoice.getUser().getUserId();
-        Map<String, String> studentValues = Map.of(
+
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        String paidAt = invoice.getPaidAt() != null
+                ? invoice.getPaidAt().format(formatter)
+                : LocalDateTime.now().format(formatter);
+
+        // TODO: chỉnh đúng getter className theo entity của bạn
+        String className = invoice.getClasses().getClassName();
+        // ví dụ khác:
+        // invoice.getStudentClass().getName();
+
+        Map<String, String> values = Map.of(
                 "studentName", invoice.getUser().getFullName(),
+                "className", className,
                 "invoiceId", String.valueOf(invoice.getInvoiceId()),
+                "invoiceContent", invoice.getInvoiceContent(),
                 "amount", String.valueOf(payment.getAmount()),
-                "invoiceContent", invoice.getInvoiceContent()
+                "paidAt", paidAt
         );
 
-        String studentSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.STUDENT_PAID_INVOICE, studentValues
-        );
-        String studentBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.STUDENT_PAID_INVOICE, studentValues
+        // ===== STUDENT =====
+        notificationService.createNotification(
+                invoice.getUser().getUserId(),
+                NotificationTemplateBuilder.buildSubject(
+                        NotificationTemplateEnum.STUDENT_PAID_INVOICE, values
+                ),
+                NotificationTemplateBuilder.buildBody(
+                        NotificationTemplateEnum.STUDENT_PAID_INVOICE, values
+                )
         );
 
-        notificationService.createNotification(studentId, studentSubject, studentBody);
         emailService.sendNotificationEmail(
                 invoice.getUser().getEmail(),
                 NotificationTemplateEnum.STUDENT_PAID_INVOICE,
-                studentValues
+                values
         );
 
-        // --- Notify Admin ---
+        // ===== ADMIN (GỬI Y HỆT) =====
         List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
         for (User admin : admins) {
-            Map<String, String> adminValues = Map.of(
-                    "teacherName", admin.getFullName(),
-                    "studentName", invoice.getUser().getFullName(),
-                    "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                    "amount", String.valueOf(payment.getAmount()),
-                    "invoiceContent", invoice.getInvoiceContent()
+
+            notificationService.createNotification(
+                    admin.getUserId(),
+                    NotificationTemplateBuilder.buildSubject(
+                            NotificationTemplateEnum.STUDENT_PAID_INVOICE, values
+                    ),
+                    NotificationTemplateBuilder.buildBody(
+                            NotificationTemplateEnum.STUDENT_PAID_INVOICE, values
+                    )
             );
 
-            String adminSubject = NotificationTemplateBuilder.buildSubject(
-                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, adminValues
-            );
-            String adminBody = NotificationTemplateBuilder.buildBody(
-                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, adminValues
-            );
-
-            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
             emailService.sendNotificationEmail(
                     admin.getEmail(),
-                    NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT,
-                    adminValues
+                    NotificationTemplateEnum.STUDENT_PAID_INVOICE,
+                    values
             );
         }
     }
+
 
     @Async
     public void notifyClassFeeUpdated(Classes classes, Integer newAmount) {
