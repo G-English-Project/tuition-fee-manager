@@ -108,10 +108,20 @@ public class MailTemplateBuilder {
                     "Đơn học phí của bạn đã được chỉnh sửa – vui lòng kiểm tra lại chi tiết.";
             // --- NHẮC NHỞ ---
             case STUDENT_OVERDUE_REMINDER ->
-                    "Chào {studentName}, hóa đơn '{invoiceContent}' của bạn đã quá hạn {daysOverdue} ngày. "
-                            + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.";
+                    "Chào {studentName},<br/><br/>"
+                            + "Hóa đơn '<b>{invoiceContent}</b>' của bạn đã quá hạn <b>{daysOverdue} ngày</b>.<br/>"
+                            + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.<br/><br/>"
+                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
+
+
             case STUDENT_MANUAL_REMINDER ->
-                    "Chào {studentName}, bạn vui lòng kiểm tra và hoàn tất thanh toán cho hóa đơn '{invoiceContent}' trong thời gian sớm nhất.";
+                    "Chào {studentName},<br/><br/>"
+                            + "Bạn vui lòng kiểm tra và hoàn tất thanh toán cho hóa đơn '<b>{invoiceContent}</b>' trong thời gian sớm nhất.<br/><br/>"
+                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
+
+
             case FEEDBACK_REMINDER ->
                     "Chào {studentName},<br/><br/>"
                             + "Đã 2 tháng kể từ lần góp ý gần nhất. Trung tâm rất mong nhận được chia sẻ của bạn.<br/>"

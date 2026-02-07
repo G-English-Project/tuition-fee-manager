@@ -158,11 +158,11 @@ public class InvoiceNotificationServiceImpl {
 
         Map<String, String> values = Map.of(
                 "studentName", invoice.getUser().getFullName(),
-                "className", className,
+                "className", invoice.getClasses().getClassName(),
                 "invoiceId", String.valueOf(invoice.getInvoiceId()),
                 "invoiceContent", invoice.getInvoiceContent(),
                 "amount", String.valueOf(payment.getAmount()),
-                "paidAt", paidAt
+                "paidAt", invoice.getPaidAt().format(formatter)
         );
 
         // ===== STUDENT =====
