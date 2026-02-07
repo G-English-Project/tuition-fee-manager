@@ -36,7 +36,7 @@ public class MailTemplateBuilder {
 
     private static String getSubjectTemplate(NotificationTemplateEnum type) {
         return switch (type) {
-            case STUDENT_PAID_INVOICE -> "THANK YOU !";
+            case STUDENT_PAID_INVOICE -> "Biên lai thu tiền – Mã hóa đơn #{invoiceId}";
             case CLASS_INVOICE_CREATED -> "Tạo đơn học phí mới cho lớp {className}";
             case STUDENT_INVOICE_CREATED -> "Tạo hóa đơn cho học sinh {studentName}";
             case OVERDUE_INVOICE_ALERT -> "Cảnh báo: Có hóa đơn quá hạn";
@@ -61,7 +61,17 @@ public class MailTemplateBuilder {
     private static String getBodyTemplate(NotificationTemplateEnum type) {
         return switch (type) {
             case STUDENT_PAID_INVOICE ->
-                    "Học sinh {studentName} đã thanh toán hóa đơn với nội dung: {invoiceContent}.";
+                    "<h3>BIÊN LAI THU TIỀN (RECEIPT)</h3>"
+                            + "<ul>"
+                            + "<li><b>Tên học viên:</b> {studentName}</li>"
+                            + "<li><b>Lớp:</b> {className}</li>"
+                            + "<li><b>Mã hóa đơn:</b> {invoiceId}</li>"
+                            + "<li><b>Nội dung thu phí:</b> {invoiceContent}</li>"
+                            + "<li><b>Số tiền đã thanh toán:</b> {amount} VND</li>"
+                            + "<li><b>Thời gian thanh toán:</b> {paidAt}</li>"
+                            + "</ul>"
+                            + "<p>Email này là biên lai xác nhận thanh toán. "
+                            + "Vui lòng lưu lại để đối chiếu khi cần.</p>";
             case CLASS_INVOICE_CREATED ->
                     "Đã tạo thành công đơn học phí cho lớp {className}.";
             case STUDENT_INVOICE_CREATED ->
@@ -77,7 +87,17 @@ public class MailTemplateBuilder {
             case NEW_INVOICE_NOTIFICATION ->
                     "Bạn có hóa đơn thanh toán mới với nội dung {invoiceContent}, vui lòng kiểm tra.";
             case STUDENT_SUCCESSFUL_PAYMENT ->
-                    "Học sinh {studentName} đã thanh toán hóa đơn với nội dung: {invoiceContent}";
+                    "<h3>BIÊN LAI THU TIỀN (RECEIPT)</h3>"
+                            + "<ul>"
+                            + "<li><b>Tên học viên:</b> {studentName}</li>"
+                            + "<li><b>Lớp:</b> {className}</li>"
+                            + "<li><b>Mã hóa đơn:</b> {invoiceId}</li>"
+                            + "<li><b>Nội dung thu phí:</b> {invoiceContent}</li>"
+                            + "<li><b>Số tiền đã thanh toán:</b> {amount} VND</li>"
+                            + "<li><b>Thời gian thanh toán:</b> {paidAt}</li>"
+                            + "</ul>"
+                            + "<p>Email này là biên lai xác nhận thanh toán. "
+                            + "Vui lòng lưu lại để đối chiếu khi cần.</p>";
             case STUDENT_INVOICE_OVERDUE ->
                     "Hóa đơn với nội dung {invoiceContent} đã quá hạn, vui lòng thanh toán sớm.";
             case STUDENT_ADDED_TO_CLASS ->
@@ -88,10 +108,20 @@ public class MailTemplateBuilder {
                     "Đơn học phí của bạn đã được chỉnh sửa – vui lòng kiểm tra lại chi tiết.";
             // --- NHẮC NHỞ ---
             case STUDENT_OVERDUE_REMINDER ->
-                    "Chào {studentName}, hóa đơn '{invoiceContent}' của bạn đã quá hạn {daysOverdue} ngày. "
-                            + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.";
+                    "Chào {studentName},<br/><br/>"
+                            + "Hóa đơn '<b>{invoiceContent}</b>' của bạn đã quá hạn <b>{daysOverdue} ngày</b>.<br/>"
+                            + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.<br/><br/>"
+                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
+
+
             case STUDENT_MANUAL_REMINDER ->
-                    "Chào {studentName}, bạn vui lòng kiểm tra và hoàn tất thanh toán cho hóa đơn '{invoiceContent}' trong thời gian sớm nhất.";
+                    "Chào {studentName},<br/><br/>"
+                            + "Bạn vui lòng kiểm tra và hoàn tất thanh toán cho hóa đơn '<b>{invoiceContent}</b>' trong thời gian sớm nhất.<br/><br/>"
+                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
+
+
             case FEEDBACK_REMINDER ->
                     "Chào {studentName},<br/><br/>"
                             + "Đã 2 tháng kể từ lần góp ý gần nhất. Trung tâm rất mong nhận được chia sẻ của bạn.<br/>"
