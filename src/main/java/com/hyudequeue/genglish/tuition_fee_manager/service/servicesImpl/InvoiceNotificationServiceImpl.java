@@ -319,12 +319,28 @@ public class InvoiceNotificationServiceImpl {
 
     @Async
     public void notifyManualConfirm(Invoice invoice) {
-        // --- Notify Student ---
+
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        String paidAt = invoice.getPaidAt() != null
+                ? invoice.getPaidAt().format(formatter)
+                : LocalDateTime.now().format(formatter);
+
+        String className = invoice.getClasses() != null
+                ? invoice.getClasses().getClassName()
+                : "N/A";
+
+        // ===== STUDENT =====
         Long studentId = invoice.getUser().getUserId();
+
         Map<String, String> studentValues = Map.of(
                 "studentName", invoice.getUser().getFullName(),
+                "className", className,
                 "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                "amount", String.valueOf(invoice.getTotalAmount())
+                "invoiceContent", invoice.getInvoiceContent(),
+                "amount", String.valueOf(invoice.getTotalAmount()),
+                "paidAt", paidAt
         );
 
         String studentSubject = NotificationTemplateBuilder.buildSubject(
@@ -341,14 +357,18 @@ public class InvoiceNotificationServiceImpl {
                 studentValues
         );
 
-        // --- Notify Admin ---
+        // ===== ADMIN =====
         List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
         for (User admin : admins) {
+
             Map<String, String> adminValues = Map.of(
                     "teacherName", admin.getFullName(),
                     "studentName", invoice.getUser().getFullName(),
+                    "className", className,
                     "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                    "amount", String.valueOf(invoice.getTotalAmount())
+                    "invoiceContent", invoice.getInvoiceContent(),
+                    "amount", String.valueOf(invoice.getTotalAmount()),
+                    "paidAt", paidAt
             );
 
             String adminSubject = NotificationTemplateBuilder.buildSubject(
@@ -358,7 +378,10 @@ public class InvoiceNotificationServiceImpl {
                     NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
             );
 
-            notificationService.createNotification(admin.getUserId(), adminSubject, adminBody);
+            notificationService.createNotification(
+                    admin.getUserId(), adminSubject, adminBody
+            );
+
             emailService.sendNotificationEmail(
                     admin.getEmail(),
                     NotificationTemplateEnum.STUDENT_PAID_INVOICE,
@@ -366,6 +389,7 @@ public class InvoiceNotificationServiceImpl {
             );
         }
     }
+
 
 
     @Async
