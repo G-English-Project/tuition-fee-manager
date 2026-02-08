@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceNotifyDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.request.CreatePaymentRequest;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.response.PaymentPayOSResponse;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payment.response.PaymentResponseDTO;
@@ -138,7 +139,13 @@ public class PaymentServiceImpl implements PaymentService {
             invoice.setPaidAt(LocalDateTime.now());
             invoice.setUpdatedAt(LocalDateTime.now());
             invoice.setStatus(InvoiceStatusEnum.PAID);
-            invoiceNotificationService.notifyPaymentSuccess(invoice, payment);
+            InvoiceNotifyDTO dto = InvoiceServiceImpl.buildInvoiceNotifyDTO(
+                    invoice,
+                    (int) payment.getAmount()
+            );
+
+            invoiceNotificationService.notifyPaymentSuccess(dto);
+
         }
         else {
             payment.setStatus(PaymentStatusEnum.CANCELLED);

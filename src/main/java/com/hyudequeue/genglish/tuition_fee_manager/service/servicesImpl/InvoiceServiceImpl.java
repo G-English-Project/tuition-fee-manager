@@ -3,6 +3,7 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceItemRequestDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.InvoiceUpdateRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.request.StudentInvoiceRequest;
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceNotifyDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceStatResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto;
@@ -22,7 +23,6 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -31,8 +31,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -524,19 +527,60 @@ public class InvoiceServiceImpl implements InvoiceService {
         };
     }
 
+    public static InvoiceNotifyDTO buildInvoiceNotifyDTO(Invoice invoice, Integer amount) {
+
+        ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        NumberFormat vnFormat =
+                NumberFormat.getInstance(new Locale("vi", "VN"));
+
+        String paidAt = invoice.getPaidAt()
+                .atZone(ZoneId.systemDefault())
+                .withZoneSameInstant(vietnamZone)
+                .format(formatter);
+
+        return new InvoiceNotifyDTO(
+                invoice.getUser().getUserId(),        // ✅ studentId
+                invoice.getUser().getEmail(),         // ✅ studentEmail
+                invoice.getUser().getFullName(),
+                invoice.getClasses() != null
+                        ? invoice.getClasses().getClassName()
+                        : "N/A",
+                String.valueOf(invoice.getInvoiceId()),
+                invoice.getInvoiceContent(),          // SAFE (trong TX)
+                vnFormat.format(amount),
+                paidAt
+        );
+    }
+
+
+
     @Override
+    @Transactional
     public void manualConfirmInvoice(Long invoiceId) {
+
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Invoice not found"));
 
-        // Cập nhật trạng thái và phương thức
+        // 1️⃣ Update trạng thái
         invoice.setStatus(InvoiceStatusEnum.PAID);
         invoice.setPaymentType(PaymentMethodEnum.MANUAL);
         invoice.setPaidAt(LocalDateTime.now());
         invoiceRepository.save(invoice);
-        invoiceNotificationService.notifyManualConfirm(invoice);
+
+        // 2️⃣ Build DTO (TRONG TRANSACTION)
+        InvoiceNotifyDTO dto = buildInvoiceNotifyDTO(
+                invoice,
+                invoice.getTotalAmount()
+        );
+
+        // 3️⃣ Gọi async bằng DTO
+        invoiceNotificationService.notifyManualConfirm(dto);
     }
+
 
     @Override
     @Transactional

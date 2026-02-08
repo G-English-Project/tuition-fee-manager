@@ -1,5 +1,6 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
+import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceNotifyDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.*;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
@@ -146,46 +147,20 @@ public class InvoiceNotificationServiceImpl {
     }
 
     @Async
-    public void notifyPaymentSuccess(Invoice invoice, Payment payment) {
+    public void notifyPaymentSuccess(InvoiceNotifyDTO dto) {
 
-        // ===== TIMEZONE VIET NAM =====
-        ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
-
-        DateTimeFormatter formatter =
-                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
-        String paidAt = invoice.getPaidAt() != null
-                ? invoice.getPaidAt()
-                .atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(vietnamZone)
-                .format(formatter)
-                : ZonedDateTime.now(vietnamZone).format(formatter);
-
-        // ===== CLASS NAME (SAFE) =====
-        String className = invoice.getClasses() != null
-                ? invoice.getClasses().getClassName()
-                : "N/A";
-
-        // ===== FORMAT AMOUNT =====
-        NumberFormat vnFormat =
-                NumberFormat.getInstance(new Locale("vi", "VN"));
-
-        String amountFormatted =
-                vnFormat.format(payment.getAmount());
-
-        // ===== VALUES =====
         Map<String, String> values = Map.of(
-                "studentName", invoice.getUser().getFullName(),
-                "className", className,
-                "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                "invoiceContent", invoice.getInvoiceContent(),
-                "amount", amountFormatted,
-                "paidAt", paidAt
+                "studentName", dto.studentName(),
+                "className", dto.className(),
+                "invoiceId", dto.invoiceId(),
+                "invoiceContent", dto.invoiceContent(),
+                "amount", dto.amount(),
+                "paidAt", dto.paidAt()
         );
 
         // ===== STUDENT =====
         notificationService.createNotification(
-                invoice.getUser().getUserId(),
+                dto.studentId(),   // ✅ không cần entity
                 NotificationTemplateBuilder.buildSubject(
                         NotificationTemplateEnum.STUDENT_PAID_INVOICE, values
                 ),
@@ -195,7 +170,7 @@ public class InvoiceNotificationServiceImpl {
         );
 
         emailService.sendNotificationEmail(
-                invoice.getUser().getEmail(),
+                dto.studentEmail(),  // ✅ lấy từ DTO
                 NotificationTemplateEnum.STUDENT_PAID_INVOICE,
                 values
         );
@@ -203,7 +178,6 @@ public class InvoiceNotificationServiceImpl {
         // ===== ADMIN =====
         List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
         for (User admin : admins) {
-
             notificationService.createNotification(
                     admin.getUserId(),
                     NotificationTemplateBuilder.buildSubject(
@@ -221,6 +195,7 @@ public class InvoiceNotificationServiceImpl {
             );
         }
     }
+
 
 
 
@@ -337,87 +312,56 @@ public class InvoiceNotificationServiceImpl {
     }
 
     @Async
-    public void notifyManualConfirm(Invoice invoice) {
+    public void notifyManualConfirm(InvoiceNotifyDTO dto) {
 
-        ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
+        Map<String, String> values = Map.of(
+                "studentName", dto.studentName(),
+                "className", dto.className(),
+                "invoiceId", dto.invoiceId(),
+                "invoiceContent", dto.invoiceContent(),
+                "amount", dto.amount(),
+                "paidAt", dto.paidAt()
+        );
 
-        DateTimeFormatter formatter =
-                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
-        String paidAt = invoice.getPaidAt() != null
-                ? invoice.getPaidAt()
-                .atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(vietnamZone)
-                .format(formatter)
-                : ZonedDateTime.now(vietnamZone).format(formatter);
-
-
-        String className = invoice.getClasses() != null
-                ? invoice.getClasses().getClassName()
-                : "N/A";
-
-        NumberFormat vnFormat =
-                NumberFormat.getInstance(new Locale("vi", "VN"));
-        String amountFormatted =
-                vnFormat.format(invoice.getTotalAmount());
         // ===== STUDENT =====
-        Long studentId = invoice.getUser().getUserId();
-
-        Map<String, String> studentValues = Map.of(
-                "studentName", invoice.getUser().getFullName(),
-                "className", className,
-                "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                "invoiceContent", invoice.getInvoiceContent(),
-                "amount", amountFormatted,
-                "paidAt", paidAt
+        notificationService.createNotification(
+                dto.studentId(),
+                NotificationTemplateBuilder.buildSubject(
+                        NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, values
+                ),
+                NotificationTemplateBuilder.buildBody(
+                        NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, values
+                )
         );
 
-        String studentSubject = NotificationTemplateBuilder.buildSubject(
-                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
-        );
-        String studentBody = NotificationTemplateBuilder.buildBody(
-                NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT, studentValues
-        );
-
-        notificationService.createNotification(studentId, studentSubject, studentBody);
         emailService.sendNotificationEmail(
-                invoice.getUser().getEmail(),
+                dto.studentEmail(),
                 NotificationTemplateEnum.STUDENT_SUCCESSFUL_PAYMENT,
-                studentValues
+                values
         );
 
         // ===== ADMIN =====
         List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
         for (User admin : admins) {
 
-            Map<String, String> adminValues = Map.of(
-                    "teacherName", admin.getFullName(),
-                    "studentName", invoice.getUser().getFullName(),
-                    "className", className,
-                    "invoiceId", String.valueOf(invoice.getInvoiceId()),
-                    "invoiceContent", invoice.getInvoiceContent(),
-                    "amount", amountFormatted,
-                    "paidAt", paidAt
-            );
-
-            String adminSubject = NotificationTemplateBuilder.buildSubject(
-                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
-            );
-            String adminBody = NotificationTemplateBuilder.buildBody(
-                    NotificationTemplateEnum.STUDENT_PAID_INVOICE, adminValues
-            );
-
             notificationService.createNotification(
-                    admin.getUserId(), adminSubject, adminBody
+                    admin.getUserId(),
+                    NotificationTemplateBuilder.buildSubject(
+                            NotificationTemplateEnum.STUDENT_PAID_INVOICE, values
+                    ),
+                    NotificationTemplateBuilder.buildBody(
+                            NotificationTemplateEnum.STUDENT_PAID_INVOICE, values
+                    )
             );
 
             emailService.sendNotificationEmail(
                     admin.getEmail(),
                     NotificationTemplateEnum.STUDENT_PAID_INVOICE,
-                    adminValues
+                    values
             );
         }
     }
+
 
 
 
