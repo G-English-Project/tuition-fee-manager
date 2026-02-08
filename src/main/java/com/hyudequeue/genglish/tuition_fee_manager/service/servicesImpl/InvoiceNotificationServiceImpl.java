@@ -11,10 +11,14 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -144,25 +148,39 @@ public class InvoiceNotificationServiceImpl {
     @Async
     public void notifyPaymentSuccess(Invoice invoice, Payment payment) {
 
+        // ===== TIMEZONE VIET NAM =====
+        ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
+
         DateTimeFormatter formatter =
                 DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         String paidAt = invoice.getPaidAt() != null
-                ? invoice.getPaidAt().format(formatter)
-                : LocalDateTime.now().format(formatter);
+                ? invoice.getPaidAt()
+                .atZone(ZoneId.systemDefault())
+                .withZoneSameInstant(vietnamZone)
+                .format(formatter)
+                : ZonedDateTime.now(vietnamZone).format(formatter);
 
-        // TODO: chỉnh đúng getter className theo entity của bạn
-        String className = invoice.getClasses().getClassName();
-        // ví dụ khác:
-        // invoice.getStudentClass().getName();
+        // ===== CLASS NAME (SAFE) =====
+        String className = invoice.getClasses() != null
+                ? invoice.getClasses().getClassName()
+                : "N/A";
 
+        // ===== FORMAT AMOUNT =====
+        NumberFormat vnFormat =
+                NumberFormat.getInstance(new Locale("vi", "VN"));
+
+        String amountFormatted =
+                vnFormat.format(payment.getAmount());
+
+        // ===== VALUES =====
         Map<String, String> values = Map.of(
                 "studentName", invoice.getUser().getFullName(),
-                "className", invoice.getClasses().getClassName(),
+                "className", className,
                 "invoiceId", String.valueOf(invoice.getInvoiceId()),
                 "invoiceContent", invoice.getInvoiceContent(),
-                "amount", String.valueOf(payment.getAmount()),
-                "paidAt", invoice.getPaidAt().format(formatter)
+                "amount", amountFormatted,
+                "paidAt", paidAt
         );
 
         // ===== STUDENT =====
@@ -182,7 +200,7 @@ public class InvoiceNotificationServiceImpl {
                 values
         );
 
-        // ===== ADMIN (GỬI Y HỆT) =====
+        // ===== ADMIN =====
         List<User> admins = userRepository.findByRole(RoleEnum.ADMIN);
         for (User admin : admins) {
 
@@ -203,6 +221,7 @@ public class InvoiceNotificationServiceImpl {
             );
         }
     }
+
 
 
     @Async
@@ -320,17 +339,27 @@ public class InvoiceNotificationServiceImpl {
     @Async
     public void notifyManualConfirm(Invoice invoice) {
 
+        ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
+
         DateTimeFormatter formatter =
                 DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         String paidAt = invoice.getPaidAt() != null
-                ? invoice.getPaidAt().format(formatter)
-                : LocalDateTime.now().format(formatter);
+                ? invoice.getPaidAt()
+                .atZone(ZoneId.systemDefault())
+                .withZoneSameInstant(vietnamZone)
+                .format(formatter)
+                : ZonedDateTime.now(vietnamZone).format(formatter);
+
 
         String className = invoice.getClasses() != null
                 ? invoice.getClasses().getClassName()
                 : "N/A";
 
+        NumberFormat vnFormat =
+                NumberFormat.getInstance(new Locale("vi", "VN"));
+        String amountFormatted =
+                vnFormat.format(invoice.getTotalAmount());
         // ===== STUDENT =====
         Long studentId = invoice.getUser().getUserId();
 
@@ -339,7 +368,7 @@ public class InvoiceNotificationServiceImpl {
                 "className", className,
                 "invoiceId", String.valueOf(invoice.getInvoiceId()),
                 "invoiceContent", invoice.getInvoiceContent(),
-                "amount", String.valueOf(invoice.getTotalAmount()),
+                "amount", amountFormatted,
                 "paidAt", paidAt
         );
 
@@ -367,7 +396,7 @@ public class InvoiceNotificationServiceImpl {
                     "className", className,
                     "invoiceId", String.valueOf(invoice.getInvoiceId()),
                     "invoiceContent", invoice.getInvoiceContent(),
-                    "amount", String.valueOf(invoice.getTotalAmount()),
+                    "amount", amountFormatted,
                     "paidAt", paidAt
             );
 
