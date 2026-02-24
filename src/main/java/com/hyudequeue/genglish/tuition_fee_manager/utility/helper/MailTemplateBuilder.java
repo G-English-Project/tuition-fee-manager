@@ -77,7 +77,11 @@ public class MailTemplateBuilder {
             case STUDENT_INVOICE_CREATED ->
                     "Đã tạo thành công hóa đơn cho học sinh {studentName}.";
             case OVERDUE_INVOICE_ALERT ->
-                    "Có hóa đơn thanh toán bị quá hạn. Vui lòng kiểm tra.";
+                    "Chào {studentName},<br/><br/>"
+                            + "Hóa đơn '<b>{invoiceContent}</b>' của bạn đã quá hạn <b>{daysOverdue} ngày</b>.<br/>"
+                            + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.<br/><br/>"
+                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
             case STUDENT_REMOVED_FROM_CLASS ->
                     "Học sinh {studentName} đã bị xóa khỏi lớp {className}.";
             case CLASS_TUITION_UPDATED ->
@@ -99,7 +103,11 @@ public class MailTemplateBuilder {
                             + "<p>Email này là biên lai xác nhận thanh toán. "
                             + "Vui lòng lưu lại để đối chiếu khi cần.</p>";
             case STUDENT_INVOICE_OVERDUE ->
-                    "Hóa đơn với nội dung {invoiceContent} đã quá hạn, vui lòng thanh toán sớm.";
+                    "Chào {studentName},<br/><br/>"
+                            + "Hóa đơn '<b>{invoiceContent}</b>' của bạn đã quá hạn <b>{daysOverdue} ngày</b>.<br/>"
+                            + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.<br/><br/>"
+                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
             case STUDENT_ADDED_TO_CLASS ->
                     "Bạn được thêm vào lớp {className}.";
             case STUDENT_REMOVED_FROM_CLASS_STUDENT ->
