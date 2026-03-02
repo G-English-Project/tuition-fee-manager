@@ -378,23 +378,19 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 
     @Query(value = """
         SELECT 
-            CONCAT(year_col, '-', LPAD(month_col, 2, '0')) as period,
-            SUM(total_amount) as revenue
-        FROM (
-            SELECT 
-                YEAR(created_at) as year_col,
-                month as month_col,
-                total_amount
-            FROM invoices
-            WHERE status = 'PAID' AND class_id = :classId
-        ) t
-        GROUP BY year_col, month_col
-        ORDER BY year_col DESC, month_col DESC
+            DATE_FORMAT(COALESCE(paid_at, due_date), '%Y-%m') as period,
+            COALESCE(SUM(total_amount), 0) as revenue
+        FROM invoices
+        WHERE status = 'PAID'
+          AND class_id = :classId
+        GROUP BY DATE_FORMAT(COALESCE(paid_at, due_date), '%Y-%m')
+        ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(YEAR(created_at), '-', month))
+        SELECT COUNT(DISTINCT DATE_FORMAT(COALESCE(paid_at, due_date), '%Y-%m'))
         FROM invoices
-        WHERE status = 'PAID' AND class_id = :classId
+        WHERE status = 'PAID'
+          AND class_id = :classId
         """,
             nativeQuery = true)
     Page<Object[]> sumRevenueGroupByMonthWithClassNative(Pageable pageable, @Param("classId") Long classId);
@@ -412,27 +408,21 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 
     @Query(value = """
         SELECT 
-            CONCAT(year_col, '-', LPAD(month_col, 2, '0')) as period,
-            SUM(total_amount) as revenue
-        FROM (
-            SELECT 
-                YEAR(i.created_at) as year_col,
-                i.month as month_col,
-                i.total_amount
-            FROM invoices i
-            INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
-            WHERE i.status = 'PAID' 
-              AND icm.category_id = :categoryId
-              AND i.class_id = :classId
-        ) t
-        GROUP BY year_col, month_col
-        ORDER BY year_col DESC, month_col DESC
-        """,
-            countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(YEAR(i.created_at), '-', i.month))
+            DATE_FORMAT(COALESCE(i.paid_at, i.due_date), '%Y-%m') as period,
+            COALESCE(SUM(i.total_amount), 0) as revenue
         FROM invoices i
         INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
-        WHERE i.status = 'PAID' 
+        WHERE i.status = 'PAID'
+          AND icm.category_id = :categoryId
+          AND i.class_id = :classId
+        GROUP BY DATE_FORMAT(COALESCE(i.paid_at, i.due_date), '%Y-%m')
+        ORDER BY period DESC
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT DATE_FORMAT(COALESCE(i.paid_at, i.due_date), '%Y-%m'))
+        FROM invoices i
+        INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+        WHERE i.status = 'PAID'
           AND icm.category_id = :categoryId
           AND i.class_id = :classId
         """,
