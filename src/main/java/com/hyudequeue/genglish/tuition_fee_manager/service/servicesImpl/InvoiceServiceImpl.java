@@ -268,10 +268,10 @@ public class InvoiceServiceImpl implements InvoiceService {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("month"), month));
         }
 
-        // ✅ Use createdAt for year filter
+        // ✅ Use dueDate for year filter (kỳ học phí)
         if (year != null) {
             spec = spec.and((root, query, cb) ->
-                    cb.equal(cb.function("YEAR", Integer.class, root.get("createdAt")), year)
+                    cb.equal(cb.function("YEAR", Integer.class, root.get("dueDate")), year)
             );
         }
 
