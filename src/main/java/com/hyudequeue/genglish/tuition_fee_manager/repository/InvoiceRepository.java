@@ -109,8 +109,8 @@ select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.
 )
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-group by function('year', i.dueDate), i.month
-order by function('year', i.dueDate) desc, i.month desc
+group by concat(cast(function('year', i.dueDate) as string), '-', lpad(cast(i.month as string), 2, '0'))
+order by concat(cast(function('year', i.dueDate) as string), '-', lpad(cast(i.month as string), 2, '0')) desc
 """,
             countQuery = """
 select count(distinct concat(
@@ -140,8 +140,8 @@ select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
   and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
-group by function('year', i.dueDate), i.month
-order by function('year', i.dueDate) desc, i.month desc
+group by concat(cast(function('year', i.dueDate) as string), '-', lpad(cast(i.month as string), 2, '0'))
+order by concat(cast(function('year', i.dueDate) as string), '-', lpad(cast(i.month as string), 2, '0')) desc
 """)
     Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategory(
             Pageable pageable,
