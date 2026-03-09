@@ -80,7 +80,7 @@ public class MailTemplateBuilder {
                     "Chào {studentName},<br/><br/>"
                             + "Hóa đơn '<b>{invoiceContent}</b>' của bạn đã quá hạn <b>{daysOverdue} ngày</b>.<br/>"
                             + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.<br/><br/>"
-                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "👉 <a href=\"https://gsenglish.org/huong-dan-thanh-toan-hoc-phi.html\" "
                             + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
             case STUDENT_REMOVED_FROM_CLASS ->
                     "Học sinh {studentName} đã bị xóa khỏi lớp {className}.";
@@ -106,7 +106,7 @@ public class MailTemplateBuilder {
                     "Chào {studentName},<br/><br/>"
                             + "Hóa đơn '<b>{invoiceContent}</b>' của bạn đã quá hạn <b>{daysOverdue} ngày</b>.<br/>"
                             + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.<br/><br/>"
-                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "👉 <a href=\"https://gsenglish.org/huong-dan-thanh-toan-hoc-phi.html\" "
                             + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
             case STUDENT_ADDED_TO_CLASS ->
                     "Bạn được thêm vào lớp {className}.";
@@ -119,14 +119,14 @@ public class MailTemplateBuilder {
                     "Chào {studentName},<br/><br/>"
                             + "Hóa đơn '<b>{invoiceContent}</b>' của bạn đã quá hạn <b>{daysOverdue} ngày</b>.<br/>"
                             + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.<br/><br/>"
-                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "👉 <a href=\"https://gsenglish.org/huong-dan-thanh-toan-hoc-phi.html\" "
                             + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
 
 
             case STUDENT_MANUAL_REMINDER ->
                     "Chào {studentName},<br/><br/>"
                             + "Bạn vui lòng kiểm tra và hoàn tất thanh toán cho hóa đơn '<b>{invoiceContent}</b>' trong thời gian sớm nhất.<br/><br/>"
-                            + "👉 <a href=\"https://gsenglish.notion.site/H-ng-d-n-Thanh-to-n-h-c-ph-26d2662ad004809ea49bee1ab360dbf2\" "
+                            + "👉 <a href=\"https://gsenglish.org/huong-dan-thanh-toan-hoc-phi.html\" "
                             + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
 
 
