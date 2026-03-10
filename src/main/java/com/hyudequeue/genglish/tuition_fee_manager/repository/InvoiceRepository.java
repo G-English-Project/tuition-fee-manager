@@ -128,7 +128,8 @@ where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.Invo
 
 
 
-    @Query("""
+    @Query(
+            value = """
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
   concat(
     cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string),
@@ -142,7 +143,18 @@ where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.Invo
   and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
 group by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0'))
 order by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0')) desc
-""")
+""",
+            countQuery = """
+select count(distinct concat(
+  cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string),
+  '-',
+  lpad(cast(i.month as string), 2, '0')
+))
+from Invoice i
+where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
+  and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
+"""
+    )
     Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategory(
             Pageable pageable,
             @Param("categoryId") Long categoryId
