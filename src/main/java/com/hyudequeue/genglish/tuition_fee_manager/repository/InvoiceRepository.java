@@ -101,7 +101,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
             value = """
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
   concat(
-    cast(function('year', i.dueDate) as string),
+    cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string),
     '-',
     lpad(cast(i.month as string), 2, '0')
   ),
@@ -109,12 +109,12 @@ select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.
 )
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-group by concat(cast(function('year', i.dueDate) as string), '-', lpad(cast(i.month as string), 2, '0'))
-order by concat(cast(function('year', i.dueDate) as string), '-', lpad(cast(i.month as string), 2, '0')) desc
+group by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0'))
+order by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0')) desc
 """,
             countQuery = """
 select count(distinct concat(
-  cast(function('year', i.dueDate) as string),
+  cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string),
   '-',
   lpad(cast(i.month as string), 2, '0')
 ))
@@ -131,7 +131,7 @@ where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.Invo
     @Query("""
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
   concat(
-    cast(function('year', i.dueDate) as string),
+    cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string),
     '-',
     lpad(cast(i.month as string), 2, '0')
   ),
@@ -140,8 +140,8 @@ select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
   and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
-group by concat(cast(function('year', i.dueDate) as string), '-', lpad(cast(i.month as string), 2, '0'))
-order by concat(cast(function('year', i.dueDate) as string), '-', lpad(cast(i.month as string), 2, '0')) desc
+group by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0'))
+order by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0')) desc
 """)
     Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategory(
             Pageable pageable,
@@ -393,16 +393,16 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 
     @Query(value = """
         SELECT 
-            CONCAT(YEAR(due_date), '-', LPAD(month, 2, '0')) as period,
+            CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0')) as period,
             COALESCE(SUM(total_amount), 0) as revenue
         FROM invoices
         WHERE status = 'PAID'
           AND class_id = :classId
-        GROUP BY YEAR(due_date), month
-        ORDER BY YEAR(due_date) DESC, month DESC
+        GROUP BY CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0'))
+        ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(YEAR(due_date), '-', month))
+        SELECT COUNT(DISTINCT CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', month))
         FROM invoices
         WHERE status = 'PAID'
           AND class_id = :classId
@@ -423,18 +423,18 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 
     @Query(value = """
         SELECT 
-            CONCAT(YEAR(i.due_date), '-', LPAD(i.month, 2, '0')) as period,
+            CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0')) as period,
             COALESCE(SUM(i.total_amount), 0) as revenue
         FROM invoices i
         INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
         WHERE i.status = 'PAID' 
           AND icm.category_id = :categoryId
           AND i.class_id = :classId
-        GROUP BY YEAR(i.due_date), i.month
-        ORDER BY YEAR(i.due_date) DESC, i.month DESC
+        GROUP BY CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0'))
+        ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(YEAR(i.due_date), '-', i.month))
+        SELECT COUNT(DISTINCT CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', i.month))
         FROM invoices i
         INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
         WHERE i.status = 'PAID'
