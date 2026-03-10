@@ -99,30 +99,32 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     }
     @Query(
             value = """
-select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  concat(
-    cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string),
-    '-',
-    lpad(cast(i.month as string), 2, '0')
-  ),
-  sum(cast(i.totalAmount as big_decimal))
-)
-from Invoice i
-where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-group by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0'))
-order by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0')) desc
-""",
+        SELECT
+            CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0')) as period,
+            COALESCE(SUM(total_amount), 0) as revenue
+        FROM invoices
+        WHERE status = 'PAID'
+        GROUP BY CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0'))
+        ORDER BY period DESC
+        """,
             countQuery = """
-select count(distinct concat(
-  cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string),
-  '-',
-  lpad(cast(i.month as string), 2, '0')
-))
-from Invoice i
-where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-"""
-    )
-    Page<RevenueSummaryDto> sumRevenueGroupByMonth(Pageable pageable);
+        SELECT COUNT(DISTINCT CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', month))
+        FROM invoices
+        WHERE status = 'PAID'
+        """,
+            nativeQuery = true)
+    Page<Object[]> sumRevenueGroupByMonthNative(Pageable pageable);
+
+    default Page<RevenueSummaryDto> sumRevenueGroupByMonth(Pageable pageable) {
+        Page<Object[]> results = sumRevenueGroupByMonthNative(pageable);
+        List<RevenueSummaryDto> dtos = results.getContent().stream()
+                .map(row -> new RevenueSummaryDto(
+                        (String) row[0],
+                        ((BigDecimal) row[1]).intValue()
+                ))
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, results.getTotalElements());
+    }
 
 
 
@@ -130,35 +132,38 @@ where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.Invo
 
     @Query(
             value = """
-select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  concat(
-    cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string),
-    '-',
-    lpad(cast(i.month as string), 2, '0')
-  ),
-  sum(cast(i.totalAmount as big_decimal))
-)
-from Invoice i
-where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-  and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
-group by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0'))
-order by concat(cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string), '-', lpad(cast(i.month as string), 2, '0')) desc
-""",
+        SELECT
+            CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0')) as period,
+            COALESCE(SUM(i.total_amount), 0) as revenue
+        FROM invoices i
+        LEFT JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+            AND (:categoryId IS NULL OR icm.category_id = :categoryId)
+        WHERE i.status = 'PAID'
+          AND (:categoryId IS NULL OR icm.invoice_id IS NOT NULL)
+        GROUP BY CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0'))
+        ORDER BY period DESC
+        """,
             countQuery = """
-select count(distinct concat(
-  cast(case when i.month > function('month', i.dueDate) then function('year', i.dueDate) - 1 else function('year', i.dueDate) end as string),
-  '-',
-  lpad(cast(i.month as string), 2, '0')
-))
-from Invoice i
-where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-  and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
-"""
-    )
-    Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategory(
-            Pageable pageable,
-            @Param("categoryId") Long categoryId
-    );
+        SELECT COUNT(DISTINCT CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', i.month))
+        FROM invoices i
+        LEFT JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
+            AND (:categoryId IS NULL OR icm.category_id = :categoryId)
+        WHERE i.status = 'PAID'
+          AND (:categoryId IS NULL OR icm.invoice_id IS NOT NULL)
+        """,
+            nativeQuery = true)
+    Page<Object[]> sumRevenueGroupByMonthWithCategoryNative(Pageable pageable, @Param("categoryId") Long categoryId);
+
+    default Page<RevenueSummaryDto> sumRevenueGroupByMonthWithCategory(Pageable pageable, Long categoryId) {
+        Page<Object[]> results = sumRevenueGroupByMonthWithCategoryNative(pageable, categoryId);
+        List<RevenueSummaryDto> dtos = results.getContent().stream()
+                .map(row -> new RevenueSummaryDto(
+                        (String) row[0],
+                        ((BigDecimal) row[1]).intValue()
+                ))
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, results.getTotalElements());
+    }
 
 
 
