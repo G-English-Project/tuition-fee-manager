@@ -27,6 +27,8 @@ public class EmailServiceImpl {
             Map<String, String> values
     ) {
         try {
+            // DEBUG
+            System.out.println("Mail values: " + values);
             // Build subject & HTML body
             String subject = "Mail from G's English";
             String body = MailTemplateBuilder.buildHtml(template, values);

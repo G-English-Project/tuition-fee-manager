@@ -696,8 +696,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         );
     }
 
-    @Async
     @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Bangkok")
+    @Transactional
     public void sendOverdueRemindersAutomatically() {
         LocalDate today = LocalDate.now();
         List<Invoice> overdueInvoices = invoiceRepository.findByStatus(InvoiceStatusEnum.OVERDUE);

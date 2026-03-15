@@ -63,23 +63,33 @@ public class InvoiceOverdueMarker {
                 invoiceRepository.mapUserToOverdueInvoiceContents(targetInvoiceIds);
 
         userToInvoiceContents.forEach((userId, contents) -> {
-            String joined = String.join(", ", contents);
-            Map<String, String> values = Map.of("invoiceContent", joined);
-
-            String subject = NotificationTemplateBuilder.buildSubject(
-                    NotificationTemplateEnum.STUDENT_INVOICE_OVERDUE, values);
-            String body = NotificationTemplateBuilder.buildBody(
-                    NotificationTemplateEnum.STUDENT_INVOICE_OVERDUE, values);
-
-            notificationService.createNotification(userId, subject, body);
 
             userRepository.findById(userId).ifPresent(student -> {
+
+                String joined = String.join(", ", contents);
+
+                Map<String, String> values = Map.of(
+                        "studentName", student.getFullName(),
+                        "invoiceContent", joined
+                );
+
+                String subject = NotificationTemplateBuilder.buildSubject(
+                        NotificationTemplateEnum.STUDENT_INVOICE_OVERDUE, values);
+
+                String body = NotificationTemplateBuilder.buildBody(
+                        NotificationTemplateEnum.STUDENT_INVOICE_OVERDUE, values);
+
+                // Notification trong hệ thống
+                notificationService.createNotification(userId, subject, body);
+
+                // Email
                 emailService.sendNotificationEmail(
                         student.getEmail(),
                         NotificationTemplateEnum.STUDENT_INVOICE_OVERDUE,
                         values
                 );
             });
+
         });
     }
 }
