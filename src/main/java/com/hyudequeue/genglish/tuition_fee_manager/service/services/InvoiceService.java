@@ -51,6 +51,8 @@ public interface InvoiceService {
                                             List<InvoiceStatusEnum> status,
                                             Integer month,
                                             Integer year,
+                                            LocalDate paidFromDate,
+                                            LocalDate paidToDate,
                                             Long classId,
                                             List<Long> categoryIds,
                                             String username);

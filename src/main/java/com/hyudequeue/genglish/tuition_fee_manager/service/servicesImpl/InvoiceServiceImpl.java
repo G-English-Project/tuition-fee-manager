@@ -253,6 +253,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             List<InvoiceStatusEnum> status,
             Integer month,
             Integer year,
+            LocalDate paidFromDate,
+            LocalDate paidToDate,
             Long classId,
             List<Long> categoryIds,
             String username
@@ -272,6 +274,20 @@ public class InvoiceServiceImpl implements InvoiceService {
         if (year != null) {
             spec = spec.and((root, query, cb) ->
                     cb.equal(cb.function("YEAR", Integer.class, root.get("dueDate")), year)
+            );
+        }
+
+        if (paidFromDate != null) {
+            LocalDateTime paidFromDateTime = paidFromDate.atStartOfDay();
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("paidAt"), paidFromDateTime)
+            );
+        }
+
+        if (paidToDate != null) {
+            LocalDateTime paidToDateTimeExclusive = paidToDate.plusDays(1).atStartOfDay();
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThan(root.get("paidAt"), paidToDateTimeExclusive)
             );
         }
 

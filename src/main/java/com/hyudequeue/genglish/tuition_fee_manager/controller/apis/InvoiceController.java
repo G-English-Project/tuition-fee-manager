@@ -113,12 +113,21 @@ public class InvoiceController {
             @RequestParam(required = false) List<InvoiceStatusEnum> status,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate paidFromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate paidToDate,
             @RequestParam(required = false) Long classId,
             @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) String username
     ) {
+        if (paidFromDate != null && paidToDate != null && paidFromDate.isAfter(paidToDate)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "paidFromDate must be before or equal to paidToDate"
+            );
+        }
+
         return ApiResp.success(
-                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, classId, categoryIds, username)
+                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, paidFromDate, paidToDate, classId, categoryIds, username)
         );
     }
 
