@@ -53,6 +53,7 @@ public interface InvoiceService {
                                             Integer year,
                                             LocalDate paidFromDate,
                                             LocalDate paidToDate,
+                                            LocalDate dueDate,
                                             Long classId,
                                             List<Long> categoryIds,
                                             String username);

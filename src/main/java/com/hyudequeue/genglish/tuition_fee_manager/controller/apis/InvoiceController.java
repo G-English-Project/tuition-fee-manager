@@ -115,6 +115,7 @@ public class InvoiceController {
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate paidFromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate paidToDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDate,
             @RequestParam(required = false) Long classId,
             @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) String username
@@ -127,7 +128,7 @@ public class InvoiceController {
         }
 
         return ApiResp.success(
-                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, paidFromDate, paidToDate, classId, categoryIds, username)
+                invoiceService.getAllInvoices(PageRequest.of(page, size), status, month, year, paidFromDate, paidToDate, dueDate, classId, categoryIds, username)
         );
     }
 

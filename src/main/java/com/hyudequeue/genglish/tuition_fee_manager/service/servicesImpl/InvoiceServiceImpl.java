@@ -255,6 +255,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             Integer year,
             LocalDate paidFromDate,
             LocalDate paidToDate,
+            LocalDate dueDate,
             Long classId,
             List<Long> categoryIds,
             String username
@@ -287,6 +288,12 @@ public class InvoiceServiceImpl implements InvoiceService {
             LocalDateTime paidToDateTimeExclusive = paidToDate.plusDays(1).atStartOfDay();
             spec = spec.and((root, query, cb) ->
                     cb.lessThan(root.get("paidAt"), paidToDateTimeExclusive)
+            );
+        }
+
+        if (dueDate != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("dueDate"), dueDate)
             );
         }
 
