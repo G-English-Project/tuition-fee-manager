@@ -43,6 +43,8 @@ import java.util.stream.Collectors;
 @Service
 public class InvoiceServiceImpl implements InvoiceService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(InvoiceServiceImpl.class);
+
     private final InvoiceRepository invoiceRepository;
     private final UserRepository userRepository;
     private final ClassRepository classRepository;
@@ -715,6 +717,14 @@ public class InvoiceServiceImpl implements InvoiceService {
             // Gửi lại mail sau mỗi 10 ngày: 10, 20, 30,...
             if (daysOverdue >= 10 && daysOverdue % 10 == 0) {
                 User student = invoice.getUser();
+
+                log.info("Sending STUDENT_OVERDUE_REMINDER | Time: {} | Student Name: {} | Student ID: {} | Student Email: {} | Invoice ID: {} | Days Overdue: {}",
+                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                        student.getFullName(),
+                        student.getUserId(),
+                        student.getEmail(),
+                        invoice.getInvoiceId(),
+                        daysOverdue);
 
                 Map<String, String> values = Map.of(
                         "studentName", student.getFullName(),
