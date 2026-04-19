@@ -120,7 +120,8 @@ public class MailTemplateBuilder {
                             + "Hóa đơn '<b>{invoiceContent}</b>' của bạn đã quá hạn <b>{daysOverdue} ngày</b>.<br/>"
                             + "Vui lòng thanh toán sớm để tránh gián đoạn việc học.<br/><br/>"
                             + "👉 <a href=\"https://gsenglish.org/huong-dan-thanh-toan-hoc-phi.html\" "
-                            + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a>";
+                            + "target=\"_blank\">Hướng dẫn đăng nhập & thanh toán học phí</a><br/><br/>"
+                            + "<i>(Nếu bạn đã trả tiền vui lòng bỏ qua mail này)</i>";
 
 
             case STUDENT_MANUAL_REMINDER ->
