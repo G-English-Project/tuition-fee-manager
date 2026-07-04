@@ -24,6 +24,17 @@ public class PayOSConfig {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    // Health-check status for each gateway, updated by PayOSHealthCheckCron
+    private Boolean gate1Healthy;
+    private LocalDateTime gate1LastCheckedAt;
+    @Column(columnDefinition = "TEXT")
+    private String gate1LastError;
+
+    private Boolean gate2Healthy;
+    private LocalDateTime gate2LastCheckedAt;
+    @Column(columnDefinition = "TEXT")
+    private String gate2LastError;
+
     @PrePersist
     @PreUpdate
     private void onUpdate() {

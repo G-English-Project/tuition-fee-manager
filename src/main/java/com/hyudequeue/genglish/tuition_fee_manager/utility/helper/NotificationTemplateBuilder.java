@@ -48,6 +48,9 @@ public class NotificationTemplateBuilder {
             case STUDENT_OVERDUE_REMINDER -> "Nhắc nhở học phí còn nợ sau 10 ngày";
             case STUDENT_MANUAL_REMINDER -> "Nhắc học phí chưa thanh toán";
             case FEEDBACK_REMINDER -> "Nhắc nhở điền feedback định kỳ";
+            // --- ADMIN ---
+            case PAYOS_GATEWAY_DOWN -> "⚠️ Cổng thanh toán {gateLabel} đang gặp lỗi";
+            case PAYOS_GATEWAY_RECOVERED -> "✅ Cổng thanh toán {gateLabel} đã hoạt động trở lại";
 
             default -> "Thông báo hệ thống";
         };
@@ -98,6 +101,12 @@ public class NotificationTemplateBuilder {
             case FEEDBACK_REMINDER ->
                     "Chào {studentName}, đã đến lúc bạn điền form góp ý sau 2 tháng học. "
                             + "Vui lòng dành ít phút để chia sẻ cảm nhận của bạn tại link sau: {feedbackLink}";
+            // --- ADMIN ---
+            case PAYOS_GATEWAY_DOWN ->
+                    "Cổng thanh toán {gateLabel} đang gặp lỗi và có thể khiến học sinh không thanh toán được. "
+                            + "Chi tiết lỗi: {errorMessage}. Vui lòng vào trang Cấu hình để kiểm tra và chuyển sang cổng dự phòng nếu cần.";
+            case PAYOS_GATEWAY_RECOVERED ->
+                    "Cổng thanh toán {gateLabel} đã hoạt động bình thường trở lại.";
             default -> "[Không tìm thấy nội dung thông báo]";
         };
     }

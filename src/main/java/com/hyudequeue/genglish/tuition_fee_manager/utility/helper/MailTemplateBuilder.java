@@ -53,6 +53,8 @@ public class MailTemplateBuilder {
             case STUDENT_OVERDUE_REMINDER -> "Nhắc nhở học phí còn nợ sau 10 ngày";
             case STUDENT_MANUAL_REMINDER -> "Nhắc học phí chưa thanh toán";
             case FEEDBACK_REMINDER -> "Nhắc nhở điền feedback định kỳ";
+            case PAYOS_GATEWAY_DOWN -> "⚠️ Cổng thanh toán {gateLabel} đang gặp lỗi";
+            case PAYOS_GATEWAY_RECOVERED -> "✅ Cổng thanh toán {gateLabel} đã hoạt động trở lại";
 
             default -> "Thông báo hệ thống";
         };
@@ -136,6 +138,16 @@ public class MailTemplateBuilder {
                             + "Đã 2 tháng kể từ lần góp ý gần nhất. Trung tâm rất mong nhận được chia sẻ của bạn.<br/>"
                             + "Vui lòng điền form tại đây:<br/><b>{feedbackLink}</b><br/><br/>"
                             + "Xin cảm ơn bạn!";
+
+            case PAYOS_GATEWAY_DOWN ->
+                    "<h3>⚠️ Cổng thanh toán PayOS gặp lỗi</h3>"
+                            + "<p>Cổng thanh toán <b>{gateLabel}</b> đang gặp lỗi và có thể khiến học sinh "
+                            + "không thanh toán được.</p>"
+                            + "<p><b>Chi tiết lỗi:</b> {errorMessage}</p>"
+                            + "<p>Vui lòng vào trang Cấu hình để kiểm tra và chuyển sang cổng dự phòng nếu cần.</p>";
+            case PAYOS_GATEWAY_RECOVERED ->
+                    "<h3>✅ Cổng thanh toán PayOS đã hoạt động trở lại</h3>"
+                            + "<p>Cổng thanh toán <b>{gateLabel}</b> đã hoạt động bình thường trở lại.</p>";
 
             default -> "[Không tìm thấy nội dung thông báo]";
         };

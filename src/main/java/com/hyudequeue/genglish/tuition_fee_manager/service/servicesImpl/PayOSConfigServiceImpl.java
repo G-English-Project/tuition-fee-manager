@@ -33,7 +33,36 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
                 .activeSecret(config.getActiveSecret())
                 .activeSecretLabel(getSecretLabel(config.getActiveSecret()))
                 .updatedAt(config.getUpdatedAt())
+                .gate1Healthy(config.getGate1Healthy())
+                .gate1LastCheckedAt(config.getGate1LastCheckedAt())
+                .gate1LastError(config.getGate1LastError())
+                .gate2Healthy(config.getGate2Healthy())
+                .gate2LastCheckedAt(config.getGate2LastCheckedAt())
+                .gate2LastError(config.getGate2LastError())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public GatewayHealthCheckResult updateGatewayHealth(int gateNumber, boolean healthy, String errorMessage) {
+        PayOSConfig config = getOrCreateConfig();
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+
+        boolean previousHealthy;
+        if (gateNumber == 1) {
+            previousHealthy = config.getGate1Healthy() == null || config.getGate1Healthy();
+            config.setGate1Healthy(healthy);
+            config.setGate1LastCheckedAt(now);
+            config.setGate1LastError(errorMessage);
+        } else {
+            previousHealthy = config.getGate2Healthy() == null || config.getGate2Healthy();
+            config.setGate2Healthy(healthy);
+            config.setGate2LastCheckedAt(now);
+            config.setGate2LastError(errorMessage);
+        }
+        payOSConfigRepository.save(config);
+
+        return new GatewayHealthCheckResult(gateNumber, previousHealthy, healthy);
     }
 
     @Override

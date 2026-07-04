@@ -15,5 +15,13 @@ public class PayOSConfigResponse {
     private Integer activeSecret;
     private String activeSecretLabel;
     private LocalDateTime updatedAt;
+
+    private Boolean gate1Healthy;
+    private LocalDateTime gate1LastCheckedAt;
+    private String gate1LastError;
+
+    private Boolean gate2Healthy;
+    private LocalDateTime gate2LastCheckedAt;
+    private String gate2LastError;
 }
 

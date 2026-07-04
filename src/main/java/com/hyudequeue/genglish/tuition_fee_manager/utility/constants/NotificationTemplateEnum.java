@@ -82,6 +82,20 @@ public enum NotificationTemplateEnum {
     NEW_FEEDBACK_RECEIVED,
     STUDENT_OVERDUE_REMINDER,   // Nhắc tự động sau mỗi 10 ngày
     STUDENT_MANUAL_REMINDER,   // Nhắc thủ công do admin gửi
-    FEEDBACK_REMINDER
+    FEEDBACK_REMINDER,
+
+    // =============================
+    // ========== ADMIN ============
+    // =============================
+
+    /**
+     * Cổng thanh toán PayOS gặp lỗi khi health check
+     */
+    PAYOS_GATEWAY_DOWN,
+
+    /**
+     * Cổng thanh toán PayOS đã hoạt động trở lại sau khi bị lỗi
+     */
+    PAYOS_GATEWAY_RECOVERED
 
 }
