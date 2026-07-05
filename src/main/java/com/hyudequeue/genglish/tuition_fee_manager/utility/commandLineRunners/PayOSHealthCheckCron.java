@@ -38,7 +38,6 @@ public class PayOSHealthCheckCron {
     private static final String WEBHOOK_URL = "https://portal-internal.gsenglish.org/api/v1/payment/webhook";
     private static final int MAX_ERROR_LENGTH = 500;
 
-    private final PayOSProperties payOSProperties;
     private final PayOSProperties payOSProperties2;
     private final PayOSConfigService payOSConfigService;
     private final UserRepository userRepository;
@@ -46,13 +45,11 @@ public class PayOSHealthCheckCron {
     private final EmailServiceImpl emailService;
 
     public PayOSHealthCheckCron(
-            PayOSProperties payOSProperties,
             @Qualifier("payOSProperties2") PayOSProperties payOSProperties2,
             PayOSConfigService payOSConfigService,
             UserRepository userRepository,
             NotificationService notificationService,
             EmailServiceImpl emailService) {
-        this.payOSProperties = payOSProperties;
         this.payOSProperties2 = payOSProperties2;
         this.payOSConfigService = payOSConfigService;
         this.userRepository = userRepository;
@@ -60,9 +57,10 @@ public class PayOSHealthCheckCron {
         this.emailService = emailService;
     }
 
+    // Gate 1 (Nguyen Van Gioi) is no longer used by the customer, so it is
+    // intentionally excluded from the health check to avoid false alarms.
     @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Ho_Chi_Minh")
     public void checkGateways() {
-        checkGateway(1, payOSProperties, "Payment Gate 1");
         checkGateway(2, payOSProperties2, "Payment Gate 2");
     }
 
