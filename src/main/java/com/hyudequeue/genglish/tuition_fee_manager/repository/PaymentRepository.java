@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findTopByInvoice_InvoiceIdOrderByCreatedAtDesc(Long invoiceId);
 
+    Optional<Payment> findTopByOrderByCreatedAtDesc();
+
 }
