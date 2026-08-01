@@ -2,10 +2,13 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Teacher.request.TeacherRequestDto;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Teacher.response.TeacherResponseDto;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ResourceTypeEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Teacher;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.TeacherRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.ActionLogService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.TeacherService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.ActionLogDetail;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +28,7 @@ public class TeacherServiceImpl implements TeacherService {
 
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
+    private final ActionLogService actionLogService;
 
     @Override
     public TeacherResponseDto createTeacher(TeacherRequestDto request) {
@@ -53,6 +57,12 @@ public class TeacherServiceImpl implements TeacherService {
                 .build();
 
         Teacher savedTeacher = teacherRepository.save(teacher);
+        actionLogService.created(
+                ResourceTypeEnum.TEACHER,
+                savedTeacher.getId(),
+                savedTeacher.getName(),
+                ActionLogDetail.of("userId", savedTeacher.getUserId())
+        );
         return TeacherResponseDto.toDto(savedTeacher);
     }
 
@@ -109,15 +119,25 @@ public class TeacherServiceImpl implements TeacherService {
         if (request.getAchievements() != null) teacher.setAchievements(request.getAchievements());
 
         Teacher updatedTeacher = teacherRepository.save(teacher);
+        actionLogService.updated(
+                ResourceTypeEnum.TEACHER,
+                updatedTeacher.getId(),
+                updatedTeacher.getName()
+        );
         return TeacherResponseDto.toDto(updatedTeacher);
     }
 
     @Override
     public void deleteTeacher(Long id) {
-        if (!teacherRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatusCode.valueOf(404), "Teacher not found with id: " + id);
-        }
+        Teacher teacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Teacher not found with id: " + id));
+        String name = teacher.getName();
         teacherRepository.deleteById(id);
+        actionLogService.deleted(
+                ResourceTypeEnum.TEACHER,
+                id,
+                name
+        );
     }
 
     @Override
@@ -170,6 +190,12 @@ public class TeacherServiceImpl implements TeacherService {
         
         teacher.setRating(rating);
         Teacher updatedTeacher = teacherRepository.save(teacher);
+        actionLogService.updated(
+                ResourceTypeEnum.TEACHER,
+                updatedTeacher.getId(),
+                updatedTeacher.getName(),
+                ActionLogDetail.of("rating", rating)
+        );
         return TeacherResponseDto.toDto(updatedTeacher);
     }
 }

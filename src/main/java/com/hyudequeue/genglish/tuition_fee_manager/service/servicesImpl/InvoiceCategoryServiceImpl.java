@@ -2,9 +2,12 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.InvoiceCategoryResponseDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.CategoryStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ResourceTypeEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.InvoiceCategory;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceCategoryRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.ActionLogService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceCategoryService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.ActionLogDetail;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,9 +21,11 @@ import java.util.List;
 public class InvoiceCategoryServiceImpl implements InvoiceCategoryService {
 
     private final InvoiceCategoryRepository repository;
+    private final ActionLogService actionLogService;
 
-    public InvoiceCategoryServiceImpl(InvoiceCategoryRepository repository) {
+    public InvoiceCategoryServiceImpl(InvoiceCategoryRepository repository, ActionLogService actionLogService) {
         this.repository = repository;
+        this.actionLogService = actionLogService;
     }
 
     @Override
@@ -37,7 +42,13 @@ public class InvoiceCategoryServiceImpl implements InvoiceCategoryService {
                 .status(CategoryStatusEnum.ACTIVE)
                 .build();
 
-        return InvoiceCategoryResponseDTO.toDto(repository.save(entity));
+        InvoiceCategory saved = repository.save(entity);
+        actionLogService.created(
+                ResourceTypeEnum.INVOICE_CATEGORY,
+                saved.getCategoryId(),
+                saved.getName()
+        );
+        return InvoiceCategoryResponseDTO.toDto(saved);
     }
 
     @Override
@@ -58,7 +69,13 @@ public class InvoiceCategoryServiceImpl implements InvoiceCategoryService {
             entity.setColor(colorHex);
         }
 
-        return InvoiceCategoryResponseDTO.toDto(repository.save(entity));
+        InvoiceCategory saved = repository.save(entity);
+        actionLogService.updated(
+                ResourceTypeEnum.INVOICE_CATEGORY,
+                saved.getCategoryId(),
+                saved.getName()
+        );
+        return InvoiceCategoryResponseDTO.toDto(saved);
     }
 
     @Override
@@ -69,6 +86,12 @@ public class InvoiceCategoryServiceImpl implements InvoiceCategoryService {
         if (entity.getStatus() == CategoryStatusEnum.INACTIVE) return;
         entity.setStatus(CategoryStatusEnum.INACTIVE);
         repository.save(entity);
+        actionLogService.deleted(
+                ResourceTypeEnum.INVOICE_CATEGORY,
+                entity.getCategoryId(),
+                entity.getName(),
+                ActionLogDetail.of("status", "INACTIVE")
+        );
     }
 
     @Override

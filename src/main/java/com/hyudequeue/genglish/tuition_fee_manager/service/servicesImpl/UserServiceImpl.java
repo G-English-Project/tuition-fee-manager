@@ -9,13 +9,16 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.re
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.User.response.*;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
-import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
-import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
-import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ResourceTypeEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.ActionLogService;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.UserService;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.CommonConstants;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.ActionLogDetail;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.GenerateId;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.PasswordUtils;
 import jakarta.transaction.Transactional;
@@ -37,10 +40,16 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ClassEnrollmentRepository classEnrollmentRepository;
+    private final ActionLogService actionLogService;
 
-    public UserServiceImpl(UserRepository userRepository, ClassEnrollmentRepository classEnrollmentRepository) {
+    public UserServiceImpl(
+            UserRepository userRepository,
+            ClassEnrollmentRepository classEnrollmentRepository,
+            ActionLogService actionLogService
+    ) {
         this.userRepository = userRepository;
         this.classEnrollmentRepository = classEnrollmentRepository;
+        this.actionLogService = actionLogService;
     }
 
     @Override
@@ -79,6 +88,12 @@ public class UserServiceImpl implements UserService {
         entity.setUpdatedAt(LocalDateTime.now());
 
         User saved = userRepository.save(entity);
+        actionLogService.created(
+                ResourceTypeEnum.USER,
+                saved.getUserId(),
+                saved.getFullName(),
+                ActionLogDetail.of("role", role.name(), "email", saved.getEmail())
+        );
         return UserResponseDto.toDto(saved);
     }
 
@@ -255,6 +270,12 @@ public class UserServiceImpl implements UserService {
         existingUser.setUpdatedAt(userDto.getUpdatedAt() != null ? userDto.getUpdatedAt() : LocalDateTime.now());
 
         User updatedUser = userRepository.save(existingUser);
+        actionLogService.updated(
+                ResourceTypeEnum.USER,
+                updatedUser.getUserId(),
+                updatedUser.getFullName(),
+                ActionLogDetail.of("email", updatedUser.getEmail())
+        );
         return UserResponseDto.toDto(updatedUser);
     }
 
@@ -271,6 +292,12 @@ public class UserServiceImpl implements UserService {
         user.setStatus(UserStatusEnum.DISABLED);
         user.setUpdatedAt(now);
         userRepository.save(user);
+        actionLogService.deleted(
+                ResourceTypeEnum.USER,
+                user.getUserId(),
+                user.getFullName(),
+                ActionLogDetail.of("unenrolledClasses", affected)
+        );
     }
 
     @Override
@@ -441,6 +468,13 @@ public class UserServiceImpl implements UserService {
             }
         }
 
+        actionLogService.bulkCreated(
+                ResourceTypeEnum.USER,
+                null,
+                "bulk students",
+                ActionLogDetail.of("success", successCount, "failed", request.getStudents().size() - successCount)
+        );
+
         return BulkUserCreateResponseDto.builder()
                 .totalRequested(request.getStudents().size())
                 .successfullyCreated(successCount)
@@ -463,6 +497,12 @@ public class UserServiceImpl implements UserService {
         user.setStudentStatus(studentStatus);
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+        actionLogService.updated(
+                ResourceTypeEnum.USER,
+                user.getUserId(),
+                user.getFullName(),
+                ActionLogDetail.of("studentStatus", studentStatus.name())
+        );
     }
 
     @Override
@@ -532,6 +572,12 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+        actionLogService.updated(
+                ResourceTypeEnum.USER,
+                user.getUserId(),
+                user.getFullName(),
+                ActionLogDetail.of("role", role.name())
+        );
     }
 
 }

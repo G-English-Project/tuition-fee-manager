@@ -14,9 +14,11 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceCategoryRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.InvoiceRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.ActionLogService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.InvoiceService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.constants.NotificationTemplateEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.ActionLogDetail;
 import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.NotificationTemplateBuilder;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -54,6 +56,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceCategoryRepository categoryRepository;
     private final InvoiceNotificationServiceImpl invoiceNotificationService;
     private final InvoiceCategoryRepository invoiceCategoryRepository;
+    private final ActionLogService actionLogService;
 
     public InvoiceServiceImpl(InvoiceRepository invoiceRepository,
                               UserRepository userRepository,
@@ -63,7 +66,8 @@ public class InvoiceServiceImpl implements InvoiceService {
                               EmailServiceImpl emailService,
                               InvoiceCategoryRepository categoryRepository,
                               InvoiceNotificationServiceImpl invoiceNotificationService,
-                              InvoiceCategoryRepository invoiceCategoryRepository) {
+                              InvoiceCategoryRepository invoiceCategoryRepository,
+                              ActionLogService actionLogService) {
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
         this.classRepository = classRepository;
@@ -73,6 +77,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         this.categoryRepository = categoryRepository;
         this.invoiceNotificationService = invoiceNotificationService;
         this.invoiceCategoryRepository = invoiceCategoryRepository;
+        this.actionLogService = actionLogService;
     }
 
     // =========================
@@ -128,6 +133,13 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setItems(invoiceItems);
 
         Invoice saved = invoiceRepository.save(invoice);
+
+        actionLogService.created(
+                ResourceTypeEnum.INVOICE,
+                saved.getInvoiceId(),
+                user.getFullName(),
+                ActionLogDetail.of("classId", classId, "month", month, "amount", saved.getTotalAmount())
+        );
 
         return InvoiceResponseDto.toDto(saved);
     }
@@ -229,6 +241,13 @@ public class InvoiceServiceImpl implements InvoiceService {
         for (Invoice inv : saved) {
             responseDtos.add(InvoiceResponseDto.toDto(inv));
         }
+
+        actionLogService.bulkCreated(
+                ResourceTypeEnum.INVOICE,
+                classId,
+                classes.getClassName(),
+                ActionLogDetail.of("count", saved.size(), "month", month)
+        );
 
         return new PageImpl<>(responseDtos);
     }
@@ -380,6 +399,11 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         Invoice saved = invoiceRepository.save(invoice);
+        actionLogService.updated(
+                ResourceTypeEnum.INVOICE,
+                saved.getInvoiceId(),
+                saved.getUserName()
+        );
         return InvoiceResponseDto.toDto(saved);
     }
 
@@ -398,6 +422,12 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceNotificationService.notifyInvoiceCancelled(invoice);
 
         invoiceRepository.save(invoice);
+        actionLogService.deleted(
+                ResourceTypeEnum.INVOICE,
+                invoice.getInvoiceId(),
+                invoice.getUserName(),
+                ActionLogDetail.of("status", "CANCELLED")
+        );
     }
 
     // =========================
@@ -416,6 +446,12 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setUpdatedAt(LocalDateTime.now());
 
         invoiceRepository.save(invoice);
+        actionLogService.updated(
+                ResourceTypeEnum.INVOICE,
+                invoice.getInvoiceId(),
+                invoice.getUserName(),
+                ActionLogDetail.of("status", invoiceStatus.name())
+        );
     }
 
     // =========================
@@ -603,6 +639,12 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         // 3️⃣ Gọi async bằng DTO
         invoiceNotificationService.notifyManualConfirm(dto);
+        actionLogService.confirmed(
+                ResourceTypeEnum.INVOICE,
+                invoice.getInvoiceId(),
+                invoice.getUserName(),
+                ActionLogDetail.of("payment", "MANUAL", "status", "PAID")
+        );
     }
 
 
@@ -620,6 +662,12 @@ public class InvoiceServiceImpl implements InvoiceService {
         });
 
         invoiceRepository.saveAll(invoices);
+        actionLogService.deleted(
+                ResourceTypeEnum.INVOICE,
+                null,
+                "bulk soft delete",
+                ActionLogDetail.of("invoiceIds", invoiceIds)
+        );
     }
 
     @Override
@@ -642,6 +690,12 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         // Now delete the invoices
         invoiceRepository.deleteAll(invoices);
+        actionLogService.deleted(
+                ResourceTypeEnum.INVOICE,
+                null,
+                "bulk hard delete",
+                ActionLogDetail.of("invoiceIds", invoiceIds)
+        );
     }
 
     @Override

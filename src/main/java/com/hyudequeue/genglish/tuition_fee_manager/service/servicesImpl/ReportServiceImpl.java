@@ -5,6 +5,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Report.
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Report.response.ReportImageDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Report.response.ReportResponseDTO;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ResourceTypeEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Report;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ReportImage;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.User;
@@ -12,7 +13,9 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ReportImageRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ReportRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.ActionLogService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ReportService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.ActionLogDetail;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +39,7 @@ public class ReportServiceImpl implements ReportService {
     private final UserRepository userRepository;
     private final ClassRepository classesRepository;
     private final InvoiceNotificationServiceImpl invoiceNotificationService;
+    private final ActionLogService actionLogService;
 
     @Override
     public ReportResponseDTO create(CreateReportRequest req) {
@@ -66,6 +70,12 @@ public class ReportServiceImpl implements ReportService {
             upsertImage(report, req.getImageThumbBase64(), req.getImageBase64(), req.getMimeType());
         }
         invoiceNotificationService.notifyReport(report);
+        actionLogService.created(
+                ResourceTypeEnum.REPORT,
+                report.getReportId(),
+                student.getFullName(),
+                ActionLogDetail.of("classId", clazz.getClassId(), "teacherId", teacher.getUserId())
+        );
         return toDto(report);
     }
 
@@ -93,15 +103,28 @@ public class ReportServiceImpl implements ReportService {
                 upsertImage(report, req.getImageThumbBase64(), req.getImageBase64(), req.getMimeType());
             }
         }
-        return toDto(reportRepository.save(report));
+        Report saved = reportRepository.save(report);
+        actionLogService.updated(
+                ResourceTypeEnum.REPORT,
+                saved.getReportId(),
+                saved.getStudent().getFullName()
+        );
+        return toDto(saved);
     }
 
     @Override
     public void delete(Long reportId) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404), "Report not found"));
+        Long id = report.getReportId();
+        String label = report.getStudent() != null ? report.getStudent().getFullName() : null;
         // orphanRemoval=true sẽ xóa ảnh nếu có
         reportRepository.delete(report);
+        actionLogService.deleted(
+                ResourceTypeEnum.REPORT,
+                id,
+                label
+        );
     }
 
     @Override

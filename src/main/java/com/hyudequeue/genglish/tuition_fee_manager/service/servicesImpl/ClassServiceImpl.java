@@ -13,6 +13,7 @@ import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassCategory;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassEnrollment;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Classes;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ClassStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ResourceTypeEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.RoleEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.StudentStatusEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.UserStatusEnum;
@@ -21,8 +22,10 @@ import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassCategoryRepos
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassEnrollmentRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassRepository;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.UserRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.ActionLogService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.NotificationService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.ActionLogDetail;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
@@ -57,7 +60,19 @@ public class ClassServiceImpl implements ClassService {
     private final EmailServiceImpl emailService;
     private final InvoiceNotificationServiceImpl invoiceNotificationService;
     private final ClassCategoryRepository classCategoryRepository;
-    public ClassServiceImpl(ClassEnrollmentRepository classEnrollmentRepository, ClassRepository classesRepository, UserRepository userRepository, NotificationService notificationService, ClassRepository classRepository, EmailServiceImpl emailService, InvoiceNotificationServiceImpl invoiceNotificationService, ClassCategoryRepository classCategoryRepository) {
+    private final ActionLogService actionLogService;
+
+    public ClassServiceImpl(
+            ClassEnrollmentRepository classEnrollmentRepository,
+            ClassRepository classesRepository,
+            UserRepository userRepository,
+            NotificationService notificationService,
+            ClassRepository classRepository,
+            EmailServiceImpl emailService,
+            InvoiceNotificationServiceImpl invoiceNotificationService,
+            ClassCategoryRepository classCategoryRepository,
+            ActionLogService actionLogService
+    ) {
         this.classEnrollmentRepository = classEnrollmentRepository;
         this.classesRepository = classesRepository;
         this.userRepository = userRepository;
@@ -66,6 +81,7 @@ public class ClassServiceImpl implements ClassService {
         this.emailService = emailService;
         this.invoiceNotificationService = invoiceNotificationService;
         this.classCategoryRepository = classCategoryRepository;
+        this.actionLogService = actionLogService;
     }
 
     @Override
@@ -170,7 +186,9 @@ public class ClassServiceImpl implements ClassService {
         }
 
         // Save và return DTO
-        return ClassResponseDto.fromEntity(classesRepository.save(newClass));
+        Classes saved = classesRepository.save(newClass);
+        actionLogService.created(ResourceTypeEnum.CLASS, saved.getClassId(), saved.getClassName());
+        return ClassResponseDto.fromEntity(saved);
     }
 
     @Override
@@ -215,6 +233,7 @@ public class ClassServiceImpl implements ClassService {
         if (isUpdated) {
             existingClass.setUpdatedAt(LocalDateTime.now());
             classesRepository.save(existingClass);
+            actionLogService.updated(ResourceTypeEnum.CLASS, existingClass.getClassId(), existingClass.getClassName());
         }
 
         return ClassResponseDto.fromEntity(existingClass);
@@ -226,6 +245,7 @@ public class ClassServiceImpl implements ClassService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatusCode.valueOf(404),"Class not found"));
         classes.setStatus(ClassStatusEnum.INACTIVE);
         classesRepository.save(classes);
+        actionLogService.deleted(ResourceTypeEnum.CLASS, classes.getClassId(), classes.getClassName(), ActionLogDetail.of("status", "INACTIVE"));
     }
 
     @Override
@@ -244,6 +264,7 @@ public class ClassServiceImpl implements ClassService {
         classes.setUpdatedAt(LocalDateTime.now());
         classesRepository.save(classes);
         invoiceNotificationService.notifyClassFeeUpdated(classes, req.getAmount());
+        actionLogService.updated(ResourceTypeEnum.CLASS, classes.getClassId(), classes.getClassName(), ActionLogDetail.of("amount", req.getAmount()));
         return ClassResponseDto.fromEntity(classes);
     }
 
@@ -282,6 +303,8 @@ public class ClassServiceImpl implements ClassService {
 
         invoiceNotificationService.notifyStudentAssignedToClass(user, classes);
 
+        actionLogService.assigned(ResourceTypeEnum.ENROLLMENT, newEnrollment.getEnrollmentId(), user.getFullName(), ActionLogDetail.of("studentId", studentId, "classId", classId, "className", classes.getClassName()));
+
         return EnrollmentResponseDto.fromEntity(newEnrollment);
     }
 
@@ -309,6 +332,8 @@ public class ClassServiceImpl implements ClassService {
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
         }
+
+        actionLogService.removed(ResourceTypeEnum.ENROLLMENT, enrollment.getEnrollmentId(), user.getFullName(), ActionLogDetail.of("studentId", studentId, "classId", classId));
     }
 
 
@@ -323,6 +348,7 @@ public class ClassServiceImpl implements ClassService {
 
         enrollment.setNote(note);
         enrollment = classEnrollmentRepository.save(enrollment);
+        actionLogService.noted(ResourceTypeEnum.ENROLLMENT, enrollment.getEnrollmentId(), enrollment.getUser().getFullName(), ActionLogDetail.of("classId", classId, "studentId", studentId));
         return UserInClassWithNoteDto.fromEnrollment(enrollment);
     }
 
@@ -407,6 +433,8 @@ public class ClassServiceImpl implements ClassService {
             }
         }
 
+        actionLogService.assigned(ResourceTypeEnum.CLASS, classId, classes.getClassName(), ActionLogDetail.of("success", successfulEnrollments.size(), "failed", failedAssignments.size()));
+
         return MultipleStudentAssignmentResponseDto.builder()
                 .successfulEnrollments(successfulEnrollments)
                 .failedAssignments(failedAssignments)
@@ -426,6 +454,7 @@ public class ClassServiceImpl implements ClassService {
             classes.setStatus(ClassStatusEnum.ACTIVE);
             classes.setUpdatedAt(LocalDateTime.now());
             classesRepository.save(classes);
+            actionLogService.restored(ResourceTypeEnum.CLASS, classes.getClassId(), classes.getClassName());
         }
     }
 
@@ -566,6 +595,8 @@ public class ClassServiceImpl implements ClassService {
             }
         }
 
+        actionLogService.bulkCreated(ResourceTypeEnum.CLASS, classes.getClassId(), classes.getClassName(), ActionLogDetail.of("success", successfulStudents.size(), "failed", failedStudents.size()));
+
         return BulkStudentCreateAndAssignResponseDto.builder()
                 .successfulStudents(successfulStudents)
                 .failedStudents(failedStudents)
@@ -659,6 +690,8 @@ public class ClassServiceImpl implements ClassService {
 
         classesRepository.save(classes);
 
+        actionLogService.assigned(ResourceTypeEnum.CLASS, classes.getClassId(), classes.getClassName(), ActionLogDetail.of("mentorIds", mentorIds));
+
         return ClassResponseDto.fromEntity(classes);
     }
 
@@ -677,6 +710,8 @@ public class ClassServiceImpl implements ClassService {
 
         classes.setUpdatedAt(LocalDateTime.now());
         classesRepository.save(classes);
+
+        actionLogService.removed(ResourceTypeEnum.CLASS, classes.getClassId(), classes.getClassName(), ActionLogDetail.of("mentorId", mentorId));
 
         return ClassResponseDto.fromEntity(classes);
     }

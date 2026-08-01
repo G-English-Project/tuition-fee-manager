@@ -1,8 +1,10 @@
 package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.payosconfig.response.PayOSConfigResponse;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ResourceTypeEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.PayOSConfig;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.PayOSConfigRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.ActionLogService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.PayOSConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 public class PayOSConfigServiceImpl implements PayOSConfigService {
 
     private final PayOSConfigRepository payOSConfigRepository;
+    private final ActionLogService actionLogService;
 
     @Override
     public Integer getActiveSecret() {
@@ -81,6 +84,11 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
         payOSConfigRepository.save(config);
 
         log.info("PayOS secret switched to: {}", secretNumber);
+        actionLogService.switched(
+                ResourceTypeEnum.PAYOS_CONFIG,
+                config.getId(),
+                getSecretLabel(secretNumber)
+        );
 
         return PayOSConfigResponse.builder()
                 .activeSecret(config.getActiveSecret())

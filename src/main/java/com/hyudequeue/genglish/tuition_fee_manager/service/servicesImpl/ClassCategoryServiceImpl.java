@@ -3,8 +3,11 @@ package com.hyudequeue.genglish.tuition_fee_manager.service.servicesImpl;
 import com.hyudequeue.genglish.tuition_fee_manager.controller.model.dtos.Classes.response.ClassCategoryResponseDto;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.ClassCategory;
 import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.CategoryStatusEnum;
+import com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.ResourceTypeEnum;
 import com.hyudequeue.genglish.tuition_fee_manager.repository.ClassCategoryRepository;
+import com.hyudequeue.genglish.tuition_fee_manager.service.services.ActionLogService;
 import com.hyudequeue.genglish.tuition_fee_manager.service.services.ClassCategoryService;
+import com.hyudequeue.genglish.tuition_fee_manager.utility.helper.ActionLogDetail;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +21,7 @@ import java.util.List;
 public class ClassCategoryServiceImpl implements ClassCategoryService {
 
     private final ClassCategoryRepository repository;
+    private final ActionLogService actionLogService;
 
     @Override
     @Transactional
@@ -33,7 +37,13 @@ public class ClassCategoryServiceImpl implements ClassCategoryService {
                 .status(CategoryStatusEnum.ACTIVE)
                 .build();
 
-        return ClassCategoryResponseDto.fromEntity(repository.save(entity));
+        ClassCategory saved = repository.save(entity);
+        actionLogService.created(
+                ResourceTypeEnum.CLASS_CATEGORY,
+                saved.getCategoryId(),
+                saved.getName()
+        );
+        return ClassCategoryResponseDto.fromEntity(saved);
     }
 
     @Override
@@ -54,7 +64,13 @@ public class ClassCategoryServiceImpl implements ClassCategoryService {
             entity.setColor(colorHex);
         }
 
-        return ClassCategoryResponseDto.fromEntity(repository.save(entity));
+        ClassCategory saved = repository.save(entity);
+        actionLogService.updated(
+                ResourceTypeEnum.CLASS_CATEGORY,
+                saved.getCategoryId(),
+                saved.getName()
+        );
+        return ClassCategoryResponseDto.fromEntity(saved);
     }
 
     @Override
@@ -65,6 +81,12 @@ public class ClassCategoryServiceImpl implements ClassCategoryService {
         if (entity.getStatus() == CategoryStatusEnum.INACTIVE) return;
         entity.setStatus(CategoryStatusEnum.INACTIVE);
         repository.save(entity);
+        actionLogService.deleted(
+                ResourceTypeEnum.CLASS_CATEGORY,
+                entity.getCategoryId(),
+                entity.getName(),
+                ActionLogDetail.of("status", "INACTIVE")
+        );
     }
 
     @Override
