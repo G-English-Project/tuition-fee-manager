@@ -59,4 +59,5 @@ jobs:
                 cd /home/huyhoang204205/Documents/tuitionfeemanagementbe
                 echo "${{ secrets.SSH_PASS }}" | sudo -S docker compose pull tuition-fee-backend
                 echo "${{ secrets.SSH_PASS }}" | sudo -S docker compose up -d
+                echo "${{ secrets.SSH_PASS }}" | sudo -S docker image prune -a -f
               EOF

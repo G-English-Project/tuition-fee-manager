@@ -59,4 +59,5 @@ jobs:
                 cd /${{ secrets.SSH_USER_PRODUCTION }}/tuitionfee
                 echo "${{ secrets.SSH_PASS_PRODUCTION }}" | sudo -S docker compose pull ${{ secrets.DOCKER_SERVICE_PRODUCTION }}
                 echo "${{ secrets.SSH_PASS_PRODUCTION }}" | sudo -S docker compose up -d
+                echo "${{ secrets.SSH_PASS_PRODUCTION }}" | sudo -S docker image prune -a -f
               EOF
