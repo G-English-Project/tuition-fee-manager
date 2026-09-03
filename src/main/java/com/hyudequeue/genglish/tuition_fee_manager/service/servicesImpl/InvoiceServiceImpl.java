@@ -666,9 +666,13 @@ public class InvoiceServiceImpl implements InvoiceService {
         );
 
         // 4. Tổng tiền của tháng hiện tại (PAID, UNPAID, OVERDUE)
-        int currentMonth = LocalDate.now().getMonthValue();
-        List<Invoice> currentMonthInvoices = invoiceRepository.findByMonthAndStatusIn(
-                currentMonth,
+        LocalDate now = LocalDate.now();
+        int month = now.getMonthValue();
+        int year = now.getYear();
+
+        List<Invoice> currentMonthInvoices = invoiceRepository.findByMonthAndYearAndStatusIn(
+                month,
+                year,
                 List.of(
                         InvoiceStatusEnum.PAID,
                         InvoiceStatusEnum.UNPAID,
@@ -679,10 +683,6 @@ public class InvoiceServiceImpl implements InvoiceService {
         int currentMonthTotal = currentMonthInvoices.stream()
                 .mapToInt(Invoice::getTotalAmount)
                 .sum();
-
-        LocalDate now = LocalDate.now();
-        int month = now.getMonthValue();
-        int year = now.getYear();
 
         List<Invoice> currentMonthPaid = invoiceRepository.findPaidInvoicesInCurrentMonth(
                 InvoiceStatusEnum.PAID, month, year

@@ -30,6 +30,17 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     Page<Invoice> findByClasses_ClassIdAndStatusNot(Long classId, InvoiceStatusEnum status, Pageable pageable);
     List<Invoice> findByStatus(InvoiceStatusEnum status);
     List<Invoice> findByMonthAndStatusIn(Integer month, List<InvoiceStatusEnum> statuses);
+
+    @Query("SELECT i FROM Invoice i " +
+            "WHERE i.month = :month " +
+            "AND FUNCTION('YEAR', i.dueDate) = :year " +
+            "AND i.status IN :statuses")
+    List<Invoice> findByMonthAndYearAndStatusIn(
+            @Param("month") Integer month,
+            @Param("year") int year,
+            @Param("statuses") List<InvoiceStatusEnum> statuses
+    );
+
     @Query("SELECT i FROM Invoice i " +
             "WHERE i.status = :status " +
             "AND FUNCTION('MONTH', i.paidAt) = :month " +
