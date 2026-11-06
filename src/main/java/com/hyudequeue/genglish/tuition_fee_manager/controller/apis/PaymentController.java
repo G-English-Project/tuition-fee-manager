@@ -84,12 +84,18 @@ public class PaymentController {
             @ApiResponse(responseCode = "200", description = "Webhook processed")
     })
     @PostMapping(WEBHOOK)
-    public ResponseEntity<ApiResp<String>> handleWebhookConfirmPayOs(
+    public ResponseEntity<ApiResp<String>> handleWebhook(
             @RequestBody Webhook webhook
     ) {
         try{
             log.info("Webhook called");
+            // Use active secret for webhook verification
+            Integer activeSecret = payOSConfigService.getActiveSecret();
+            PayOSProperties activeProperties = (activeSecret != null && activeSecret == 2) ? payOSProperties2 : payOSProperties;
+            PayOS payOS = new PayOS(activeProperties.getClientId(), activeProperties.getApiKey(), activeProperties.getChecksumKey());
+            payOS.verifyPaymentWebhookData(webhook);
             log.info("Pass verify");
+            paymentService.handleWebhook(webhook);
             log.info("Webhook success");
             return ApiResp.success("OK");
         }
