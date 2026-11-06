@@ -40,6 +40,7 @@ import java.util.Map;
 public class PaymentServiceImpl implements PaymentService {
     private final PayOSProperties payOSProperties;
     private final PayOSProperties payOSProperties2;
+    private final PayOSProperties payOSProperties3;
     private final PayOSConfigService payOSConfigService;
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
@@ -51,6 +52,7 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentServiceImpl(
             PayOSProperties payOSProperties,
             @org.springframework.beans.factory.annotation.Qualifier("payOSProperties2") PayOSProperties payOSProperties2,
+            @org.springframework.beans.factory.annotation.Qualifier("payOSProperties3") PayOSProperties payOSProperties3,
             PayOSConfigService payOSConfigService,
             PaymentRepository paymentRepository,
             InvoiceRepository invoiceRepository,
@@ -60,6 +62,7 @@ public class PaymentServiceImpl implements PaymentService {
             InvoiceNotificationServiceImpl invoiceNotificationService) {
         this.payOSProperties = payOSProperties;
         this.payOSProperties2 = payOSProperties2;
+        this.payOSProperties3 = payOSProperties3;
         this.payOSConfigService = payOSConfigService;
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
@@ -71,7 +74,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     private PayOSProperties getActivePayOSProperties() {
         Integer activeSecret = payOSConfigService.getActiveSecret();
-        return activeSecret != null && activeSecret == 2 ? payOSProperties2 : payOSProperties;
+        if (activeSecret != null && activeSecret == 3) return payOSProperties3;
+        if (activeSecret != null && activeSecret == 2) return payOSProperties2;
+        return payOSProperties;
     }
 
     @Override

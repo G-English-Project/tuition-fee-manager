@@ -19,7 +19,7 @@ public class PayOSConfig {
     private Long id;
 
     @Column(nullable = false)
-    private Integer activeSecret; // 1 or 2
+    private Integer activeSecret; // 1, 2, or 3
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
@@ -34,6 +34,11 @@ public class PayOSConfig {
     private LocalDateTime gate2LastCheckedAt;
     @Column(columnDefinition = "TEXT")
     private String gate2LastError;
+
+    private Boolean gate3Healthy;
+    private LocalDateTime gate3LastCheckedAt;
+    @Column(columnDefinition = "TEXT")
+    private String gate3LastError;
 
     @PrePersist
     @PreUpdate

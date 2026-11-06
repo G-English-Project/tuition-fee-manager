@@ -23,5 +23,9 @@ public class PayOSConfigResponse {
     private Boolean gate2Healthy;
     private LocalDateTime gate2LastCheckedAt;
     private String gate2LastError;
+
+    private Boolean gate3Healthy;
+    private LocalDateTime gate3LastCheckedAt;
+    private String gate3LastError;
 }
 

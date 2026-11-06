@@ -39,6 +39,9 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
                 .gate2Healthy(config.getGate2Healthy())
                 .gate2LastCheckedAt(config.getGate2LastCheckedAt())
                 .gate2LastError(config.getGate2LastError())
+                .gate3Healthy(config.getGate3Healthy())
+                .gate3LastCheckedAt(config.getGate3LastCheckedAt())
+                .gate3LastError(config.getGate3LastError())
                 .build();
     }
 
@@ -54,11 +57,16 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
             config.setGate1Healthy(healthy);
             config.setGate1LastCheckedAt(now);
             config.setGate1LastError(errorMessage);
-        } else {
+        } else if (gateNumber == 2) {
             previousHealthy = config.getGate2Healthy() == null || config.getGate2Healthy();
             config.setGate2Healthy(healthy);
             config.setGate2LastCheckedAt(now);
             config.setGate2LastError(errorMessage);
+        } else {
+            previousHealthy = config.getGate3Healthy() == null || config.getGate3Healthy();
+            config.setGate3Healthy(healthy);
+            config.setGate3LastCheckedAt(now);
+            config.setGate3LastError(errorMessage);
         }
         payOSConfigRepository.save(config);
 
@@ -68,10 +76,10 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
     @Override
     @Transactional
     public PayOSConfigResponse switchSecret(Integer secretNumber) {
-        if (secretNumber == null || (secretNumber != 1 && secretNumber != 2)) {
+        if (secretNumber == null || (secretNumber != 1 && secretNumber != 2 && secretNumber != 3)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Secret number must be 1 or 2"
+                    "Secret number must be 1, 2, or 3"
             );
         }
 
@@ -105,7 +113,11 @@ public class PayOSConfigServiceImpl implements PayOSConfigService {
         if (secretNumber == null) {
             return "Payment Gate 1";
         }
-        return secretNumber == 1 ? "Payment Gate 1" : "Payment Gate 2";
+        return switch (secretNumber) {
+            case 2 -> "Payment Gate 2";
+            case 3 -> "Payment Gate 3";
+            default -> "Payment Gate 1";
+        };
     }
 }
 

@@ -18,4 +18,10 @@ public class AppConfig {
     public PayOSProperties payOSProperties2() {
         return new PayOSProperties();
     }
+
+    @Bean
+    @ConfigurationProperties("payos3")
+    public PayOSProperties payOSProperties3() {
+        return new PayOSProperties();
+    }
 }

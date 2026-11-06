@@ -47,6 +47,7 @@ public class PayOSHealthCheckCron {
     private static final int MAX_ERROR_LENGTH = 500;
 
     private final PayOSProperties payOSProperties2;
+    private final PayOSProperties payOSProperties3;
     private final PayOSConfigService payOSConfigService;
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
@@ -55,12 +56,14 @@ public class PayOSHealthCheckCron {
 
     public PayOSHealthCheckCron(
             @Qualifier("payOSProperties2") PayOSProperties payOSProperties2,
+            @Qualifier("payOSProperties3") PayOSProperties payOSProperties3,
             PayOSConfigService payOSConfigService,
             PaymentRepository paymentRepository,
             UserRepository userRepository,
             NotificationService notificationService,
             EmailServiceImpl emailService) {
         this.payOSProperties2 = payOSProperties2;
+        this.payOSProperties3 = payOSProperties3;
         this.payOSConfigService = payOSConfigService;
         this.paymentRepository = paymentRepository;
         this.userRepository = userRepository;
@@ -71,6 +74,7 @@ public class PayOSHealthCheckCron {
     @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Ho_Chi_Minh")
     public void checkGateways() {
         checkGateway(2, payOSProperties2, "Payment Gate 2");
+        checkGateway(3, payOSProperties3, "Payment Gate 3");
     }
 
     private void checkGateway(int gateNumber, PayOSProperties properties, String label) {

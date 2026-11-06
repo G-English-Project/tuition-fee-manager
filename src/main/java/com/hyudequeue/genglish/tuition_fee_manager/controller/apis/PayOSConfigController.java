@@ -31,16 +31,16 @@ public class PayOSConfigController {
         return ApiResp.success(payOSConfigService.getConfig());
     }
 
-    @Operation(summary = "Switch PayOS secret", description = "Switch between Payment Gate 1 and Payment Gate 2. Admin only.")
+    @Operation(summary = "Switch PayOS secret", description = "Switch between Payment Gate 1, Payment Gate 2, and Payment Gate 3. Admin only.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Secret switched successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid secret number (must be 1 or 2)"),
+            @ApiResponse(responseCode = "400", description = "Invalid secret number (must be 1, 2, or 3)"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Admin access required")
     })
     @PutMapping(SWITCH_SECRET)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResp<PayOSConfigResponse>> switchSecret(
-            @Parameter(description = "Secret number (1 or 2)", required = true)
+            @Parameter(description = "Secret number (1, 2, or 3)", required = true)
             @RequestParam Integer secretNumber) {
         return ApiResp.success(payOSConfigService.switchSecret(secretNumber));
     }
