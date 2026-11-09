@@ -275,7 +275,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         if (year != null) {
             spec = spec.and((root, query, cb) ->
-                cb.equal(cb.function("YEAR", Integer.class, root.get("dueDate")), year)
+                cb.equal(cb.function("YEAR", Integer.class, root.get("createdAt")), year)
             );
         }
 
