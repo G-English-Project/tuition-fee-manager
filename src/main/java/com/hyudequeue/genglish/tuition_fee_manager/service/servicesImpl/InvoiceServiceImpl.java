@@ -88,10 +88,24 @@ public class InvoiceServiceImpl implements InvoiceService {
         return createInvoiceForStudent(userId, classId, month, dueDate, items, Collections.emptyList(), PaymentMethodEnum.BANKING);
     }
 
+    @Override
     @Transactional
     public InvoiceResponseDto createInvoiceForStudent(Long userId,
                                                       Long classId,
                                                       Integer month,
+                                                      LocalDate dueDate,
+                                                      List<InvoiceItemRequestDTO> items,
+                                                      List<Long> categoryIds,
+                                                      PaymentMethodEnum paymentType) {
+        return createInvoiceForStudent(userId, classId, month, null, dueDate, items, categoryIds, paymentType);
+    }
+
+    @Override
+    @Transactional
+    public InvoiceResponseDto createInvoiceForStudent(Long userId,
+                                                      Long classId,
+                                                      Integer month,
+                                                      Integer year,
                                                       LocalDate dueDate,
                                                       List<InvoiceItemRequestDTO> items,
                                                       List<Long> categoryIds,
@@ -106,11 +120,14 @@ public class InvoiceServiceImpl implements InvoiceService {
                 ? new ArrayList<>()
                 : new ArrayList<>(categoryRepository.findAllById(categoryIds));
 
+        Integer billingYear = determineBillingYear(month, year, dueDate);
+
         Invoice invoice = Invoice.builder()
                 .user(user)
                 .userName(user.getFullName())
                 .classes(classes)
                 .month(month)
+                .year(billingYear)
                 .dueDate(dueDate)
                 .status(InvoiceStatusEnum.UNPAID)
                 .createdAt(LocalDateTime.now())
@@ -140,6 +157,16 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Transactional
     public Page<InvoiceResponseDto> createInvoicesForClass(Long classId,
                                                            Integer month,
+                                                           LocalDate dueDate,
+                                                           List<StudentInvoiceRequest> studentRequests) {
+        return createInvoicesForClass(classId, month, null, dueDate, studentRequests);
+    }
+
+    @Override
+    @Transactional
+    public Page<InvoiceResponseDto> createInvoicesForClass(Long classId,
+                                                           Integer month,
+                                                           Integer year,
                                                            LocalDate dueDate,
                                                            List<StudentInvoiceRequest> studentRequests) {
         Classes classes = classRepository.findById(classId)
@@ -179,6 +206,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         List<User> users = userRepository.findAllById(activeUserIds);
 
+        Integer billingYear = determineBillingYear(month, year, dueDate);
+
         List<Invoice> invoices = new ArrayList<>();
         for (User user : users) {
             StudentInvoiceRequest sreq = reqByUser.get(user.getUserId());
@@ -200,6 +229,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                     .userName(user.getFullName())
                     .classes(classes)
                     .month(month)
+                    .year(billingYear)
                     .dueDate(dueDate)
                     .status(InvoiceStatusEnum.UNPAID)
                     .createdAt(LocalDateTime.now())
@@ -223,14 +253,25 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         List<Invoice> saved = invoiceRepository.saveAll(invoices);
 
-        invoiceRepository.saveAll(saved);
-
         List<InvoiceResponseDto> responseDtos = new ArrayList<>();
         for (Invoice inv : saved) {
             responseDtos.add(InvoiceResponseDto.toDto(inv));
         }
 
         return new PageImpl<>(responseDtos);
+    }
+
+    private Integer determineBillingYear(Integer month, Integer year, LocalDate dueDate) {
+        if (year != null) {
+            return year;
+        }
+        if (dueDate != null) {
+            if (month != null && dueDate.getMonthValue() < month) {
+                return dueDate.getYear() - 1;
+            }
+            return dueDate.getYear();
+        }
+        return LocalDate.now().getYear();
     }
 
 
@@ -274,9 +315,21 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         if (year != null) {
-            spec = spec.and((root, query, cb) ->
-                cb.equal(cb.function("YEAR", Integer.class, root.get("createdAt")), year)
-            );
+            spec = spec.and((root, query, cb) -> {
+                var yearField = root.<Integer>get("year");
+                var monthField = root.<Integer>get("month");
+                var dueDateField = root.<LocalDate>get("dueDate");
+                var dueMonth = cb.function("MONTH", Integer.class, dueDateField);
+                var dueYear = cb.function("YEAR", Integer.class, dueDateField);
+
+                var inferredYear = cb.<Integer>selectCase()
+                        .when(cb.and(cb.isNotNull(monthField), cb.isNotNull(dueDateField), cb.lessThan(dueMonth, monthField)),
+                                cb.diff(dueYear, 1))
+                        .otherwise(dueYear);
+
+                var effectiveYear = cb.coalesce(yearField, inferredYear);
+                return cb.equal(effectiveYear, year);
+            });
         }
 
         if (paidFromDate != null) {

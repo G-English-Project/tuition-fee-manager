@@ -18,6 +18,7 @@ public class InvoiceUpdateRequestDto {
     private List<InvoiceItemRequestDTO> updatedItems;
     private List<Long> categoryIds;
     private Integer month;
+    private Integer year;
     private LocalDate dueDate;
     private Long classId;   // 👈 only the ID, not the whole entity
 
@@ -37,8 +38,19 @@ public class InvoiceUpdateRequestDto {
 
     public void applyTo(Invoice invoice, Classes classes) {
         if (month != null) invoice.setMonth(month);
+        if (year != null) invoice.setYear(year);
         if (dueDate != null) invoice.setDueDate(dueDate);
         if (classes != null) invoice.setClasses(classes);
+
+        // If year was not explicitly provided but both month and dueDate are available,
+        // infer billing year using the standard rule:
+        // if MONTH(dueDate) < billingMonth → billingYear = YEAR(dueDate) - 1
+        if (year == null && invoice.getMonth() != null && invoice.getDueDate() != null) {
+            int dueDateMonth = invoice.getDueDate().getMonthValue();
+            int dueDateYear = invoice.getDueDate().getYear();
+            int billingYear = (dueDateMonth < invoice.getMonth()) ? dueDateYear - 1 : dueDateYear;
+            invoice.setYear(billingYear);
+        }
 
         invoice.setTotalAmount(calculateTotalAmount());
         invoice.setUpdatedAt(LocalDateTime.now());

@@ -47,6 +47,8 @@ public class InvoiceController {
             @Parameter(description = "User ID") @RequestParam Long userId,
             @Parameter(description = "Class ID") @RequestParam Long classId,
             @Parameter(description = "Month of invoice (1-12)") @RequestParam Integer month,
+            @Parameter(description = "Billing year of the invoice (e.g. 2026). If omitted, inferred from dueDate.")
+            @RequestParam(required = false) Integer year,
             @Parameter(description = "Due date (e.g., last day of current month)", example = "2025-08-31")
             @RequestParam LocalDate dueDate,
             @Parameter(description = "Optional category IDs for this invoice")
@@ -58,7 +60,7 @@ public class InvoiceController {
         List<Long> safeCategoryIds = (categoryIds == null) ? Collections.emptyList() : categoryIds;
         return ApiResp.success(
                 invoiceService.createInvoiceForStudent(
-                        userId, classId, month, dueDate, items, safeCategoryIds, paymentType
+                        userId, classId, month, year, dueDate, items, safeCategoryIds, paymentType
                 )
         );
     }
@@ -68,12 +70,14 @@ public class InvoiceController {
     public ResponseEntity<ApiResp<Page<InvoiceResponseDto>>> createInvoicesForClass(
             @Parameter(description = "Class ID") @RequestParam Long classId,
             @Parameter(description = "Month of invoice (1-12)") @RequestParam Integer month,
+            @Parameter(description = "Billing year of the invoice (e.g. 2026). If omitted, inferred from dueDate.")
+            @RequestParam(required = false) Integer year,
             @Parameter(description = "Due date (e.g., last day of current month)", example = "2025-08-31")
             @RequestParam LocalDate dueDate,
             @RequestBody List<StudentInvoiceRequest> studentRequests) {
 
         return ApiResp.success(
-                invoiceService.createInvoicesForClass(classId, month, dueDate, studentRequests)
+                invoiceService.createInvoicesForClass(classId, month, year, dueDate, studentRequests)
         );
     }
 

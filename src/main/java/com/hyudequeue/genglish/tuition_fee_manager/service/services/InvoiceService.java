@@ -31,9 +31,26 @@ public interface InvoiceService {
                                                List<Long> categoryIds,
                                                PaymentMethodEnum paymentType);
 
+    InvoiceResponseDto createInvoiceForStudent(Long userId,
+                                               Long classId,
+                                               Integer month,
+                                               Integer year,
+                                               LocalDate dueDate,
+                                               List<InvoiceItemRequestDTO> items,
+                                               List<Long> categoryIds,
+                                               PaymentMethodEnum paymentType);
+
     Page<InvoiceResponseDto> createInvoicesForClass(
             Long classId,
             Integer month,
+            LocalDate dueDate,
+            List<StudentInvoiceRequest> studentRequests
+    );
+
+    Page<InvoiceResponseDto> createInvoicesForClass(
+            Long classId,
+            Integer month,
+            Integer year,
             LocalDate dueDate,
             List<StudentInvoiceRequest> studentRequests
     );
