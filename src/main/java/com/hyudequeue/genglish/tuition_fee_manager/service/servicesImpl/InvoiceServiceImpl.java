@@ -85,13 +85,27 @@ public class InvoiceServiceImpl implements InvoiceService {
                                                       Integer month,
                                                       LocalDate dueDate,
                                                       List<InvoiceItemRequestDTO> items) {
-        return createInvoiceForStudent(userId, classId, month, dueDate, items, Collections.emptyList(), PaymentMethodEnum.BANKING);
+        return createInvoiceForStudent(userId, classId, month, dueDate != null ? dueDate.getYear() : null, dueDate, items, Collections.emptyList(), PaymentMethodEnum.BANKING);
     }
 
+    @Override
     @Transactional
     public InvoiceResponseDto createInvoiceForStudent(Long userId,
                                                       Long classId,
                                                       Integer month,
+                                                      LocalDate dueDate,
+                                                      List<InvoiceItemRequestDTO> items,
+                                                      List<Long> categoryIds,
+                                                      PaymentMethodEnum paymentType) {
+        return createInvoiceForStudent(userId, classId, month, dueDate != null ? dueDate.getYear() : null, dueDate, items, categoryIds, paymentType);
+    }
+
+    @Override
+    @Transactional
+    public InvoiceResponseDto createInvoiceForStudent(Long userId,
+                                                      Long classId,
+                                                      Integer month,
+                                                      Integer year,
                                                       LocalDate dueDate,
                                                       List<InvoiceItemRequestDTO> items,
                                                       List<Long> categoryIds,
@@ -106,11 +120,14 @@ public class InvoiceServiceImpl implements InvoiceService {
                 ? new ArrayList<>()
                 : new ArrayList<>(categoryRepository.findAllById(categoryIds));
 
+        int resolvedYear = (year != null) ? year : (dueDate != null ? dueDate.getYear() : LocalDate.now().getYear());
+
         Invoice invoice = Invoice.builder()
                 .user(user)
                 .userName(user.getFullName())
                 .classes(classes)
                 .month(month)
+                .year(resolvedYear)
                 .dueDate(dueDate)
                 .status(InvoiceStatusEnum.UNPAID)
                 .createdAt(LocalDateTime.now())
@@ -142,6 +159,16 @@ public class InvoiceServiceImpl implements InvoiceService {
                                                            Integer month,
                                                            LocalDate dueDate,
                                                            List<StudentInvoiceRequest> studentRequests) {
+        return createInvoicesForClass(classId, month, dueDate != null ? dueDate.getYear() : null, dueDate, studentRequests);
+    }
+
+    @Override
+    @Transactional
+    public Page<InvoiceResponseDto> createInvoicesForClass(Long classId,
+                                                           Integer month,
+                                                           Integer year,
+                                                           LocalDate dueDate,
+                                                           List<StudentInvoiceRequest> studentRequests) {
         Classes classes = classRepository.findById(classId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
 
@@ -153,6 +180,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         if (month != null && (month < 1 || month > 12)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Month must be 1..12");
         }
+
+        int resolvedYear = (year != null) ? year : (dueDate != null ? dueDate.getYear() : LocalDate.now().getYear());
 
         // Map by userId
         Map<Long, StudentInvoiceRequest> reqByUser = studentRequests.stream()
@@ -200,6 +229,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                     .userName(user.getFullName())
                     .classes(classes)
                     .month(month)
+                    .year(resolvedYear)
                     .dueDate(dueDate)
                     .status(InvoiceStatusEnum.UNPAID)
                     .createdAt(LocalDateTime.now())
@@ -275,7 +305,10 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         if (year != null) {
             spec = spec.and((root, query, cb) ->
-                cb.equal(cb.function("YEAR", Integer.class, root.get("createdAt")), year)
+                cb.or(
+                    cb.equal(root.get("year"), year),
+                    cb.and(cb.isNull(root.get("year")), cb.equal(cb.function("YEAR", Integer.class, root.get("dueDate")), year))
+                )
             );
         }
 
@@ -776,5 +809,102 @@ public class InvoiceServiceImpl implements InvoiceService {
                     values
             );
         }
+    }
+
+    @Override
+    @Transactional
+    public int migrateInvoiceYears(boolean overrideExisting) {
+        List<Invoice> invoices = overrideExisting ? invoiceRepository.findAll() : invoiceRepository.findByYearIsNull();
+        if (invoices.isEmpty()) {
+            log.info("No invoices found requiring year migration.");
+            return 0;
+        }
+
+        int count = 0;
+        for (Invoice invoice : invoices) {
+            Integer resolvedYear = calculateBillingYearForLegacyInvoice(invoice);
+            invoice.setYear(resolvedYear);
+            count++;
+        }
+        invoiceRepository.saveAll(invoices);
+        log.info("Completed year migration for {} invoices.", count);
+        return count;
+    }
+
+    public static Integer calculateBillingYearForLegacyInvoice(Invoice invoice) {
+        if (invoice == null) return null;
+
+        LocalDate dueDate = invoice.getDueDate();
+        LocalDateTime createdAt = invoice.getCreatedAt();
+        Integer month = invoice.getMonth();
+
+        // 3. Nếu case là những hóa đơn của lớp "Tutor" tháng 12 2025 đc tạo vào tháng 01 2026,
+        // xử lý edge case đó để year được tạo đúng cho 2025
+        if (isTutorClassInvoice(invoice)) {
+            if (month != null && month == 12) {
+                boolean createdInJan2026 = (createdAt != null && createdAt.getYear() == 2026 && createdAt.getMonthValue() == 1);
+                boolean dueInJan2026 = (dueDate != null && dueDate.getYear() == 2026 && dueDate.getMonthValue() == 1);
+                boolean dueIn2026 = (dueDate != null && dueDate.getYear() == 2026);
+                boolean createdIn2026 = (createdAt != null && createdAt.getYear() == 2026);
+
+                if (createdInJan2026 || dueInJan2026 || dueIn2026 || createdIn2026) {
+                    return 2025;
+                }
+            }
+        }
+
+        // 2. Year sẽ được add theo dueDate của invoice, để match tháng/năm của học phí
+        if (dueDate != null) {
+            return dueDate.getYear();
+        }
+
+        if (createdAt != null) {
+            return createdAt.getYear();
+        }
+
+        return LocalDate.now().getYear();
+    }
+
+    public static boolean isTutorClassInvoice(Invoice invoice) {
+        if (invoice == null) return false;
+
+        // Check class name
+        if (invoice.getClasses() != null && invoice.getClasses().getClassName() != null) {
+            if (invoice.getClasses().getClassName().toLowerCase().contains("tutor")) {
+                return true;
+            }
+        }
+
+        // Check class categories
+        if (invoice.getClasses() != null && invoice.getClasses().getCategories() != null) {
+            for (ClassCategory cat : invoice.getClasses().getCategories()) {
+                if (cat.getName() != null && cat.getName().toLowerCase().contains("tutor")) {
+                    return true;
+                }
+            }
+        }
+
+        // Check invoice categories
+        if (invoice.getCategories() != null) {
+            for (InvoiceCategory cat : invoice.getCategories()) {
+                if (cat.getName() != null && cat.getName().toLowerCase().contains("tutor")) {
+                    return true;
+                }
+            }
+        }
+
+        // Check invoice items
+        if (invoice.getItems() != null) {
+            for (InvoiceItem item : invoice.getItems()) {
+                if (item.getFeeName() != null && item.getFeeName().toLowerCase().contains("tutor")) {
+                    return true;
+                }
+                if (item.getDescription() != null && item.getDescription().toLowerCase().contains("tutor")) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

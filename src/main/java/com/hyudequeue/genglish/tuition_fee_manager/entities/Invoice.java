@@ -36,6 +36,9 @@ public class Invoice {
     @Column(nullable = true)
     private Integer month;
 
+    @Column(name = "`year`", nullable = true)
+    private Integer year;
+
     @Column(nullable = false)
     private LocalDate dueDate;
 
@@ -101,7 +104,12 @@ public class Invoice {
 
         // Không có item → fallback summary
         String className = classes != null ? classes.getClassName() : "Unknown class";
-        String monthInfo = month != null ? "tháng " + month : "";
+        String monthInfo = "";
+        if (month != null && year != null) {
+            monthInfo = "tháng " + month + "/" + year;
+        } else if (month != null) {
+            monthInfo = "tháng " + month;
+        }
 
         return "Học phí " + className + " " + monthInfo;
     }

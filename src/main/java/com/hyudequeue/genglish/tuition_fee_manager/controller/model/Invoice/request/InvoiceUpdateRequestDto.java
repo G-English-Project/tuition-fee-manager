@@ -18,6 +18,7 @@ public class InvoiceUpdateRequestDto {
     private List<InvoiceItemRequestDTO> updatedItems;
     private List<Long> categoryIds;
     private Integer month;
+    private Integer year;
     private LocalDate dueDate;
     private Long classId;   // 👈 only the ID, not the whole entity
 
@@ -37,6 +38,7 @@ public class InvoiceUpdateRequestDto {
 
     public void applyTo(Invoice invoice, Classes classes) {
         if (month != null) invoice.setMonth(month);
+        if (year != null) invoice.setYear(year);
         if (dueDate != null) invoice.setDueDate(dueDate);
         if (classes != null) invoice.setClasses(classes);
 

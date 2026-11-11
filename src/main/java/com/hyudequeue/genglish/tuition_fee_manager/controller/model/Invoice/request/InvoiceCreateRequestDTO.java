@@ -19,6 +19,7 @@ public class InvoiceCreateRequestDTO {
     private Long classId;
     private LocalDate dueDate;
     private Integer month;
+    private Integer year;
     private List<InvoiceItemRequestDTO> items;
     private List<Long> categoryIds;
 
@@ -26,6 +27,7 @@ public class InvoiceCreateRequestDTO {
         return Invoice.builder()
                 .dueDate(dueDate)
                 .month(month)
+                .year(year != null ? year : (dueDate != null ? dueDate.getYear() : null))
                 .status(InvoiceStatusEnum.UNPAID)
                 .totalAmount(calculateTotalAmount(items))
                 .createdAt(LocalDateTime.now())

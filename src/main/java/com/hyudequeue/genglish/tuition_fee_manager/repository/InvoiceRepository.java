@@ -30,10 +30,12 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     Page<Invoice> findByClasses_ClassIdAndStatusNot(Long classId, InvoiceStatusEnum status, Pageable pageable);
     List<Invoice> findByStatus(InvoiceStatusEnum status);
     List<Invoice> findByMonthAndStatusIn(Integer month, List<InvoiceStatusEnum> statuses);
+    List<Invoice> findByYearIsNull();
+    long countByYearIsNull();
 
     @Query("SELECT i FROM Invoice i " +
             "WHERE i.month = :month " +
-            "AND FUNCTION('YEAR', i.dueDate) = :year " +
+            "AND (i.year = :year OR (i.year IS NULL AND FUNCTION('YEAR', i.dueDate) = :year)) " +
             "AND i.status IN :statuses")
     List<Invoice> findByMonthAndYearAndStatusIn(
             @Param("month") Integer month,
@@ -111,15 +113,15 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     @Query(
             value = """
         SELECT
-            CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0')) as period,
+            CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', LPAD(month, 2, '0')) as period,
             COALESCE(SUM(total_amount), 0) as revenue
         FROM invoices
         WHERE status = 'PAID'
-        GROUP BY CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0'))
+        GROUP BY CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', LPAD(month, 2, '0'))
         ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', month))
+        SELECT COUNT(DISTINCT CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', month))
         FROM invoices
         WHERE status = 'PAID'
         """,
@@ -144,18 +146,18 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     @Query(
             value = """
         SELECT
-            CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0')) as period,
+            CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', LPAD(i.month, 2, '0')) as period,
             COALESCE(SUM(i.total_amount), 0) as revenue
         FROM invoices i
         LEFT JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
             AND (:categoryId IS NULL OR icm.category_id = :categoryId)
         WHERE i.status = 'PAID'
           AND (:categoryId IS NULL OR icm.invoice_id IS NOT NULL)
-        GROUP BY CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0'))
+        GROUP BY CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', LPAD(i.month, 2, '0'))
         ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', i.month))
+        SELECT COUNT(DISTINCT CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', i.month))
         FROM invoices i
         LEFT JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
             AND (:categoryId IS NULL OR icm.category_id = :categoryId)
@@ -421,16 +423,16 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 
     @Query(value = """
         SELECT 
-            CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0')) as period,
+            CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', LPAD(month, 2, '0')) as period,
             COALESCE(SUM(total_amount), 0) as revenue
         FROM invoices
         WHERE status = 'PAID'
           AND class_id = :classId
-        GROUP BY CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0'))
+        GROUP BY CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', LPAD(month, 2, '0'))
         ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', month))
+        SELECT COUNT(DISTINCT CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', month))
         FROM invoices
         WHERE status = 'PAID'
           AND class_id = :classId
@@ -451,18 +453,18 @@ order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 
     @Query(value = """
         SELECT 
-            CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0')) as period,
+            CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', LPAD(i.month, 2, '0')) as period,
             COALESCE(SUM(i.total_amount), 0) as revenue
         FROM invoices i
         INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
         WHERE i.status = 'PAID' 
           AND icm.category_id = :categoryId
           AND i.class_id = :classId
-        GROUP BY CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0'))
+        GROUP BY CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', LPAD(i.month, 2, '0'))
         ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', i.month))
+        SELECT COUNT(DISTINCT CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', i.month))
         FROM invoices i
         INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
         WHERE i.status = 'PAID'

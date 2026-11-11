@@ -14,4 +14,5 @@ public final class InvoiceEndpoints {
     public static final String DELETE = "/delete";
     public static final String PROCESS_STATUS = "/process-status";
     public static final String GET_BY_ID = "/by-id";
+    public static final String MIGRATE_YEARS = "/migrate-years";
 }
