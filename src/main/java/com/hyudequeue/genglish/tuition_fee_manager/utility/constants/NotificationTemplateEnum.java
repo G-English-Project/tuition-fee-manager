@@ -96,6 +96,10 @@ public enum NotificationTemplateEnum {
     /**
      * Cổng thanh toán PayOS đã hoạt động trở lại sau khi bị lỗi
      */
-    PAYOS_GATEWAY_RECOVERED
+    PAYOS_GATEWAY_RECOVERED,
 
+    /**
+     * Webhook thanh toán gặp lỗi (xác thực chữ ký hoặc xử lý dữ liệu thất bại)
+     */
+    PAYMENT_WEBHOOK_FAILED
 }

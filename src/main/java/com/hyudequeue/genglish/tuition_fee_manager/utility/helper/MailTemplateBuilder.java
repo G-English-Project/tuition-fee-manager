@@ -55,6 +55,7 @@ public class MailTemplateBuilder {
             case FEEDBACK_REMINDER -> "Nhắc nhở điền feedback định kỳ";
             case PAYOS_GATEWAY_DOWN -> "⚠️ Cổng thanh toán {gateLabel} đang gặp lỗi";
             case PAYOS_GATEWAY_RECOVERED -> "✅ Cổng thanh toán {gateLabel} đã hoạt động trở lại";
+            case PAYMENT_WEBHOOK_FAILED -> "🚨 [Cảnh báo] Lỗi xử lý Webhook thanh toán PayOS – Đơn hàng #{orderCode}";
 
             default -> "Thông báo hệ thống";
         };
@@ -148,6 +149,26 @@ public class MailTemplateBuilder {
             case PAYOS_GATEWAY_RECOVERED ->
                     "<h3>✅ Cổng thanh toán PayOS đã hoạt động trở lại</h3>"
                             + "<p>Cổng thanh toán <b>{gateLabel}</b> đã hoạt động bình thường trở lại.</p>";
+
+            case PAYMENT_WEBHOOK_FAILED ->
+                    "<div style=\"background-color: #fff5f5; border-left: 4px solid #e53e3e; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;\">"
+                            + "<h3 style=\"color: #c53030; margin-top: 0; margin-bottom: 6px;\">⚠️ Cảnh báo: Lỗi xử lý Webhook thanh toán</h3>"
+                            + "<p style=\"margin: 0; color: #4a5568;\">Hệ thống nhận được webhook từ PayOS nhưng quá trình đối soát / xử lý hóa đơn gặp lỗi. Hóa đơn có thể <b>chưa được chuyển sang trạng thái Đã thanh toán</b> tự động.</p>"
+                            + "</div>"
+                            + "<table style=\"width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 15px;\">"
+                            + "<tr style=\"border-bottom: 1px solid #edf2f7;\"><td style=\"padding: 10px 0; color: #718096; width: 160px;\"><b>Cổng thanh toán:</b></td><td style=\"padding: 10px 0; color: #2d3748;\">{gateLabel}</td></tr>"
+                            + "<tr style=\"border-bottom: 1px solid #edf2f7;\"><td style=\"padding: 10px 0; color: #718096;\"><b>Mã đơn (OrderCode):</b></td><td style=\"padding: 10px 0; color: #2d3748; font-weight: bold;\">#{orderCode}</td></tr>"
+                            + "<tr style=\"border-bottom: 1px solid #edf2f7;\"><td style=\"padding: 10px 0; color: #718096;\"><b>Số tiền:</b></td><td style=\"padding: 10px 0; color: #e53e3e; font-weight: bold;\">{amount} VND</td></tr>"
+                            + "<tr style=\"border-bottom: 1px solid #edf2f7;\"><td style=\"padding: 10px 0; color: #718096;\"><b>Nội dung CK:</b></td><td style=\"padding: 10px 0; color: #2d3748; font-family: monospace; background: #edf2f7; padding: 4px 8px; border-radius: 4px;\">{description}</td></tr>"
+                            + "<tr style=\"border-bottom: 1px solid #edf2f7;\"><td style=\"padding: 10px 0; color: #718096;\"><b>Mã tham chiếu:</b></td><td style=\"padding: 10px 0; color: #2d3748;\">{reference}</td></tr>"
+                            + "<tr style=\"border-bottom: 1px solid #edf2f7;\"><td style=\"padding: 10px 0; color: #718096;\"><b>Thời gian:</b></td><td style=\"padding: 10px 0; color: #2d3748;\">{timestamp}</td></tr>"
+                            + "<tr><td style=\"padding: 10px 0; color: #718096;\"><b>Chi tiết lỗi:</b></td><td style=\"padding: 10px 0; color: #c53030; font-family: monospace; word-break: break-all;\">{errorMessage}</td></tr>"
+                            + "</table>"
+                            + "<div style=\"background-color: #ebf8ff; border-left: 4px solid #3182ce; padding: 12px 16px; border-radius: 6px;\">"
+                            + "<p style=\"margin: 0; font-size: 14px; color: #2b6cb0;\">"
+                            + "💡 <b>Hành động khuyến nghị:</b> Vui lòng đối chiếu với sao kê ngân hàng và cập nhật trạng thái hóa đơn thủ công trên Portal nếu học viên đã chuyển khoản thành công."
+                            + "</p>"
+                            + "</div>";
 
             default -> "[Không tìm thấy nội dung thông báo]";
         };

@@ -51,6 +51,7 @@ public class NotificationTemplateBuilder {
             // --- ADMIN ---
             case PAYOS_GATEWAY_DOWN -> "⚠️ Cổng thanh toán {gateLabel} đang gặp lỗi";
             case PAYOS_GATEWAY_RECOVERED -> "✅ Cổng thanh toán {gateLabel} đã hoạt động trở lại";
+            case PAYMENT_WEBHOOK_FAILED -> "🚨 [Cảnh báo] Lỗi xử lý Webhook thanh toán PayOS – Đơn #{orderCode}";
 
             default -> "Thông báo hệ thống";
         };
@@ -107,6 +108,8 @@ public class NotificationTemplateBuilder {
                             + "Chi tiết lỗi: {errorMessage}. Vui lòng vào trang Cấu hình để kiểm tra và chuyển sang cổng dự phòng nếu cần.";
             case PAYOS_GATEWAY_RECOVERED ->
                     "Cổng thanh toán {gateLabel} đã hoạt động bình thường trở lại.";
+            case PAYMENT_WEBHOOK_FAILED ->
+                    "Webhook thanh toán PayOS (Mã đơn: #{orderCode}, Cổng: {gateLabel}) gặp lỗi: {errorMessage}. Nội dung: {description}, Số tiền: {amount} VND. Vui lòng kiểm tra và xử lý hóa đơn cho học viên.";
             default -> "[Không tìm thấy nội dung thông báo]";
         };
     }
