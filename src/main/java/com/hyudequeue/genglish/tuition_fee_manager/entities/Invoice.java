@@ -36,16 +36,6 @@ public class Invoice {
     @Column(nullable = true)
     private Integer month;
 
-    /**
-     * Billing year – the calendar year the invoice belongs to.
-     * Stored explicitly to avoid ambiguity when the due date crosses a year boundary
-     * (e.g. billing month = December, due date = January next year).
-     * Derivation rule (fallback when not stored): if MONTH(dueDate) < billingMonth
-     * then billingYear = YEAR(dueDate) - 1, else billingYear = YEAR(dueDate).
-     */
-    @Column(nullable = true)
-    private Integer year;
-
     @Column(nullable = false)
     private LocalDate dueDate;
 
@@ -91,34 +81,11 @@ public class Invoice {
         if (paymentType == null) {
             paymentType = PaymentMethodEnum.BANKING;
         }
-        if (this.year == null) {
-            this.year = inferBillingYear();
-        }
     }
 
     @PreUpdate
     private void onUpdate() {
         this.updatedAt = LocalDateTime.now();
-        if (this.year == null) {
-            this.year = inferBillingYear();
-        }
-    }
-
-    public Integer getYear() {
-        if (this.year != null) {
-            return this.year;
-        }
-        return inferBillingYear();
-    }
-
-    private Integer inferBillingYear() {
-        if (this.dueDate != null) {
-            if (this.month != null && this.dueDate.getMonthValue() < this.month) {
-                return this.dueDate.getYear() - 1;
-            }
-            return this.dueDate.getYear();
-        }
-        return this.createdAt != null ? this.createdAt.getYear() : null;
     }
 
     @Transient
@@ -134,10 +101,7 @@ public class Invoice {
 
         // Không có item → fallback summary
         String className = classes != null ? classes.getClassName() : "Unknown class";
-        Integer billingYear = getYear();
-        String monthInfo = month != null 
-                ? (billingYear != null ? "tháng " + month + "/" + billingYear : "tháng " + month)
-                : "";
+        String monthInfo = month != null ? "tháng " + month : "";
 
         return "Học phí " + className + " " + monthInfo;
     }

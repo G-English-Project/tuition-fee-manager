@@ -19,7 +19,6 @@ public class InvoiceCreateRequestDTO {
     private Long classId;
     private LocalDate dueDate;
     private Integer month;
-    private Integer year;
     private List<InvoiceItemRequestDTO> items;
     private List<Long> categoryIds;
 

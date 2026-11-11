@@ -24,7 +24,6 @@ public class InvoiceResponseDto {
     private String userName;
     private Long classesId;
     private Integer month;
-    private Integer year;
     private LocalDate dueDate;
     private InvoiceStatusEnum status;
     private Integer totalAmount;
@@ -44,7 +43,6 @@ public class InvoiceResponseDto {
                 .userName(invoice.getUser() != null ? invoice.getUser().getFullName() : invoice.getUserName())
                 .classesId(invoice.getClasses().getClassId())
                 .month(invoice.getMonth())
-                .year(invoice.getYear())
                 .dueDate(invoice.getDueDate())
                 .status(invoice.getStatus())
                 .totalAmount(invoice.getTotalAmount())

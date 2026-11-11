@@ -33,7 +33,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
 
     @Query("SELECT i FROM Invoice i " +
             "WHERE i.month = :month " +
-            "AND COALESCE(i.year, CASE WHEN i.dueDate IS NOT NULL AND FUNCTION('MONTH', i.dueDate) < i.month THEN FUNCTION('YEAR', i.dueDate) - 1 ELSE FUNCTION('YEAR', i.dueDate) END) = :year " +
+            "AND FUNCTION('YEAR', i.dueDate) = :year " +
             "AND i.status IN :statuses")
     List<Invoice> findByMonthAndYearAndStatusIn(
             @Param("month") Integer month,
@@ -111,15 +111,15 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     @Query(
             value = """
         SELECT
-            CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', LPAD(month, 2, '0')) as period,
+            CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0')) as period,
             COALESCE(SUM(total_amount), 0) as revenue
         FROM invoices
         WHERE status = 'PAID'
-        GROUP BY CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', LPAD(month, 2, '0'))
+        GROUP BY CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0'))
         ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', month))
+        SELECT COUNT(DISTINCT CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', month))
         FROM invoices
         WHERE status = 'PAID'
         """,
@@ -144,18 +144,18 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     @Query(
             value = """
         SELECT
-            CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', LPAD(i.month, 2, '0')) as period,
+            CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0')) as period,
             COALESCE(SUM(i.total_amount), 0) as revenue
         FROM invoices i
         LEFT JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
             AND (:categoryId IS NULL OR icm.category_id = :categoryId)
         WHERE i.status = 'PAID'
           AND (:categoryId IS NULL OR icm.invoice_id IS NOT NULL)
-        GROUP BY CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', LPAD(i.month, 2, '0'))
+        GROUP BY CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0'))
         ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', i.month))
+        SELECT COUNT(DISTINCT CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', i.month))
         FROM invoices i
         LEFT JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
             AND (:categoryId IS NULL OR icm.category_id = :categoryId)
@@ -276,16 +276,16 @@ order by cast(function('date_format', coalesce(i.paidAt, cast(i.dueDate as times
     @Query(
             value = """
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string),
+  cast(function('year', coalesce(i.paidAt, i.dueDate)) as string),
   sum(cast(i.totalAmount as big_decimal))
 )
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
-group by cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string)
-order by cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string) desc
+group by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
+order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string) desc
 """,
             countQuery = """
-select count(distinct cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string))
+select count(distinct cast(function('year', coalesce(i.paidAt, i.dueDate)) as string))
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
 """
@@ -295,14 +295,14 @@ where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.Invo
 
     @Query("""
 select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-  cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string),
+  cast(function('year', coalesce(i.paidAt, i.dueDate)) as string),
   sum(cast(i.totalAmount as big_decimal))
 )
 from Invoice i
 where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
   and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
-group by cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string)
-order by cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string) desc
+group by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
+order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
 """)
     Page<RevenueSummaryDto> sumRevenueGroupByYearWithCategory(Pageable pageable, @Param("categoryId") Long categoryId);
 
@@ -385,15 +385,15 @@ order by cast(coalesce(i.year, case when i.dueDate is not null and i.month is no
 
     @Query("""
     select new com.hyudequeue.genglish.tuition_fee_manager.controller.model.Invoice.response.RevenueSummaryDto(
-      cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string),
+      cast(function('year', coalesce(i.paidAt, i.dueDate)) as string),
       sum(cast(i.totalAmount as big_decimal))
     )
     from Invoice i
     where i.status = com.hyudequeue.genglish.tuition_fee_manager.entities.Enums.InvoiceStatusEnum.PAID
       and (:categoryId is null or exists (select 1 from i.categories c where c.categoryId = :categoryId))
       and (:classId is null or i.classes.classId = :classId)
-    group by cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string)
-    order by cast(coalesce(i.year, case when i.dueDate is not null and i.month is not null and function('month', i.dueDate) < i.month then function('year', i.dueDate) - 1 else function('year', coalesce(i.paidAt, i.dueDate)) end) as string) desc
+    group by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
+    order by cast(function('year', coalesce(i.paidAt, i.dueDate)) as string)
     """)
     Page<RevenueSummaryDto> sumRevenueGroupByYearWithFilter(Pageable pageable,
                                                             @Param("categoryId") Long categoryId,
@@ -421,16 +421,16 @@ order by cast(coalesce(i.year, case when i.dueDate is not null and i.month is no
 
     @Query(value = """
         SELECT 
-            CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', LPAD(month, 2, '0')) as period,
+            CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0')) as period,
             COALESCE(SUM(total_amount), 0) as revenue
         FROM invoices
         WHERE status = 'PAID'
           AND class_id = :classId
-        GROUP BY CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', LPAD(month, 2, '0'))
+        GROUP BY CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', LPAD(month, 2, '0'))
         ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))), '-', month))
+        SELECT COUNT(DISTINCT CONCAT(IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)), '-', month))
         FROM invoices
         WHERE status = 'PAID'
           AND class_id = :classId
@@ -451,18 +451,18 @@ order by cast(coalesce(i.year, case when i.dueDate is not null and i.month is no
 
     @Query(value = """
         SELECT 
-            CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', LPAD(i.month, 2, '0')) as period,
+            CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0')) as period,
             COALESCE(SUM(i.total_amount), 0) as revenue
         FROM invoices i
         INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
         WHERE i.status = 'PAID' 
           AND icm.category_id = :categoryId
           AND i.class_id = :classId
-        GROUP BY CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', LPAD(i.month, 2, '0'))
+        GROUP BY CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', LPAD(i.month, 2, '0'))
         ORDER BY period DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT CONCAT(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))), '-', i.month))
+        SELECT COUNT(DISTINCT CONCAT(IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)), '-', i.month))
         FROM invoices i
         INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
         WHERE i.status = 'PAID'
@@ -565,15 +565,15 @@ order by cast(coalesce(i.year, case when i.dueDate is not null and i.month is no
 
     @Query(value = """
         SELECT 
-            CAST(COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))) AS CHAR) as period,
+            CAST(YEAR(due_date) AS CHAR) as period,
             COALESCE(SUM(total_amount), 0) as revenue
         FROM invoices
         WHERE status = 'PAID' AND class_id = :classId
-        GROUP BY COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date)))
-        ORDER BY period DESC
+        GROUP BY YEAR(due_date)
+        ORDER BY YEAR(due_date) DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT COALESCE(year, IF(month > MONTH(due_date), YEAR(due_date)-1, YEAR(due_date))))
+        SELECT COUNT(DISTINCT YEAR(due_date))
         FROM invoices
         WHERE status = 'PAID' AND class_id = :classId
         """,
@@ -593,18 +593,18 @@ order by cast(coalesce(i.year, case when i.dueDate is not null and i.month is no
 
     @Query(value = """
         SELECT 
-            CAST(COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))) AS CHAR) as period,
+            CAST(YEAR(i.due_date) AS CHAR) as period,
             COALESCE(SUM(i.total_amount), 0) as revenue
         FROM invoices i
         INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
         WHERE i.status = 'PAID' 
           AND icm.category_id = :categoryId
           AND i.class_id = :classId
-        GROUP BY COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date)))
-        ORDER BY period DESC
+        GROUP BY YEAR(i.due_date)
+        ORDER BY YEAR(i.due_date) DESC
         """,
             countQuery = """
-        SELECT COUNT(DISTINCT COALESCE(i.year, IF(i.month > MONTH(i.due_date), YEAR(i.due_date)-1, YEAR(i.due_date))))
+        SELECT COUNT(DISTINCT YEAR(i.due_date))
         FROM invoices i
         INNER JOIN invoice_category_map icm ON i.invoice_id = icm.invoice_id
         WHERE i.status = 'PAID' 
