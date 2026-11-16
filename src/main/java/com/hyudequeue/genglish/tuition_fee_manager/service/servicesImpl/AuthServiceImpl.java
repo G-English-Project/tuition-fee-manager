@@ -43,9 +43,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserAuthResponseDto GetUserAuthorize(UserAuthRequestDto userRequest) {
+        String email = userRequest.getEmail() != null ? userRequest.getEmail().trim() : "";
         User user =
                 userRepository
-                        .findByEmail(userRequest.getEmail())
+                        .findByEmailIgnoreCase(email)
                         .orElseThrow(() ->
                                 new ResponseStatusException(HttpStatusCode.valueOf(404), "User not found"));
         if (user.getPasswordHash() == null) {
@@ -60,7 +61,7 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
-                                userRequest.getEmail(), userRequest.getPassword(), authorities));
+                                user.getEmail(), userRequest.getPassword(), authorities));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtService.generateToken((UserDetailsCustom) authentication.getPrincipal());

@@ -29,8 +29,9 @@ public class UserDetailsServiceCustom implements UserDetailsService {
   }
 
   private UserDetailsCustom getUserDetailsCustom(String email) {
+    String sanitizedEmail = email != null ? email.trim() : "";
     return userRepository
-            .findByEmail(email)
+            .findByEmailIgnoreCase(sanitizedEmail)
             .map(user ->
                     new UserDetailsCustom(
                             user.getEmail(),

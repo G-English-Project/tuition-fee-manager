@@ -31,11 +31,12 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
   @Override
   public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-    final String email = authentication.getPrincipal().toString();
+    final String rawEmail = authentication.getPrincipal().toString();
+    final String email = rawEmail != null ? rawEmail.trim() : "";
     final String password = authentication.getCredentials().toString();
     User user =
         userRepository
-            .findByEmail(email)
+            .findByEmailIgnoreCase(email)
             .orElseThrow(
                 () ->
                     new ApplicationException(
